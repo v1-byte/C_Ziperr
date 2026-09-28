@@ -129,7 +129,7 @@ function showErr(title,items,retry){window._r=retry;$('#dlg').innerHTML=`<h3 cla
 
 /* ---------- Tahap 1: download ---------- */
 async function start(){
- const link=$('#url').value.trim(),ep=($('#ep').value.trim()||'/api').replace(/\/$/,'');
+ const link=$('#url').value.trim(),ep=($('#ep').value.trim()||'https://c-ziperr.technologiesfrostbyte.workers.dev/api').replace(/\/$/,'');
  F.clear();failed=[];$('#nx').disabled=true;setP(0);renderDl();
  try{
   let buf;
@@ -148,7 +148,7 @@ async function start(){
 async function resume(){
  let tag='';try{tag=localStorage.getItem('cz_tag')||''}catch{}
  if(!tag)return showErr('Tidak ada job',['Belum ada job yang bisa dilanjutkan.']);
- const ep=($('#ep').value.trim()||'/api').replace(/\/$/,'');
+ const ep=($('#ep').value.trim()||'https://c-ziperr.technologiesfrostbyte.workers.dev/api').replace(/\/$/,'');
  try{await loadZip(await waitAndDownload(ep,tag),true)}catch(e){showErr('Lanjut gagal',[e.message],resume)}
 }
 async function waitAndDownload(ep,tag){
