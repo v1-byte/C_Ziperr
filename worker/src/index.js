@@ -1,7 +1,8 @@
 // C_ziperr Worker: dispatch job ke GitHub Actions, lacak status, stream artifact.
 // Tidak ada unzip/proses berat di sini (aman untuk limit CPU 10ms Free plan).
 const RL = new Map(); // rate limit best-effort per isolate
-const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'content-type': 'application/json' } });
+const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'content-type,x-token', 'access-control-allow-methods': 'GET,POST,OPTIONS' };
+const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...CORS, 'content-type': 'application/json' } });
 const GH = (env, p, init = {}) => fetch(`https://api.github.com/repos/${env.GH_REPO}${p}`, {
   ...init,
   headers: { authorization: `Bearer ${env.GH_TOKEN}`, accept: 'application/vnd.github+json',
@@ -17,6 +18,7 @@ async function findRun(env, tag) {
 export default {
   async fetch(req, env) {
     const u = new URL(req.url), p = u.pathname;
+    if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
     if (!p.startsWith('/api/')) return env.ASSETS.fetch(req);
     if (!env.GH_TOKEN || !env.GH_REPO) return J({ error: 'GH_TOKEN / GH_REPO belum diset' }, 500);
     if (env.ACCESS_TOKEN && req.headers.get('x-token') !== env.ACCESS_TOKEN) return J({ error: 'Token akses salah' }, 401);
@@ -52,7 +54,7 @@ export default {
         const loc = z.headers.get('location');
         if (!loc) return J({ error: 'Link artifact gagal (HTTP ' + z.status + ')' }, 502);
         const f = await fetch(loc);
-        const h = { 'content-type': 'application/zip' };
+        const h = { ...CORS, 'content-type': 'application/zip' };
         if (f.headers.get('content-length')) h['content-length'] = f.headers.get('content-length');
         return new Response(f.body, { headers: h });
       }
