@@ -2,6 +2,12 @@
 
 Alat untuk **mengumpulkan (collect)**, **menjalankan (preview)**, dan **mengedit (workspace)** ZIP game web, dengan bantuan AI. Berjalan di Cloudflare Worker + GitHub Actions (Playwright).
 
+## Visual rancangan APK
+
+Tampilan mobile menggunakan gaya profesional dark navy dengan aksen cyan-teal. Empat fitur utama yang ditampilkan adalah **Download**, **Preview**, **Editor Code**, dan **Pengaturan**.
+
+![Mockup tampilan HP C_Ziperr — empat fitur utama](c_ziperr-mobile-cyan-4-features.png)
+
 ---
 
 ## 1. Arsitektur
