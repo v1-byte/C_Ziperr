@@ -1,0 +1,44 @@
+name: collect
+run-name: collect ${{ inputs.tag }}
+on:
+  workflow_dispatch:
+    inputs:
+      game_url:     { description: "Link game", required: true }
+      folder:       { description: "Nama folder hasil", default: "game-1" }
+      play_seconds: { description: "Lama bermain (detik)", default: "90" }
+      spins:        { description: "Jumlah spin otomatis", default: "30" }
+      spin_x:       { description: "Koordinat X tombol spin (kosong = otomatis)", default: "" }
+      spin_y:       { description: "Koordinat Y tombol spin (kosong = otomatis)", default: "" }
+      tag:          { description: "ID pelacak dari Worker", default: "manual" }
+      har:          { description: "Simpan HAR (0/1)", default: "0" }
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-v1
+      - run: npm i playwright && npx playwright install --with-deps chromium
+      - run: node tools/collect.mjs
+        env:
+          GAME_URL: ${{ inputs.game_url }}
+          OUT: out/${{ inputs.folder }}
+          PLAY_SECONDS: ${{ inputs.play_seconds }}
+          SPINS: ${{ inputs.spins }}
+          SPIN_X: ${{ inputs.spin_x }}
+          SPIN_Y: ${{ inputs.spin_y }}
+          HAR: ${{ inputs.har }}
+          COOKIES: ${{ secrets.COLLECT_COOKIES }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          if-no-files-found: ignore
+          name: ${{ inputs.folder }}
+          path: out/${{ inputs.folder }}
+          retention-days: 30

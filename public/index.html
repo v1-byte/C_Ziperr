@@ -1,0 +1,254 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>C_Ziperr</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#0f1115"><style>
+:root{--bg:#0f1115;--p:#181b22;--b:#2a2f3a;--t:#e8eaf0;--m:#8b93a5;--a:#8b5cf6;--e:#ef4444}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font:14px system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--p);border-bottom:1px solid var(--b);padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+button,input,textarea{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
+button{cursor:pointer}button.pri,button.on{background:var(--a);border-color:var(--a)}button:disabled{opacity:.4}
+main{padding:12px;max-width:820px;margin:auto}
+.card{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.row>input{flex:1;min-width:0}
+.bar{height:8px;background:var(--b);border-radius:9px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;background:var(--a);transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}.stats div{text-align:center;background:var(--bg);border-radius:8px;padding:8px;color:var(--m)}.stats b{display:block;font-size:18px;color:var(--t)}
+.list{max-height:340px;overflow:auto}.it{display:flex;gap:8px;align-items:center;padding:6px;border-bottom:1px solid var(--b);cursor:pointer;word-break:break-all}
+.it img{width:36px;height:36px;object-fit:cover;border-radius:6px;background:var(--bg)}.it small{color:var(--m);margin-left:auto;white-space:nowrap}
+textarea{width:100%;min-height:300px;font:12px ui-monospace,monospace;white-space:pre}
+pre{background:var(--bg);padding:8px;border-radius:8px;overflow:auto;max-height:200px;font-size:12px;margin:6px 0 0}
+dialog{background:var(--p);color:var(--t);border:1px solid var(--e);border-radius:12px;max-width:92vw;width:520px}
+.brand{display:flex;align-items:center;gap:8px}.brand img{width:32px;height:32px;border-radius:8px;background:#fff;padding:2px}.hero{background:#fff;border-radius:12px;text-align:center;padding:10px;margin-bottom:12px}.hero img{max-width:100%;height:150px;object-fit:contain}.hero small{display:block;color:#475069;margin-top:4px}.err{color:var(--e)}[hidden]{display:none!important}.chips button{padding:4px 12px;border-radius:99px}small,#ts{color:var(--m)}
+header{flex-wrap:wrap}header nav{width:100%;overflow-x:auto;flex-wrap:nowrap!important;margin:0!important}header nav button{white-space:nowrap;flex:1}
+select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
+#ed:not([hidden]){display:flex;flex-direction:column;height:calc(100dvh - 92px);background:#1e1e1e;color:#ccc}
+#ed button,#ed input{background:#3c3c3c;border:1px solid #454545;color:#ccc;border-radius:4px;padding:4px 8px;font-size:12px}
+.vt{display:flex;gap:4px;padding:4px;background:#333;overflow-x:auto}.vt button{white-space:nowrap}#e-pv{background:var(--a)!important;border-color:var(--a)!important;color:#fff!important}
+.vb{flex:1;min-height:0;display:flex;position:relative}
+.ab{width:36px;background:#333;display:flex;flex-direction:column;gap:2px;padding:4px 2px;flex:none}.ab button{background:none!important;border:0!important;font-size:16px;opacity:.6}.ab button.on{opacity:1;border-left:2px solid #fff!important}
+#sb{width:230px;background:#252526;overflow:auto;flex:none}#sb.off{display:none}
+@media(max-width:700px){#sb{position:absolute;z-index:6;left:36px;top:0;bottom:0;width:78%}}
+.ph2{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:11px;color:#bbb}.ph2 button{padding:2px 6px}
+#sb input{width:calc(100% - 12px);margin:0 6px 6px}
+#tr,#s-r{font-size:12px}#tr summary{cursor:pointer;padding:3px 4px}
+.fi{padding:3px 8px 3px 18px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fi.on{background:#37373d}.fi.dt::after{content:' ●';color:#e8ab53}.fi:hover{background:#2a2d2e}
+.sr{padding:4px 8px;cursor:pointer;font-size:12px;word-break:break-all}.sr:hover{background:#2a2d2e}.em{padding:12px;color:#888;font-size:12px}
+.vm{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+#tb{display:flex;background:#252526;overflow-x:auto;min-height:30px;flex:none}.tab{padding:6px 10px;font-size:12px;white-space:nowrap;cursor:pointer;border-right:1px solid #1e1e1e;background:#2d2d2d;color:#999}.tab.on{background:#1e1e1e;color:#fff;border-top:1px solid #007acc}.tab span{margin-left:8px;opacity:.6}
+#bc{font-size:11px;color:#999;padding:3px 10px;white-space:nowrap;overflow:auto;flex:none}
+#cm{flex:1;min-height:0}#cm .CodeMirror{height:100%;font-family:ui-monospace,Consolas,monospace;font-size:inherit}#vw2{flex:1;overflow:auto;padding:8px}
+#qo{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:min(520px,94%);background:#252526;border:1px solid #454545;z-index:9;padding:6px;border-radius:6px}#qo input{width:100%}#ql{max-height:260px;overflow:auto;font-size:12px}
+.sbar{display:flex;gap:14px;background:#007acc;color:#fff;font-size:11px;padding:3px 10px;overflow-x:auto;white-space:nowrap;flex:none}
+</style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css"></head><body>
+<header><span class="brand"><img src="icon-192.png" alt=""><b>C_Ziperr</b></span><nav class="row"><button data-t="dl" class="on">1 Download</button><button data-t="pv">2 Preview</button><button data-t="ws">3 Workspace</button><button data-t="ed">4 Editor</button><button data-t="cfg" title="Setelan">🔑</button></nav></header>
+
+<main id="dl">
+ <div class="hero"><img src="logo.png" alt="C_Ziperr"><small>Collect · Preview · Workspace · AI</small></div>
+ <div class="card">
+  <div class="row"><input id="url" placeholder="Link game (acuan)"></div>
+  <div class="row"><input id="ep" placeholder="Endpoint (kosong = /api, ketik demo = contoh)"><button class="pri" onclick="start()">Mulai</button></div>
+  <div class="row"><input id="fd" value="game-1" placeholder="Folder"><input id="sp" value="30" placeholder="Spin" style="max-width:80px"><input id="ps" value="90" placeholder="Detik" style="max-width:80px"><button onclick="resume()">Lanjutkan</button></div>
+  <div class="bar"><i id="pb"></i></div><small id="log">Siap.</small>
+ </div>
+ <div class="card">
+  <div class="stats" id="st"></div>
+  <div class="row chips" id="ch"><button data-f="all" class="on">Semua</button><button data-f="img">Gambar</button><button data-f="audio">Audio</button><button data-f="code">Kode</button><button data-f="other">Lain</button></div>
+  <div class="list" id="al"></div>
+ </div>
+ <div class="card" id="ly"></div><button class="pri" id="nx" disabled style="width:100%">Next → Preview</button>
+</main>
+
+<main id="ws" hidden>
+ <div class="row"><input type="file" id="zf" accept=".zip"><button id="ex">Export ZIP</button><span id="ts"></span></div>
+ <div class="row chips" id="sub"><button data-s="fl" class="on">File</button><button data-s="api">Custom API</button><button data-s="wk">Deteksi Workers</button><button data-s="ai">🤖 Chat AI</button></div>
+
+ <section id="fl">
+  <div class="row"><input id="q" placeholder="Cari file…"></div>
+  <div class="card list" id="fls"></div>
+    <div class="card"><b>Ganti teks di semua file kode</b><div class="row" style="margin-top:8px"><input id="fi" placeholder="Cari (mis. domain lama)"><input id="re" placeholder="Ganti dengan"><button id="ra">Terapkan</button></div></div>
+ </section>
+
+ <section id="api" hidden>
+  <div class="card"><b>Set nilai field di semua respons</b><div class="row" style="margin-top:8px"><input id="bk" value="balance"><input id="bv" value="0" style="max-width:80px"><button id="bsv">Terapkan</button></div><small>Aturan diisi otomatis dari folder server/ di ZIP.</small></div>
+  <div class="row"><button id="ar">+ Aturan</button><button id="xa">Export mock-api.json</button></div>
+  <div id="rl"></div>
+ </section>
+
+ <section id="wk" hidden>
+  <div class="row"><button class="pri" id="sc">Scan semua kode</button></div><div id="wr"></div>
+ </section>
+ <section id="ai" hidden><div class="card list" id="cl" style="min-height:160px"></div><div class="row"><label><input type="checkbox" id="cf" checked> sertakan file terbuka</label></div><textarea id="ci" style="min-height:70px;white-space:pre-wrap" placeholder="Contoh: cari endpoint spin dan jelaskan; ganti domain API lama"></textarea><div class="row" style="margin-top:8px"><button class="pri" id="cs">Kirim</button><button id="ce">Terapkan edit terakhir</button></div></section>
+</main>
+<main id="pv" hidden>
+ <div class="card">
+  <div class="row"><select id="pe" style="flex:1;min-width:0"></select><button class="pri" id="pr">▶ Jalankan</button></div>
+  <div class="row chips" id="pd"><button data-w="414px" class="on">Mobile</button><button data-w="820px">Tablet</button><button data-w="100%">Desktop</button></div>
+  <small>Game berjalan dari isi ZIP di memori, dengan aturan Custom API sebagai server tiruan. Butuh HTTPS.</small>
+ </div>
+ <div class="card" style="padding:6px"><iframe id="pf" allow="autoplay; fullscreen" style="width:414px;max-width:100%;height:68vh;border:0;background:#fff;display:block;margin:auto"></iframe></div>
+ <div class="card"><b>Error runtime</b> <small id="pcnt">0</small><pre id="perr"></pre><div class="row" style="margin-top:8px"><button id="pfx">🔧 Perbaiki otomatis</button><button class="pri" id="pai">🤖 Perbaiki dengan AI</button></div><pre id="prep"></pre></div>
+ <div class="card"><b>Permintaan tidak ditemukan</b> <small id="pm">0</small><pre id="pl"></pre></div>
+</main>
+
+<main id="cfg" hidden>
+ <div class="card"><b>🔑 AI</b><div class="row" style="margin-top:8px"><select id="k-kind"><option value="anthropic">Anthropic</option><option value="openai">OpenAI-compatible</option></select></div><div class="row"><input id="k-base" placeholder="Base URL"></div><div class="row"><input id="k-model" placeholder="Model"></div><div class="row"><input id="k-key" type="password" placeholder="API key"></div><div class="row"><input id="k-tok" type="password" placeholder="Token akses Worker (opsional)"></div><div class="row"><button class="pri" id="k-save">Simpan</button><button id="k-test">Tes AI</button><span id="k-msg"></span></div><small>Disimpan hanya di browser ini dan dikirim langsung ke penyedia AI.</small></div>
+ <div class="card"><b>Terapkan ke ZIP</b><div class="row" style="margin-top:8px"><input id="k-from" placeholder="Domain / URL API lama"><input id="k-to" placeholder="Endpoint baru"><button id="k-apply">Ganti</button></div></div>
+</main>
+<div id="ed" hidden>
+ <div class="vt"><button id="e-sb">☰</button><button id="e-sv">Simpan</button><button id="e-sa">Simpan semua</button><button id="e-qo">Buka… (Ctrl+P)</button><button id="e-fm">Format JSON</button><button id="e-wr">Wrap</button><button id="e-fa">A−</button><button id="e-fb">A+</button><button id="e-pv">▶ Preview</button></div>
+ <div class="vb">
+  <div class="ab"><button data-v="ex" class="on" title="Explorer">📁</button><button data-v="sr" title="Cari (Ctrl+Shift+F)">🔍</button></div>
+  <div id="sb">
+   <div id="p-ex"><div class="ph2"><b>EXPLORER</b><span><button id="n-new" title="File baru">＋</button> <button id="n-ren" title="Ganti nama">✎</button> <button id="n-del" title="Hapus">🗑</button></span></div><input id="n-f" placeholder="Filter file…"><div id="tr"></div></div>
+   <div id="p-sr" hidden><div class="ph2"><b>CARI</b></div><input id="s-q" placeholder="Cari di semua file…"><div id="s-r"></div></div>
+  </div>
+  <div class="vm"><div id="tb"></div><div id="bc"></div><div id="cm"></div><div id="vw2" hidden></div>
+   <div id="qo" hidden><input id="qi" placeholder="Ketik nama file…"><div id="ql"></div></div></div>
+ </div>
+ <div class="sbar"><span id="s-pos"></span><span id="s-lang"></span><span id="s-d">0 belum disimpan</span><span id="s-m"></span><span>UTF-8</span></div>
+</div>
+<dialog id="dlg"></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/jump-to-line.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const EXT={img:'png jpg jpeg webp gif svg ico',audio:'mp3 ogg wav m4a aac',code:'js mjs css html htm json atlas txt md xml yml'};
+const kind=p=>{const e=p.split('.').pop().toLowerCase();for(const k in EXT)if(EXT[k].split(' ').includes(e))return k;return'other'};
+const ICON={img:'🖼',audio:'🔊',code:'📄',other:'📦'};
+const MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp',gif:'image/gif',svg:'image/svg+xml',mp3:'audio/mpeg',ogg:'audio/ogg',wav:'audio/wav',m4a:'audio/mp4'};
+let F=new Map(),failed=[],crawlMiss=[],rules=[],cur=null,filter='all';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>n>1048576?(n/1048576).toFixed(1)+' MB':n>1024?(n/1024).toFixed(1)+' KB':n+' B';
+const url=f=>f.u||(f.u=URL.createObjectURL(new Blob([f.d],{type:MIME[f.p.split('.').pop().toLowerCase()]||'application/octet-stream'})));
+const setP=p=>$('#pb').style.width=Math.min(100,p)+'%',log=m=>$('#log').textContent=m;
+const flash=m=>{$('#ts').textContent=m;setTimeout(()=>$('#ts').textContent='',2500)};
+const H=()=>{try{return{'x-token':localStorage.getItem('cz_tok')||''}}catch{return{}}};const dec=d=>new TextDecoder().decode(d),enc=t=>new TextEncoder().encode(t);
+function dl(n,d,t){const a=document.createElement('a');a.href=URL.createObjectURL(d instanceof Blob?d:new Blob([d],{type:t}));a.download=n;a.click()}
+
+function go(t){['dl','pv','ws','ed','cfg'].forEach(x=>$('#'+x).hidden=x!=t);$$('header nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));if(t=='ws')renderWs();if(t=='pv'&&window.pvShow)pvShow();if(t=='ed'&&window.edShow)edShow();if(t=='cfg'&&window.cfgShow)cfgShow()}
+$$('header nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));$('#nx').onclick=()=>go('pv');
+$$('#ch button').forEach(b=>b.onclick=()=>{filter=b.dataset.f;$$('#ch button').forEach(x=>x.classList.toggle('on',x==b));renderDl()});
+
+function showErr(title,items,retry){window._r=retry;$('#dlg').innerHTML=`<h3 class="err">${esc(title)}</h3><div class="list">${items.map(i=>`<div class="it err">${esc(i)}</div>`).join('')}</div><div class="row" style="margin-top:8px"><button onclick="dlg.close()">Tutup</button>${retry?'<button class="pri" onclick="dlg.close();window._r()">Coba lagi</button>':''}</div>`;dlg.showModal()}
+
+/* ---------- Tahap 1: download ---------- */
+async function start(){
+ const link=$('#url').value.trim(),ep=($('#ep').value.trim()||'/api').replace(/\/$/,'');
+ F.clear();failed=[];$('#nx').disabled=true;setP(0);renderDl();
+ try{
+  let buf;
+  if(ep==='demo'){log('Mode demo…');buf=await demoZip()}
+  else{
+   if(!link)return showErr('Input kurang',['Isi link game dulu.']);
+   log('Mengirim job ke GitHub Actions…');
+   const r=await fetch(ep+'/collect',{method:'POST',headers:{'content-type':'application/json',...H()},body:JSON.stringify({url:link,folder:$('#fd').value||'game-1',spins:$('#sp').value||30,play_seconds:$('#ps').value||90})});
+   const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
+   try{localStorage.setItem('cz_tag',j.tag)}catch{}
+   buf=await waitAndDownload(ep,j.tag);
+  }
+  await loadZip(buf,true);
+ }catch(e){showErr('Download gagal',[e.message],start)}
+}
+async function resume(){
+ let tag='';try{tag=localStorage.getItem('cz_tag')||''}catch{}
+ if(!tag)return showErr('Tidak ada job',['Belum ada job yang bisa dilanjutkan.']);
+ const ep=($('#ep').value.trim()||'/api').replace(/\/$/,'');
+ try{await loadZip(await waitAndDownload(ep,tag),true)}catch(e){showErr('Lanjut gagal',[e.message],resume)}
+}
+async function waitAndDownload(ep,tag){
+ const t0=Date.now();
+ for(;;){
+  await new Promise(r=>setTimeout(r,5000));
+  const s=await(await fetch(ep+'/status?tag='+tag,{headers:H()})).json(),sec=Math.round((Date.now()-t0)/1000);if(sec>1900)throw new Error('Timeout menunggu job');
+  if(!s.found){log('Menunggu runner… '+sec+'s');continue}
+  if(s.status!=='completed'){log('Collect berjalan ('+s.status+') '+sec+'s');setP(Math.min(30,sec/4));continue}
+  if(s.conclusion!=='success')throw new Error('Run gagal: '+s.conclusion+' — '+s.url);
+  break;
+ }
+ log('Mengunduh hasil…');
+ const r=await fetch(ep+'/download?tag='+tag,{headers:H()});
+ if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'HTTP '+r.status);
+ const tot=+r.headers.get('content-length')||0,rd=r.body.getReader(),ch=[];let got=0;
+ for(;;){const{done,value}=await rd.read();if(done)break;ch.push(value);got+=value.length;if(tot)setP(30+got/tot*10);log('Diterima '+fmt(got))}
+ return new Blob(ch).arrayBuffer();
+}
+async function loadZip(buf,fromDl){
+ const z=await JSZip.loadAsync(buf),names=Object.keys(z.files).filter(n=>!z.files[n].dir);
+ F.clear();failed=[];crawlMiss=[];let i=0;
+ for(const n of names){
+  try{F.set(n,{p:n,d:await z.file(n).async('uint8array'),k:kind(n)})}catch(e){failed.push(n+' — '+e.message)}
+  i++;if(fromDl){setP(40+i/names.length*60);if(i%10==0||i==names.length)renderDl()}
+ }
+ const kel=F.get('kelengkapan.json');
+ if(kel)try{(JSON.parse(dec(kel.d)).failed||[]).forEach(x=>{const s=(x.url||x)+(x.error?' — '+x.error:'');(/\(crawl\)/.test(s)?crawlMiss:failed).push(s)})}catch{}
+ buildRules();loadMock();window.renderLy&&renderLy();if(window.edReset)edReset();renderDl();setP(100);log(`Selesai: ${F.size} file, ${failed.length} gagal, ${crawlMiss.length} tebakan crawl 404`);
+ $('#nx').disabled=!F.size;
+ if(failed.length)showErr(failed.length+' file gagal',failed);
+}
+function renderDl(){
+ const c={img:0,audio:0,code:0,other:0};F.forEach(f=>c[f.k]++);
+ $('#st').innerHTML=`<div><b>${F.size}</b>Total</div><div><b>${c.img}</b>Gambar</div><div><b>${c.audio}</b>Audio</div><div><b>${c.code}</b>Kode</div><div><b>${c.other}</b>Lain</div><div><b class="err">${failed.length}</b>Gagal</div>`;
+ const fs=[...F.values()].filter(f=>filter=='all'||f.k==filter).sort((a,b)=>a.p<b.p?-1:1);
+ $('#al').innerHTML=fs.slice(0,300).map(f=>`<div class="it">${f.k=='img'?`<img src="${url(f)}">`:`<span>${ICON[f.k]}</span>`}<span>${esc(f.p)}</span><small>${fmt(f.d.length)}</small></div>`).join('')+(fs.length>300?`<div class="it">…+${fs.length-300} lagi</div>`:'')
+}
+async function demoZip(){
+ const z=new JSZip();
+ for(let i=0;i<6;i++){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=`hsl(${i*55},70%,50%)`;x.fillRect(0,0,64,64);x.fillStyle='#fff';x.fillText('S'+i,24,36);z.file(`assets/symbols/s${i}.png`,await new Promise(r=>c.toBlob(r)))}
+ z.file('assets/audio/spin.mp3',new Uint8Array(2048));
+ z.file('index.html','<script src="assets/game.js"><\/script>');
+ z.file('assets/game.js',"const w=new Worker('w.js');fetch('https://api.example.com/game/spin');navigator.serviceWorker.register('sw.js');ai.run('@cf/meta/llama-3-8b-instruct')");
+ z.file('server/0001.json',JSON.stringify({url:'https://api.example.com/game/init',method:'POST',status:200,response:'{"balance":1000,"bet":10}'}));
+ z.file('kelengkapan.json',JSON.stringify({failed:[{url:'https://cdn.example.com/bgm.mp3',error:'404'}]}));
+ for(let i=0;i<5;i++){await new Promise(r=>setTimeout(r,150));setP(i*8);log('Demo: unduh aset '+(i+1))}
+ return z.generateAsync({type:'arraybuffer'})
+}
+
+/* ---------- Tahap 2: workspace ---------- */
+$$('#sub button').forEach(b=>b.onclick=()=>{$$('#sub button').forEach(x=>x.classList.toggle('on',x==b));['fl','api','wk','ai'].forEach(s=>$('#'+s).hidden=s!=b.dataset.s)});
+function renderWs(){renderFl();renderApi()}
+$('#zf').onchange=async e=>{const f=e.target.files[0];if(f){await loadZip(await f.arrayBuffer(),false);renderWs()}};
+$('#ex').onclick=async()=>{window.edSaveAll&&edSaveAll();const z=new JSZip();F.forEach(f=>z.file(f.p,f.d));z.file('mock-api.json',JSON.stringify(rules));dl('game-edit.zip',await z.generateAsync({type:'blob'}))};
+
+function renderFl(){
+ const q=$('#q').value.toLowerCase();
+ $('#fls').innerHTML=[...F.keys()].filter(p=>p.toLowerCase().includes(q)).sort().slice(0,300).map(p=>`<div class="it" data-p="${esc(p)}"><span>${ICON[F.get(p).k]}</span><span>${esc(p)}</span><small>${fmt(F.get(p).d.length)}</small></div>`).join('')||'<div class="it">Belum ada file. Load ZIP atau selesaikan download.</div>'
+}
+$('#q').oninput=renderFl;
+$('#fls').onclick=e=>{const r=e.target.closest('.it');if(r&&r.dataset.p)openF(r.dataset.p)};
+function openF(p){go('ed');edOpen(p)}
+$('#ra').onclick=()=>{const a=$('#fi').value;if(!a)return;window.edSaveAll&&edSaveAll();let n=0;F.forEach(f=>{if(f.k!='code')return;const t=dec(f.d);if(t.includes(a)){f.d=enc(t.split(a).join($('#re').value));n++}});window.edReset&&edReset();flash(n+' file diubah')};
+
+/* custom API */
+function buildRules(){
+ rules=[];
+ F.forEach(f=>{if(!/^server\/.*\.json$/.test(f.p))return;try{const j=JSON.parse(dec(f.d));if(j.url)rules.push({match:new URL(j.url).pathname,method:j.method||'GET',status:j.status||200,body:j.response||''})}catch{}})
+}
+function loadMock(){const m=F.get('mock-api.json');if(m)try{JSON.parse(dec(m.d)).forEach(r=>{const i=rules.findIndex(x=>x.match===r.match&&x.method===r.method);i<0?rules.push({...r,manual:1}):Object.assign(rules[i],r)})}catch{}}
+function renderApi(){
+ $('#rl').innerHTML=rules.map((r,i)=>`<div class="card"><div class="row"><input value="${esc(r.match)}" data-i="${i}" data-k="match"><input style="max-width:70px;flex:none" value="${r.status}" data-i="${i}" data-k="status"><small>${kindOf(r.match)}</small><button data-d="${i}">✕</button></div><div class="row"><input placeholder="hanya jika body request berisi… (opsional)" value="${esc(r.when||'')}" data-i="${i}" data-k="when"></div><textarea style="min-height:90px" data-i="${i}" data-k="body">${esc(r.body)}</textarea></div>`).join('')||'<div class="it">Belum ada aturan.</div>'
+}
+$('#rl').oninput=e=>{const t=e.target;if(t.dataset.i!=null)rules[t.dataset.i][t.dataset.k]=t.value};
+$('#rl').onclick=e=>{const d=e.target.dataset.d;if(d!=null){rules.splice(d,1);renderApi()}};
+$('#ar').onclick=()=>{rules.push({match:'/api/spin',method:'POST',status:200,body:'{}',manual:1});renderApi()};
+$('#xa').onclick=()=>dl('mock-api.json',JSON.stringify(rules.map(({match,method,status,body,when})=>({match,method,status,body,when})),null,2),'application/json');
+function setKey(o,k,v){if(o&&typeof o=='object')for(const x in o){if(x==k)o[x]=v;else setKey(o[x],k,v)}}
+$('#bsv').onclick=()=>{let n=0;rules.forEach(r=>{try{const j=JSON.parse(r.body),s=JSON.stringify(j);setKey(j,$('#bk').value,+$('#bv').value);if(JSON.stringify(j)!=s){r.body=JSON.stringify(j);n++}}catch{}});renderApi();flash(n+' aturan diubah')};
+
+/* deteksi workers */
+const P=[
+ ['Web Worker',/new\s+(Shared)?Worker\s*\(/g],['Service Worker',/serviceWorker\.register|navigator\.serviceWorker/g],
+ ['importScripts',/importScripts\s*\(/g],['WebAssembly',/WebAssembly\.(instantiate|compile)/g],
+ ['WebSocket',/new\s+WebSocket\(|wss?:\/\//g],['Cloudflare Workers/Pages',/[\w-]+\.(workers|pages)\.dev/g],
+ ['Cloudflare Worker (handler)',/addEventListener\(\s*['"]fetch['"]|export\s+default\s*\{\s*(async\s+)?fetch/g],
+ ['Workers AI',/@cf\/[\w./-]+|\bai\.run\(|api\/v1\/ai\/run/g],
+ ['LLM API',/api\.openai\.com|api\.groq\.com|api\.anthropic\.com|generativelanguage\.googleapis/g],
+ ['fetch / XHR',/\bfetch\s*\(|XMLHttpRequest/g]
+];
+$('#sc').onclick=()=>{
+ const R={},D={};
+ F.forEach(f=>{
+  if(f.k!='code'||f.d.length>3e6)return;const t=dec(f.d);
+  P.forEach(([n,re])=>{const m=t.match(re);if(m)(R[n]=R[n]||[]).push(`${f.p}  ×${m.length}  ${m[0].slice(0,50)}`)});
+  for(const m of t.matchAll(/https?:\/\/([a-z0-9.-]+\.[a-z]{2,})/gi))D[m[1]]=(D[m[1]]||0)+1;
+ });
+ const dom=Object.entries(D).sort((a,b)=>b[1]-a[1]).slice(0,30).map(([d,c])=>d+'  ×'+c).join('\n');
+ $('#wr').innerHTML=(Object.keys(R).length?Object.entries(R).map(([n,l])=>`<div class="card"><b>${n}</b> <small>${l.length} file</small><pre>${esc(l.slice(0,15).join('\n'))}</pre></div>`).join(''):'<div class="it">Tidak ada pola terdeteksi.</div>')+(dom?`<div class="card"><b>Domain eksternal</b><pre>${esc(dom)}</pre></div>`:'')
+};
+renderDl();
+</script><script src="editor.js"></script><script src="preview.js"></script><script src="extra.js"></script></body></html>

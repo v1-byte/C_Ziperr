@@ -1,0 +1,12 @@
+{
+  "name": "c_ziperr",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  },
+  "version": "1.0.0",
+  "description": "C_Ziperr — collect, preview, dan edit ZIP game web"
+}
