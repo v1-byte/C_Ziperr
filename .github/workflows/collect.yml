@@ -3,15 +3,16 @@ run-name: collect ${{ inputs.tag }}
 on:
   workflow_dispatch:
     inputs:
-      game_url:     { description: "Link game", required: true }
-      folder:       { description: "Nama folder hasil", default: "game-1" }
-      play_seconds: { description: "Lama bermain (detik)", default: "90" }
-      spins:        { description: "Jumlah spin otomatis", default: "30" }
-      spin_x:       { description: "Koordinat X tombol spin (kosong = otomatis)", default: "" }
-      spin_y:       { description: "Koordinat Y tombol spin (kosong = otomatis)", default: "" }
-      tag:          { description: "ID pelacak dari Worker", default: "manual" }
-      har:          { description: "Simpan HAR (0/1)", default: "0" }
-
+      game_url: { description: "Link game", required: true, type: string }
+      folder: { description: "Nama folder hasil", default: "game-1", type: string }
+      play_seconds: { description: "Lama bermain (detik)", default: "90", type: string }
+      spins: { description: "Jumlah spin otomatis", default: "30", type: string }
+      spin_x: { description: "Koordinat X tombol spin", default: "", type: string }
+      spin_y: { description: "Koordinat Y tombol spin", default: "", type: string }
+      tag: { description: "ID pelacak", default: "manual", type: string }
+      har: { description: "Simpan HAR (0/1)", default: "0", type: string }
+      crawl: { description: "Crawl CDN/reference (1/0)", default: "1", type: string }
+      crawl_max: { description: "Batas URL crawl", default: "400", type: string }
 jobs:
   collect:
     runs-on: ubuntu-latest
@@ -19,12 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with: { node-version: 22 }
       - uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-v1
-      - run: npm i playwright && npx playwright install --with-deps chromium
+        with: { path: ~/.cache/ms-playwright, key: pw-${{ runner.os }}-v1 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
       - run: node tools/collect.mjs
         env:
           GAME_URL: ${{ inputs.game_url }}
@@ -34,6 +34,8 @@ jobs:
           SPIN_X: ${{ inputs.spin_x }}
           SPIN_Y: ${{ inputs.spin_y }}
           HAR: ${{ inputs.har }}
+          CRAWL: ${{ inputs.crawl }}
+          CRAWL_MAX: ${{ inputs.crawl_max }}
           COOKIES: ${{ secrets.COLLECT_COOKIES }}
       - uses: actions/upload-artifact@v4
         if: always()

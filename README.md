@@ -11,6 +11,8 @@
 
 Toolkit untuk **mengumpulkan**, **menjalankan**, dan **mengedit** ZIP game web — lengkap dengan editor ala VS Code dan bantuan AI. Semuanya berjalan di browser (termasuk HP), dengan Cloudflare Worker + GitHub Actions di belakangnya.
 
+**Tahap 0–4 selesai:** tersedia core collector bersama, local Playwright collector, laporan CDN, SQLite job history/checkpoint, dan IndexedDB adapter browser. Worker lama tetap dipertahankan sebagai adapter deployment.
+
 ## Fitur
 
 | Menu | Fungsi |
@@ -49,6 +51,16 @@ Ubah `GH_REPO` / `GH_REF` di `wrangler.toml`, buka URL `*.workers.dev`, lalu isi
 
 UI bisa dihosting di GitHub Pages (`.github/workflows/pages.yml`). **Catatan:** Preview butuh origin di root domain, jadi gunakan repo `<user>.github.io` atau domain kustom; di subpath `/<repo>/` Preview tidak berfungsi. Tombol Collect tetap butuh Worker.
 
+**C. Local collector (Tahap 2)**
+
+```bash
+npm install
+npx playwright install chromium
+npm run collect:local -- https://game.example --out out/game-1 --play-seconds 30 --spins 4
+```
+
+CLI lokal memakai core engine yang sama dengan GitHub Actions dan membuat ZIP plus laporan `cdn-manifest.json`, `cdn-missing.json`, dan `cdn-domains.json`. Job, checkpoint, event, artifact, dan SHA-256 dicatat di SQLite; metadata browser memakai IndexedDB.
+
 ## Konfigurasi
 
 | Nama | Lokasi | Fungsi |
@@ -63,8 +75,10 @@ Input workflow `collect`: `game_url`, `folder`, `play_seconds`, `spins`, `spin_x
 ## Hasil collect
 
 ```
-assets/<host>/...   server/0001.json ...   index.rendered.html
-kelengkapan.json    keterangan.json        KETERANGAN.md    (traffic.har jika HAR=1)
+assets/<host>/...   server/0001.json ...    index.rendered.html
+kelengkapan.json    keterangan.json        KETERANGAN.md
+cdn-manifest.json   cdn-missing.json        cdn-domains.json
+traffic.har         (opsional jika HAR=1)
 ```
 
 ## Aplikasi (APK)
@@ -73,7 +87,7 @@ Logo C_Ziperr adalah ikon utama (`public/icon-*.png`, `manifest.webmanifest`). P
 
 ## Status & batasan
 
-Kode lolos cek sintaks, namun **belum diuji end-to-end** di browser dan job Actions sungguhan; gunakan checklist di [`docs/CATATAN.md`](docs/CATATAN.md). Game dengan anti-bot, WebSocket-only, atau login rumit tidak sepenuhnya terekam. Rate limit Worker bersifat best-effort. Detail lengkap, daftar 12 bug yang diperbaiki, dan roadmap: [`docs/CATATAN.md`](docs/CATATAN.md).
+Tahap 0–4 lolos syntax check, unit test, dan audit dependency production. End-to-end browser/game nyata tetap perlu dijalankan pada URL yang Anda miliki/izinkan; game dengan anti-bot, WebSocket-only, atau login rumit tidak sepenuhnya terekam. Detail implementasi: [`docs/STAGES-0-4.md`](docs/STAGES-0-4.md). Checklist existing dan batasan lain: [`docs/CATATAN.md`](docs/CATATAN.md).
 
 ## Penggunaan yang bertanggung jawab
 

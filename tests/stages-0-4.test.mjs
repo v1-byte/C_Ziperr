@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createJobRepository } from '../core/jobs/sqlite.mjs';
+
+test('core config validates URL and clamps collector settings', async () => { const { makeConfig } = await import('../core/collector/engine.mjs'); const c = makeConfig({ GAME_URL: 'https://example.com', PLAY_SECONDS: '9999', SPINS: '-2' }); assert.equal(c.playSeconds, 600); assert.equal(c.spins, 0); assert.equal(c.gameUrl, 'https://example.com'); });
+test('SQLite job repository supports lifecycle, events, checkpoint, resume, and artifacts', async () => { const dir = await mkdtemp(join(tmpdir(), 'cziperr-jobs-')); const repo = createJobRepository(join(dir, 'jobs.sqlite')); repo.create({ id: 'j1', url: 'https://example.com' }); repo.event('j1', { phase: 'capture', pct: 40, message: 'ok' }); repo.update('j1', { status: 'paused', phase: 'checkpoint', pct: 40, checkpoint: 'assets/2' }); repo.addArtifact('j1', { path: 'out/game.zip', size: 12, sha256: 'abc' }); assert.equal(repo.events('j1').length, 1); assert.equal(repo.artifacts('j1')[0].sha256, 'abc'); assert.equal(repo.resume('j1').status, 'queued'); assert.equal(repo.get('j1').checkpoint, 'assets/2'); repo.close(); await rm(dir, { recursive: true, force: true }); });
+test('browser storage adapter exposes jobs/events/artifacts stores', async () => { const source = await readFile(new URL('../public/job-storage.js', import.meta.url), 'utf8'); assert.match(source, /indexedDB\.open/); assert.match(source, /createObjectStore\('jobs'/); assert.match(source, /createObjectStore\('events'/); assert.match(source, /createObjectStore\('artifacts'/); });
+test('local collector and CDN manifests are wired to shared core', async () => { const source = await readFile(new URL('../tools/collect-local.mjs', import.meta.url), 'utf8'); const engine = await readFile(new URL('../core/collector/engine.mjs', import.meta.url), 'utf8'); assert.match(source, /collectGame/); assert.match(source, /playwright/); assert.match(engine, /cdn-manifest\.json/); assert.match(engine, /cdn-missing\.json/); });
