@@ -15,6 +15,8 @@ Toolkit untuk **mengumpulkan**, **menjalankan**, dan **mengedit** ZIP game web �
 
 **Tahap 5–9 selesai:** tersedia Local HTTP Preview Server, Local API/Mock Server, path rewriter, dependency/asset scanner, dan offline readiness gate. Detail command ada di [`docs/STAGES-5-9.md`](docs/STAGES-5-9.md).
 
+**Tahap 10–13 selesai:** UI asli sekarang memiliki adapter `github` dan `local`, artifact otomatis masuk ke Workspace melalui `loadZip()`, tersedia local bridge, contract E2E, dan workflow build APK TWA. Detail: [`docs/STAGES-10-13.md`](docs/STAGES-10-13.md).
+
 ## Fitur
 
 | Menu | Fungsi |
@@ -74,6 +76,19 @@ npm run validate:offline -- ./out/game-1
 
 Readiness gate menghasilkan `FULL_OFFLINE_READY`, `PARTIAL`, atau `NOT_READY`; status `PARTIAL`/`NOT_READY` tidak boleh dianggap offline 100%.
 
+Untuk mempertahankan UI asli dan memilih backend dari field Endpoint:
+
+```text
+github  → GitHub Actions langsung dari browser → artifact ZIP → Workspace
+local   → http://127.0.0.1:8788/api → local Playwright → ZIP → Workspace
+```
+
+Local bridge dijalankan dengan:
+
+```bash
+npm run collect:bridge
+```
+
 ## Konfigurasi
 
 | Nama | Lokasi | Fungsi |
@@ -100,7 +115,7 @@ Logo C_Ziperr adalah ikon utama (`public/icon-*.png`, `manifest.webmanifest`). P
 
 ## Status & batasan
 
-Tahap 0–9 lolos syntax check dan unit test. End-to-end browser/game nyata tetap perlu dijalankan pada URL yang Anda miliki/izinkan; game dengan anti-bot, WebSocket-only, atau login rumit tidak sepenuhnya terekam. Detail implementasi: [`docs/STAGES-0-4.md`](docs/STAGES-0-4.md) dan [`docs/STAGES-5-9.md`](docs/STAGES-5-9.md). Checklist existing dan batasan lain: [`docs/CATATAN.md`](docs/CATATAN.md).
+Tahap 0–13 lolos syntax check, 12 contract/unit tests, dan smoke test local runtime. End-to-end browser/game nyata tetap perlu dijalankan pada URL yang Anda miliki/izinkan; game dengan anti-bot, WebSocket-only, atau login rumit tidak sepenuhnya terekam. Build APK membutuhkan URL PWA HTTPS dan konfigurasi signing yang sah. Detail implementasi: [`docs/STAGES-0-4.md`](docs/STAGES-0-4.md), [`docs/STAGES-5-9.md`](docs/STAGES-5-9.md), dan [`docs/STAGES-10-13.md`](docs/STAGES-10-13.md). Checklist existing dan batasan lain: [`docs/CATATAN.md`](docs/CATATAN.md).
 
 ## Penggunaan yang bertanggung jawab
 
