@@ -18,8 +18,13 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - name: Install Bubblewrap
         run: npm install --global @bubblewrap/cli
+      - name: Configure Bubblewrap toolchain
+        run: |
+          test -n "$ANDROID_HOME"
+          mkdir -p "$HOME/.bubblewrap"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
       - name: Initialize TWA project
-        run: printf 'n\n%s\n' "$JAVA_HOME" | bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+        run: bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
       - name: Build APK
         working-directory: .twa
         run: bubblewrap build --skipPwaValidation
