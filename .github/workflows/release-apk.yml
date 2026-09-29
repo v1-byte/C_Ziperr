@@ -59,13 +59,13 @@ jobs:
             "shortcuts": []
           }
           EOF
-          (cd .twa && bubblewrap update --skipVersionUpgrade --manifest .)
+          (cd .twa && bubblewrap update --skipVersionUpgrade --manifest ./twa-manifest.json)
       - name: Build APK
         working-directory: .twa
         run: |
           export BUBBLEWRAP_KEYSTORE_PASSWORD="$(cat .key-password)"
           export BUBBLEWRAP_KEY_PASSWORD="$BUBBLEWRAP_KEYSTORE_PASSWORD"
-          bubblewrap build --skipPwaValidation --manifest .
+          bubblewrap build --skipPwaValidation --manifest ./twa-manifest.json
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
