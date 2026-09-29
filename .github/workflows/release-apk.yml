@@ -26,7 +26,11 @@ jobs:
       - name: Initialize TWA project
         run: |
           mkdir -p .twa
-          bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+          KEY_PASSWORD="$(openssl rand -hex 24)"
+          {
+            printf '%s\n' '' '' '' '' '' '' '' '' '' '' '' '' '' 'n' 'n' '' '' 'y' 'C_Ziperr Release' 'Engineering' 'C_Ziperr' 'US'
+            printf '%s\n' "$KEY_PASSWORD" "$KEY_PASSWORD"
+          } | bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
       - name: Build APK
         working-directory: .twa
         run: bubblewrap build --skipPwaValidation
