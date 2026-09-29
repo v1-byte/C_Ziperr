@@ -165,3 +165,25 @@ Tidak disertakan: pengatur RNG/hasil spin dan penggantian ID/sesi. Fitur semacam
 - [ ] Custom API: aturan dengan syarat body cocok hanya untuk request yang sesuai
 - [ ] 🔑 Tes AI → "OK"; Chat AI dan Perbaiki dengan AI menghasilkan edit
 - [ ] Token akses salah → 401; lebih dari 5 job/10 menit → 429
+
+---
+
+## 11. Implementasi Tahap 5–9
+
+- **Local HTTP Preview Server:** `core/server/preview.mjs`, bind default `127.0.0.1`, CSP, MIME, root/symlink isolation, dan path traversal protection.
+- **Local API/Mock Server:** `core/server/mock-api.mjs`, membaca `server/*.json` serta `mock-api.json`, dengan method/path/body match, delay, status, response, log, dan health.
+- **Path Rewriter:** `core/repair/rewriter.mjs`, menghasilkan `rewrite-report.json`.
+- **Dependency/Asset Scanner:** `core/analyze/dependencies.mjs`, menghasilkan hash, ukuran, tipe, dependency edges, external URL, runtime feature, serta duplicate report.
+- **Offline Validation:** `core/offline/validator.mjs`, menghasilkan `offline-readiness.json` dengan `FULL_OFFLINE_READY`, `PARTIAL`, atau `NOT_READY`.
+
+Command lokal:
+
+```bash
+npm run preview:local -- ./out/game-1
+npm run mock:local -- ./out/game-1
+npm run rewrite:package -- ./out/game-1 OLD_URL http://127.0.0.1:4000
+npm run scan:package -- ./out/game-1
+npm run validate:offline -- ./out/game-1
+```
+
+Status `PARTIAL` atau `NOT_READY` harus dianggap belum offline penuh; laporan menjelaskan resource hilang, URL eksternal, API tanpa mock, dan warning yang harus diperbaiki.

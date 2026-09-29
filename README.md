@@ -13,6 +13,8 @@ Toolkit untuk **mengumpulkan**, **menjalankan**, dan **mengedit** ZIP game web �
 
 **Tahap 0–4 selesai:** tersedia core collector bersama, local Playwright collector, laporan CDN, SQLite job history/checkpoint, dan IndexedDB adapter browser. Worker lama tetap dipertahankan sebagai adapter deployment.
 
+**Tahap 5–9 selesai:** tersedia Local HTTP Preview Server, Local API/Mock Server, path rewriter, dependency/asset scanner, dan offline readiness gate. Detail command ada di [`docs/STAGES-5-9.md`](docs/STAGES-5-9.md).
+
 ## Fitur
 
 | Menu | Fungsi |
@@ -61,6 +63,17 @@ npm run collect:local -- https://game.example --out out/game-1 --play-seconds 30
 
 CLI lokal memakai core engine yang sama dengan GitHub Actions dan membuat ZIP plus laporan `cdn-manifest.json`, `cdn-missing.json`, dan `cdn-domains.json`. Job, checkpoint, event, artifact, dan SHA-256 dicatat di SQLite; metadata browser memakai IndexedDB.
 
+**Preview dan validasi lokal:**
+
+```bash
+npm run preview:local -- ./out/game-1
+npm run mock:local -- ./out/game-1
+npm run scan:package -- ./out/game-1
+npm run validate:offline -- ./out/game-1
+```
+
+Readiness gate menghasilkan `FULL_OFFLINE_READY`, `PARTIAL`, atau `NOT_READY`; status `PARTIAL`/`NOT_READY` tidak boleh dianggap offline 100%.
+
 ## Konfigurasi
 
 | Nama | Lokasi | Fungsi |
@@ -87,7 +100,7 @@ Logo C_Ziperr adalah ikon utama (`public/icon-*.png`, `manifest.webmanifest`). P
 
 ## Status & batasan
 
-Tahap 0–4 lolos syntax check, unit test, dan audit dependency production. End-to-end browser/game nyata tetap perlu dijalankan pada URL yang Anda miliki/izinkan; game dengan anti-bot, WebSocket-only, atau login rumit tidak sepenuhnya terekam. Detail implementasi: [`docs/STAGES-0-4.md`](docs/STAGES-0-4.md). Checklist existing dan batasan lain: [`docs/CATATAN.md`](docs/CATATAN.md).
+Tahap 0–9 lolos syntax check dan unit test. End-to-end browser/game nyata tetap perlu dijalankan pada URL yang Anda miliki/izinkan; game dengan anti-bot, WebSocket-only, atau login rumit tidak sepenuhnya terekam. Detail implementasi: [`docs/STAGES-0-4.md`](docs/STAGES-0-4.md) dan [`docs/STAGES-5-9.md`](docs/STAGES-5-9.md). Checklist existing dan batasan lain: [`docs/CATATAN.md`](docs/CATATAN.md).
 
 ## Penggunaan yang bertanggung jawab
 
