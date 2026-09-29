@@ -13,10 +13,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
       - name: Install Bubblewrap
         run: npm install --global @bubblewrap/cli
       - name: Initialize TWA project
-        run: bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+        run: printf 'n\n' | bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
       - name: Build APK
         working-directory: .twa
         run: bubblewrap build --skipPwaValidation
