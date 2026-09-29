@@ -26,11 +26,42 @@ jobs:
       - name: Initialize TWA project
         run: |
           mkdir -p .twa
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq expect
           KEY_PASSWORD="$(openssl rand -hex 24)"
-          {
-            printf '%s\n' '' '' '' '' '' '' '' '' '' '' '' '' '' 'n' 'n' '' '' 'y' 'C_Ziperr Release' 'Engineering' 'C_Ziperr' 'US'
-            printf '%s\n' "$KEY_PASSWORD" "$KEY_PASSWORD"
-          } | bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+          export KEY_PASSWORD
+          expect <<'EOF'
+          set timeout 300
+          spawn bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+          expect "Domain:" { send "v1-byte.github.io\r" }
+          expect "URL path:" { send "/\r" }
+          expect "Application name:" { send "C_Ziperr\r" }
+          expect "Short name:" { send "C_Ziperr\r" }
+          expect "Application ID:" { send "com.v1byte.cziperr\r" }
+          expect "Starting version code:" { send "1\r" }
+          expect "Display mode:" { send "\r" }
+          expect "Orientation:" { send "\r" }
+          expect "Status bar color:" { send "#0f1115\r" }
+          expect "Splash screen color:" { send "#0f1115\r" }
+          expect "Icon URL:" { send "https://v1-byte.github.io/C_Ziperr/icon-512.png\r" }
+          expect "Maskable icon URL:" { send "\r" }
+          expect {
+            "Include app shortcuts?" { send "n\r"; exp_continue }
+            "Monochrome icon URL:" { send "\r" }
+          }
+          expect "Include support for Play Billing?" { send "n\r" }
+          expect "Request geolocation permission?" { send "n\r" }
+          expect "Key store location:" { send "\r" }
+          expect "Key name:" { send "\r" }
+          expect "Do you want to create one now?" { send "y\r" }
+          expect "First and Last names" { send "C_Ziperr Release\r" }
+          expect "Organizational Unit" { send "Engineering\r" }
+          expect "Organization" { send "C_Ziperr\r" }
+          expect "Country" { send "US\r" }
+          expect "Password for the Key Store:" { send "$env(KEY_PASSWORD)\r" }
+          expect "Password for the Key:" { send "$env(KEY_PASSWORD)\r" }
+          expect eof
+          EOF
       - name: Build APK
         working-directory: .twa
         run: bubblewrap build --skipPwaValidation
