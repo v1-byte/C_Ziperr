@@ -19,7 +19,7 @@ jobs:
       - name: Install Bubblewrap
         run: npm install --global @bubblewrap/cli
       - name: Initialize TWA project
-        run: printf 'n\n' | bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+        run: printf 'n\n%s\n' "$JAVA_HOME" | bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
       - name: Build APK
         working-directory: .twa
         run: bubblewrap build --skipPwaValidation
