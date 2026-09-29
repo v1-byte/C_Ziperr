@@ -24,7 +24,9 @@ jobs:
           mkdir -p "$HOME/.bubblewrap"
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
       - name: Initialize TWA project
-        run: bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
+        run: |
+          mkdir -p .twa
+          bubblewrap init --manifest "${{ inputs.pwa_url }}/manifest.webmanifest" --directory .twa --name C_Ziperr --shortName C_Ziperr --startUrl "${{ inputs.pwa_url }}/"
       - name: Build APK
         working-directory: .twa
         run: bubblewrap build --skipPwaValidation
