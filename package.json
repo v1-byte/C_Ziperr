@@ -2,9 +2,11 @@
   "name": "c_ziperr",
   "private": true,
   "version": "1.2.0",
-  "description": "C_Ziperr — offline web archiver with local and GitHub Playwright collectors",
+  "description": "C_Ziperr \u2014 offline web archiver with local and GitHub Playwright collectors",
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "deploy": "wrangler deploy",
     "test": "node --test tests/*.test.mjs",
@@ -15,8 +17,14 @@
     "mock:local": "node tools/mock-local.mjs",
     "rewrite:package": "node tools/rewrite-package.mjs",
     "scan:package": "node tools/scan-package.mjs",
-    "validate:offline": "node tools/validate-offline.mjs"
+    "validate:offline": "node tools/validate-offline.mjs",
+    "collect:bridge": "node tools/collect-bridge.mjs"
   },
-  "dependencies": { "archiver": "^7.0.1", "playwright": "^1.55.0" },
-  "devDependencies": { "wrangler": "^4" }
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "playwright": "^1.55.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
 }

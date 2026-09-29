@@ -187,3 +187,16 @@ npm run validate:offline -- ./out/game-1
 ```
 
 Status `PARTIAL` atau `NOT_READY` harus dianggap belum offline penuh; laporan menjelaskan resource hilang, URL eksternal, API tanpa mock, dan warning yang harus diperbaiki.
+
+
+---
+
+## 12. Implementasi Tahap 10–13
+
+- UI asli tetap memakai `loadZip()` yang sama untuk demo, endpoint Worker lama, `github`, dan `local`.
+- `public/collect-adapters.js` menambahkan dispatch/poll/download GitHub Actions langsung dari browser.
+- `tools/collect-bridge.mjs` menyediakan bridge lokal `127.0.0.1:8788/api` untuk Playwright local collector.
+- `core/github/adapter.mjs` dan `tests/stages-10-13.test.mjs` memvalidasi kontrak adapter tanpa token nyata.
+- `.github/workflows/release-apk.yml` menyiapkan TWA APK/AAB dari URL PWA HTTPS melalui Bubblewrap.
+
+Untuk GitHub-only, pengguna harus mengisi owner, repository, ref, dan fine-grained token Actions read/write pada Setelan. Token disimpan di localStorage browser dan tidak ditanam di source atau workflow.

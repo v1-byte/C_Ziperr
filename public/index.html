@@ -88,6 +88,7 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
 
 <main id="cfg" hidden>
  <div class="card"><b>🔑 AI</b><div class="row" style="margin-top:8px"><select id="k-kind"><option value="anthropic">Anthropic</option><option value="openai">OpenAI-compatible</option></select></div><div class="row"><input id="k-base" placeholder="Base URL"></div><div class="row"><input id="k-model" placeholder="Model"></div><div class="row"><input id="k-key" type="password" placeholder="API key"></div><div class="row"><input id="k-tok" type="password" placeholder="Token akses Worker (opsional)"></div><div class="row"><button class="pri" id="k-save">Simpan</button><button id="k-test">Tes AI</button><span id="k-msg"></span></div><small>Disimpan hanya di browser ini dan dikirim langsung ke penyedia AI.</small></div>
+ <div class="card"><b>GitHub-only / Local Collect</b><small>Isi endpoint Download dengan <code>github</code> atau <code>local</code>. GitHub token disimpan hanya di browser ini.</small><div class="row" style="margin-top:8px"><input id="gh-owner" placeholder="GitHub owner"><input id="gh-repo" placeholder="Repository"><input id="gh-ref" value="main" placeholder="ref"></div><div class="row"><input id="gh-token" type="password" placeholder="Fine-grained token: Actions read/write"><button id="gh-save">Simpan GitHub</button><span id="gh-msg"></span></div></div>
  <div class="card"><b>Terapkan ke ZIP</b><div class="row" style="margin-top:8px"><input id="k-from" placeholder="Domain / URL API lama"><input id="k-to" placeholder="Endpoint baru"><button id="k-apply">Ganti</button></div></div>
 </main>
 <div id="ed" hidden>
@@ -105,7 +106,7 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
 </div>
 <dialog id="dlg"></dialog>
 
-<script src="job-storage.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/jump-to-line.min.js"></script>
+<script src="job-storage.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/jump-to-line.min.js"></script><script src="collect-adapters.js"></script>
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const EXT={img:'png jpg jpeg webp gif svg ico',audio:'mp3 ogg wav m4a aac',code:'js mjs css html htm json atlas txt md xml yml'};
@@ -132,16 +133,11 @@ async function start(){
  const link=$('#url').value.trim(),ep=($('#ep').value.trim()||'https://c-ziperr.technologiesfrostbyte.workers.dev/api').replace(/\/$/,'');
  F.clear();failed=[];$('#nx').disabled=true;setP(0);renderDl();
  try{
-  let buf;
+  const input={url:link,folder:$('#fd').value||'game-1',spins:$('#sp').value||30,play_seconds:$('#ps').value||90};let buf;
   if(ep==='demo'){log('Mode demo…');buf=await demoZip()}
-  else{
-   if(!link)return showErr('Input kurang',['Isi link game dulu.']);
-   log('Mengirim job ke GitHub Actions…');
-   const r=await fetch(ep+'/collect',{method:'POST',headers:{'content-type':'application/json',...H()},body:JSON.stringify({url:link,folder:$('#fd').value||'game-1',spins:$('#sp').value||30,play_seconds:$('#ps').value||90})});
-   const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));
-   try{localStorage.setItem('cz_tag',j.tag)}catch{}
-   buf=await waitAndDownload(ep,j.tag);
-  }
+  else if(ep==='github'){if(!link)return showErr('Input kurang',['Isi link game dulu.']);log('Dispatch GitHub Actions…');buf=await window.CZiperrGithub.collect(input,m=>log(m))}
+  else if(ep==='local'){if(!link)return showErr('Input kurang',['Isi link game dulu.']);const base='http://127.0.0.1:8788/api';log('Mengirim ke collector lokal…');const r=await fetch(base+'/collect',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));try{localStorage.setItem('cz_tag',j.tag)}catch{}buf=await waitAndDownload(base,j.tag)}
+  else{if(!link)return showErr('Input kurang',['Isi link game dulu.']);log('Mengirim job ke endpoint…');const r=await fetch(ep+'/collect',{method:'POST',headers:{'content-type':'application/json',...H()},body:JSON.stringify(input)});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));try{localStorage.setItem('cz_tag',j.tag)}catch{}buf=await waitAndDownload(ep,j.tag)}
   await loadZip(buf,true);
  }catch(e){showErr('Download gagal',[e.message],start)}
 }
@@ -149,7 +145,7 @@ async function resume(){
  let tag='';try{tag=localStorage.getItem('cz_tag')||''}catch{}
  if(!tag)return showErr('Tidak ada job',['Belum ada job yang bisa dilanjutkan.']);
  const ep=($('#ep').value.trim()||'https://c-ziperr.technologiesfrostbyte.workers.dev/api').replace(/\/$/,'');
- try{await loadZip(await waitAndDownload(ep,tag),true)}catch(e){showErr('Lanjut gagal',[e.message],resume)}
+ try{const input={url:$('#url').value.trim(),folder:$('#fd').value||'game-1'};const buf=ep==='github'?await window.CZiperrGithub.resume(input,m=>log(m)):await waitAndDownload(ep==='local'?'http://127.0.0.1:8788/api':ep,tag);await loadZip(buf,true)}catch(e){showErr('Lanjut gagal',[e.message],resume)}
 }
 async function waitAndDownload(ep,tag){
  const t0=Date.now();

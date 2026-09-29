@@ -28,9 +28,10 @@ window.renderLy=()=>{
 
 /* ===== Setelan ===== */
 const cm=m=>{$('#k-msg').textContent=m};
-window.cfgShow=()=>{const k=LS.get('cz_kind')||'anthropic';$('#k-kind').value=k;$('#k-base').value=LS.get('cz_base')||DEF[k][0];$('#k-model').value=LS.get('cz_model')||DEF[k][1];$('#k-key').value=LS.get('cz_key');$('#k-tok').value=LS.get('cz_tok')};
+window.cfgShow=()=>{const k=LS.get('cz_kind')||'anthropic';$('#k-kind').value=k;$('#k-base').value=LS.get('cz_base')||DEF[k][0];$('#k-model').value=LS.get('cz_model')||DEF[k][1];$('#k-key').value=LS.get('cz_key');$('#k-tok').value=LS.get('cz_tok');if($('#gh-owner')){$('#gh-owner').value=LS.get('cz_gh_owner');$('#gh-repo').value=LS.get('cz_gh_repo');$('#gh-ref').value=LS.get('cz_gh_ref')||'main';$('#gh-token').value=LS.get('cz_gh_token')}};
 $('#k-kind').onchange=()=>{const k=$('#k-kind').value;$('#k-base').value=DEF[k][0];$('#k-model').value=DEF[k][1]};
 $('#k-save').onclick=()=>{[['kind','k-kind'],['base','k-base'],['model','k-model'],['key','k-key'],['tok','k-tok']].forEach(([a,b])=>LS.set('cz_'+a,$('#'+b).value.trim()));cm('Tersimpan')};
+if($('#gh-save'))$('#gh-save').onclick=()=>{[['gh_owner','gh-owner'],['gh_repo','gh-repo'],['gh_ref','gh-ref'],['gh_token','gh-token']].forEach(([a,b])=>LS.set('cz_'+a,$('#'+b).value.trim()));$('#gh-msg').textContent='GitHub tersimpan'};
 $('#k-test').onclick=async()=>{$('#k-save').click();cm('…');try{cm('OK: '+(await ai('Balas satu kata: siap','')).slice(0,40))}catch(e){cm(e.message)}};
 $('#k-apply').onclick=()=>{
  const a=$('#k-from').value,b=$('#k-to').value;if(!a)return;
