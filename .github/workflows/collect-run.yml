@@ -4,16 +4,46 @@ run-name: collect ${{ inputs.tag }}
 'on':
   workflow_dispatch:
     inputs:
-      game_url: { description: "Link game", required: true, type: string }
-      folder: { description: "Nama folder hasil", default: "game-1", type: string }
-      play_seconds: { description: "Lama bermain (detik)", default: "90", type: string }
-      spins: { description: "Jumlah spin otomatis", default: "30", type: string }
-      spin_x: { description: "Koordinat X tombol spin", default: "", type: string }
-      spin_y: { description: "Koordinat Y tombol spin", default: "", type: string }
-      tag: { description: "ID pelacak", default: "manual", type: string }
-      har: { description: "Simpan HAR (0/1)", default: "0", type: string }
-      crawl: { description: "Crawl CDN/reference (1/0)", default: "1", type: string }
-      crawl_max: { description: "Batas URL crawl", default: "400", type: string }
+      game_url:
+        description: Link game
+        required: true
+        type: string
+      folder:
+        description: Nama folder hasil
+        default: game-1
+        type: string
+      play_seconds:
+        description: Lama bermain (detik)
+        default: '90'
+        type: string
+      spins:
+        description: Jumlah spin otomatis
+        default: '30'
+        type: string
+      spin_x:
+        description: Koordinat X tombol spin
+        default: ''
+        type: string
+      spin_y:
+        description: Koordinat Y tombol spin
+        default: ''
+        type: string
+      tag:
+        description: ID pelacak
+        default: manual
+        type: string
+      har:
+        description: Simpan HAR (0/1)
+        default: '0'
+        type: string
+      crawl:
+        description: Crawl CDN/reference (1/0)
+        default: '1'
+        type: string
+      crawl_max:
+        description: Batas URL crawl
+        default: '400'
+        type: string
 jobs:
   collect:
     runs-on: ubuntu-latest
