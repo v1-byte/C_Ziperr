@@ -1,49 +1,7 @@
 name: collect-run
-run-name: collect ${{ inputs.tag }}
-# Manual integration collector for authorized game URLs.
-'on':
-  workflow_dispatch:
-    inputs:
-      game_url:
-        description: Link game
-        required: true
-        type: string
-      folder:
-        description: Nama folder hasil
-        default: game-1
-        type: string
-      play_seconds:
-        description: Lama bermain (detik)
-        default: '90'
-        type: string
-      spins:
-        description: Jumlah spin otomatis
-        default: '30'
-        type: string
-      spin_x:
-        description: Koordinat X tombol spin
-        default: ''
-        type: string
-      spin_y:
-        description: Koordinat Y tombol spin
-        default: ''
-        type: string
-      tag:
-        description: ID pelacak
-        default: manual
-        type: string
-      har:
-        description: Simpan HAR (0/1)
-        default: '0'
-        type: string
-      crawl:
-        description: Crawl CDN/reference (1/0)
-        default: '1'
-        type: string
-      crawl_max:
-        description: Batas URL crawl
-        default: '400'
-        type: string
+run-name: collect ${{ github.event.client_payload.tag || 'manual' }}
+# Dynamic collector: the Worker sends an authorized repository_dispatch payload.
+'on': [repository_dispatch, workflow_dispatch]
 jobs:
   collect:
     runs-on: ubuntu-latest
@@ -58,20 +16,20 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node tools/collect.mjs
         env:
-          GAME_URL: ${{ inputs.game_url }}
-          OUT: out/${{ inputs.folder }}
-          PLAY_SECONDS: ${{ inputs.play_seconds }}
-          SPINS: ${{ inputs.spins }}
-          SPIN_X: ${{ inputs.spin_x }}
-          SPIN_Y: ${{ inputs.spin_y }}
-          HAR: ${{ inputs.har }}
-          CRAWL: ${{ inputs.crawl }}
-          CRAWL_MAX: ${{ inputs.crawl_max }}
+          GAME_URL: ${{ github.event.client_payload.game_url || inputs.game_url }}
+          OUT: out/${{ github.event.client_payload.folder || inputs.folder || 'game-1' }}
+          PLAY_SECONDS: ${{ github.event.client_payload.play_seconds || inputs.play_seconds || '90' }}
+          SPINS: ${{ github.event.client_payload.spins || inputs.spins || '30' }}
+          SPIN_X: ${{ github.event.client_payload.spin_x || inputs.spin_x || '' }}
+          SPIN_Y: ${{ github.event.client_payload.spin_y || inputs.spin_y || '' }}
+          HAR: ${{ github.event.client_payload.har || inputs.har || '0' }}
+          CRAWL: ${{ github.event.client_payload.crawl || inputs.crawl || '1' }}
+          CRAWL_MAX: ${{ github.event.client_payload.crawl_max || inputs.crawl_max || '400' }}
           COOKIES: ${{ secrets.COLLECT_COOKIES }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           if-no-files-found: ignore
-          name: ${{ inputs.folder }}
-          path: out/${{ inputs.folder }}
+          name: ${{ github.event.client_payload.folder || inputs.folder || 'game-1' }}
+          path: out/${{ github.event.client_payload.folder || inputs.folder || 'game-1' }}
           retention-days: 30

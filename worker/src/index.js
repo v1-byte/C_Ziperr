@@ -10,7 +10,7 @@ const GH = (env, p, init = {}) => fetch(`https://api.github.com/repos/${env.GH_R
 });
 async function findRun(env, tag) {
   if (!tag) return null;
-  const r = await GH(env, '/actions/workflows/collect-run.yml/runs?event=workflow_dispatch&per_page=30');
+  const r = await GH(env, '/actions/workflows/collect-production.yml/runs?event=repository_dispatch&per_page=30');
   if (!r.ok) throw new Error('GitHub HTTP ' + r.status);
   return ((await r.json()).workflow_runs || []).find((x) => (x.display_title || '').includes(tag)) || null;
 }
@@ -31,12 +31,12 @@ export default {
         RL.set(ip, [...hits, now]);
         const tag = crypto.randomUUID().slice(0, 8);
         const num = (v, d, max) => String(Math.min(max, Math.max(1, +v || d)));
-        const r = await GH(env, '/actions/workflows/collect-run.yml/dispatches', {
+        const r = await GH(env, '/dispatches', {
           method: 'POST',
-          body: JSON.stringify({ ref: env.GH_REF || 'main', inputs: {
+          body: JSON.stringify({ event_type: 'collect', client_payload: {
             game_url: b.url, folder: String(b.folder || 'game-1').replace(/[^\w-]/g, '').slice(0, 40) || 'game-1',
             play_seconds: num(b.play_seconds, 90, 600), spins: num(b.spins, 30, 500),
-            spin_x: String(+b.spin_x || ''), spin_y: String(+b.spin_y || ''), har: '0', tag } }),
+            spin_x: String(+b.spin_x || ''), spin_y: String(+b.spin_y || ''), har: String(b.har || '0'), crawl: '1', crawl_max: '400', tag } }),
         });
         if (r.status !== 204) return J({ error: 'Dispatch gagal (HTTP ' + r.status + ')', detail: await r.text() }, 502);
         return J({ tag });
