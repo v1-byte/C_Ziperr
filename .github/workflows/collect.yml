@@ -1,5 +1,6 @@
 name: collect
 run-name: collect ${{ inputs.tag }}
+# Manual integration collector for authorized game URLs.
 on:
   workflow_dispatch:
     inputs:
