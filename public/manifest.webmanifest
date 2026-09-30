@@ -1,11 +1,11 @@
 {
- "name": "C_Ziperr",
- "short_name": "C_Ziperr",
- "description": "Collect, preview, dan edit ZIP game web",
+ "name": "C-Ziperr",
+ "short_name": "C-Ziperr",
+ "description": "Collect, preview, dan edit ZIP game web dengan sistem log dan editor kode",
  "start_url": "/",
  "display": "standalone",
- "background_color": "#0f1115",
- "theme_color": "#0f1115",
+ "background_color": "#030711",
+ "theme_color": "#071b42",
  "icons": [
   {
    "src": "icon-192.png",
