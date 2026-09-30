@@ -1,20 +1,21 @@
 <!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>C_Ziperr</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#0f1115"><style>
-:root{--bg:#0f1115;--p:#181b22;--b:#2a2f3a;--t:#e8eaf0;--m:#8b93a5;--a:#8b5cf6;--e:#ef4444}
+:root{--bg:#080d15;--p:#101923;--p2:#0b121c;--b:#283746;--t:#e8f1f4;--m:#8fa2ad;--a:#38c6cf;--a2:#1b8f9c;--e:#ff6b5f;--ok:#55d69a;--warn:#f2bd65}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font:14px system-ui,sans-serif}
 header{position:sticky;top:0;z-index:5;background:var(--p);border-bottom:1px solid var(--b);padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
 button,input,textarea{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
-button{cursor:pointer}button.pri,button.on{background:var(--a);border-color:var(--a)}button:disabled{opacity:.4}
+button{cursor:pointer}button.pri,button.on{background:var(--a);border-color:var(--a);color:#061218;font-weight:700}button:disabled{opacity:.4}
 main{padding:12px;max-width:820px;margin:auto}
 .card{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:12px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.row>input{flex:1;min-width:0}
 .bar{height:8px;background:var(--b);border-radius:9px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;background:var(--a);transition:width .2s}
+.collect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.collect-grid label{display:block;color:var(--m);font-size:11px;margin-bottom:4px}.collect-grid input{width:100%}.logbox{background:#071018;border:1px solid #29414c;border-radius:8px;margin-top:10px;overflow:hidden}.loghead{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid #29414c;color:var(--a);font-size:12px;font-weight:700}.loghead small{color:var(--m)}#errlog{margin:0;padding:9px 10px;min-height:92px;max-height:150px;overflow:auto;font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;color:#a9c0c8}.log-info{color:#a9c0c8}.log-ok{color:var(--ok)}.log-warn{color:var(--warn)}.log-error{color:var(--e)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}.stats div{text-align:center;background:var(--bg);border-radius:8px;padding:8px;color:var(--m)}.stats b{display:block;font-size:18px;color:var(--t)}
 .list{max-height:340px;overflow:auto}.it{display:flex;gap:8px;align-items:center;padding:6px;border-bottom:1px solid var(--b);cursor:pointer;word-break:break-all}
 .it img{width:36px;height:36px;object-fit:cover;border-radius:6px;background:var(--bg)}.it small{color:var(--m);margin-left:auto;white-space:nowrap}
 textarea{width:100%;min-height:300px;font:12px ui-monospace,monospace;white-space:pre}
 pre{background:var(--bg);padding:8px;border-radius:8px;overflow:auto;max-height:200px;font-size:12px;margin:6px 0 0}
 dialog{background:var(--p);color:var(--t);border:1px solid var(--e);border-radius:12px;max-width:92vw;width:520px}
-.brand{display:flex;align-items:center;gap:8px}.brand img{width:32px;height:32px;object-fit:contain;border-radius:8px;background:transparent;padding:0}.hero{background:var(--p);border:1px solid var(--b);border-radius:12px;text-align:center;padding:10px;margin-bottom:12px}.hero img{max-width:100%;height:150px;object-fit:contain}.hero small{display:block;color:var(--m);margin-top:4px}.err{color:var(--e)}[hidden]{display:none!important}.chips button{padding:4px 12px;border-radius:99px}small,#ts{color:var(--m)}
+.brand{display:flex;align-items:center;gap:8px}.brand img{width:32px;height:32px;object-fit:contain;border-radius:8px;background:transparent;padding:0}.hero{background:linear-gradient(145deg,#101d28,#0b121c);border:1px solid #2b4854;border-radius:12px;text-align:center;padding:10px;margin-bottom:12px}.hero img{max-width:100%;height:150px;object-fit:contain}.hero small{display:block;color:var(--m);margin-top:4px}.err{color:var(--e)}[hidden]{display:none!important}.chips button{padding:4px 12px;border-radius:99px}small,#ts{color:var(--m)}
 header{flex-wrap:wrap}header nav{width:100%;overflow-x:auto;flex-wrap:nowrap!important;margin:0!important}header nav button{white-space:nowrap;flex:1}
 select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
 #ed:not([hidden]){display:flex;flex-direction:column;height:calc(100dvh - 92px);background:#1e1e1e;color:#ccc}
@@ -23,7 +24,7 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
 .vb{flex:1;min-height:0;display:flex;position:relative}
 .ab{width:36px;background:#333;display:flex;flex-direction:column;gap:2px;padding:4px 2px;flex:none}.ab button{background:none!important;border:0!important;font-size:16px;opacity:.6}.ab button.on{opacity:1;border-left:2px solid #fff!important}
 #sb{width:230px;background:#252526;overflow:auto;flex:none}#sb.off{display:none}
-@media(max-width:700px){#sb{position:absolute;z-index:6;left:36px;top:0;bottom:0;width:78%}}
+@media(max-width:700px){#sb{position:absolute;z-index:6;left:36px;top:0;bottom:0;width:78%}.collect-grid{grid-template-columns:1fr 1fr}header nav button{font-size:11px;padding:7px 5px}main{padding:9px}.hero img{height:112px}.stats{grid-template-columns:repeat(3,1fr)}}
 .ph2{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:11px;color:#bbb}.ph2 button{padding:2px 6px}
 #sb input{width:calc(100% - 12px);margin:0 6px 6px}
 #tr,#s-r{font-size:12px}#tr summary{cursor:pointer;padding:3px 4px}
@@ -36,15 +37,16 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
 #qo{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:min(520px,94%);background:#252526;border:1px solid #454545;z-index:9;padding:6px;border-radius:6px}#qo input{width:100%}#ql{max-height:260px;overflow:auto;font-size:12px}
 .sbar{display:flex;gap:14px;background:#007acc;color:#fff;font-size:11px;padding:3px 10px;overflow-x:auto;white-space:nowrap;flex:none}
 </style><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css"></head><body>
-<header><span class="brand"><img src="icon-192.png" alt=""><b>C_Ziperr</b></span><nav class="row"><button data-t="dl" class="on">1 Download</button><button data-t="pv">2 Preview</button><button data-t="ws">3 Workspace</button><button data-t="ed">4 Editor</button><button data-t="cfg" title="Setelan">🔑</button></nav></header>
+<header><span class="brand"><img src="icon-192.png" alt=""><b>C_Ziperr</b></span><nav class="row"><button data-t="dl" class="on">Download</button><button data-t="pv">Preview</button><button data-t="ed">Editor Code</button><button data-t="cfg" title="Pengaturan">Pengaturan</button></nav></header>
 
 <main id="dl">
- <div class="hero"><img src="logo.png" alt="C_Ziperr"><small>Collect · Preview · Workspace · AI</small></div>
+ <div class="hero"><img src="logo.png" alt="C_Ziperr"><small>Collect · Preview · Editor · Settings</small></div>
  <div class="card">
-  <div class="row"><input id="url" placeholder="Link game (acuan)"></div>
-  <div class="row"><input id="ep" placeholder="Endpoint (kosong = /api, ketik demo = contoh)"><button class="pri" onclick="start()">Mulai</button></div>
-  <div class="row"><input id="fd" value="game-1" placeholder="Folder"><input id="sp" value="30" placeholder="Spin" style="max-width:80px"><input id="ps" value="90" placeholder="Detik" style="max-width:80px"><button onclick="resume()">Lanjutkan</button></div>
+  <div class="row"><input id="url" placeholder="Game URL — https://example.com/game"></div>
+  <div class="collect-grid"><label>Folder<input id="fd" value="game-1" placeholder="game-1"></label><label>Durasi (detik)<input id="ps" value="90" inputmode="numeric"></label><label>Auto-spins<input id="sp" value="30" inputmode="numeric"></label><label>API endpoint<input id="ep" placeholder="Default Worker API"></label></div>
+  <div class="row" style="margin-top:10px"><button class="pri" onclick="start()" style="flex:1">▶ MULAI DOWNLOAD</button><button onclick="resume()">Lanjutkan</button></div>
   <div class="bar"><i id="pb"></i></div><small id="log">Siap.</small>
+  <div class="logbox"><div class="loghead"><span>▣ LOG ERROR &amp; COLLECT</span><small id="logstate">READY</small></div><pre id="errlog"><span class="log-info">[INFO] Menunggu sesi collect...</span></pre><button id="logmore" style="margin:0 10px 10px;font-size:11px;padding:5px 8px">Lihat semua log</button></div>
  </div>
  <div class="card">
   <div class="stats" id="st"></div>
@@ -92,7 +94,7 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
  <div class="card"><b>Terapkan ke ZIP</b><div class="row" style="margin-top:8px"><input id="k-from" placeholder="Domain / URL API lama"><input id="k-to" placeholder="Endpoint baru"><button id="k-apply">Ganti</button></div></div>
 </main>
 <div id="ed" hidden>
- <div class="vt"><button id="e-sb">☰</button><button id="e-sv">Simpan</button><button id="e-sa">Simpan semua</button><button id="e-qo">Buka… (Ctrl+P)</button><button id="e-fm">Format JSON</button><button id="e-wr">Wrap</button><button id="e-fa">A−</button><button id="e-fb">A+</button><button id="e-pv">▶ Preview</button></div>
+ <div class="vt"><button id="e-sb">☰</button><button id="e-sv">Simpan</button><button id="e-sa">Simpan semua</button><button id="e-qo">Buka… (Ctrl+P)</button><button id="e-fm">Format JSON</button><button id="e-wr">Wrap</button><button id="e-fa">A−</button><button id="e-fb">A+</button><label style="padding:4px 8px;font-size:12px;background:#3c3c3c;border:1px solid #454545;border-radius:4px;white-space:nowrap">Load ZIP <input id="ezf" type="file" accept=".zip" style="width:90px;padding:0;border:0;background:transparent"></label><button id="e-pv">▶ Preview</button></div>
  <div class="vb">
   <div class="ab"><button data-v="ex" class="on" title="Explorer">📁</button><button data-v="sr" title="Cari (Ctrl+Shift+F)">🔍</button></div>
   <div id="sb">
@@ -117,7 +119,7 @@ let F=new Map(),failed=[],crawlMiss=[],rules=[],cur=null,filter='all';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>n>1048576?(n/1048576).toFixed(1)+' MB':n>1024?(n/1024).toFixed(1)+' KB':n+' B';
 const url=f=>f.u||(f.u=URL.createObjectURL(new Blob([f.d],{type:MIME[f.p.split('.').pop().toLowerCase()]||'application/octet-stream'})));
-const setP=p=>$('#pb').style.width=Math.min(100,p)+'%',log=m=>$('#log').textContent=m;
+const setP=p=>$('#pb').style.width=Math.min(100,p)+'%';let logLines=[];const log=m=>{ $('#log').textContent=m;const s=String(m),cls=/error|gagal|timeout|401|404|429/i.test(s)?'log-error':/selesai|sukses|diterima|terhubung/i.test(s)?'log-ok':'log-info';logLines.push({s,cls});logLines=logLines.slice(-80);const box=$('#errlog');if(box){box.innerHTML=logLines.map(x=>`<span class="${x.cls}">${esc(x.s)}</span>`).join('\n');box.scrollTop=box.scrollHeight}const st=$('#logstate');if(st)st.textContent=cls==='log-error'?'ERROR':cls==='log-ok'?'RUNNING':'COLLECTING'};
 const flash=m=>{$('#ts').textContent=m;setTimeout(()=>$('#ts').textContent='',2500)};
 const H=()=>{try{return{'x-token':localStorage.getItem('cz_tok')||''}}catch{return{}}};const dec=d=>new TextDecoder().decode(d),enc=t=>new TextEncoder().encode(t);
 function dl(n,d,t){const a=document.createElement('a');a.href=URL.createObjectURL(d instanceof Blob?d:new Blob([d],{type:t}));a.download=n;a.click()}
@@ -131,7 +133,7 @@ function showErr(title,items,retry){window._r=retry;$('#dlg').innerHTML=`<h3 cla
 /* ---------- Tahap 1: download ---------- */
 async function start(){
  const link=$('#url').value.trim(),ep=($('#ep').value.trim()||'https://c-ziperr.technologiesfrostbyte.workers.dev/api').replace(/\/$/,'');
- F.clear();failed=[];$('#nx').disabled=true;setP(0);renderDl();
+ F.clear();failed=[];logLines=[];$('#errlog').textContent='';$('#nx').disabled=true;setP(0);renderDl();log('Session started — menghubungkan Worker…');
  try{
   const input={url:link,folder:$('#fd').value||'game-1',spins:$('#sp').value||30,play_seconds:$('#ps').value||90};let buf;
   if(ep==='demo'){log('Mode demo…');buf=await demoZip()}
@@ -139,7 +141,7 @@ async function start(){
   else if(ep==='local'){if(!link)return showErr('Input kurang',['Isi link game dulu.']);const base='http://127.0.0.1:8788/api';log('Mengirim ke collector lokal…');const r=await fetch(base+'/collect',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));try{localStorage.setItem('cz_tag',j.tag)}catch{}buf=await waitAndDownload(base,j.tag)}
   else{if(!link)return showErr('Input kurang',['Isi link game dulu.']);log('Mengirim job ke endpoint…');const r=await fetch(ep+'/collect',{method:'POST',headers:{'content-type':'application/json',...H()},body:JSON.stringify(input)});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));try{localStorage.setItem('cz_tag',j.tag)}catch{}buf=await waitAndDownload(ep,j.tag)}
   await loadZip(buf,true);
- }catch(e){showErr('Download gagal',[e.message],start)}
+ }catch(e){log('ERROR: '+e.message);showErr('Download gagal',[e.message],start)}
 }
 async function resume(){
  let tag='';try{tag=localStorage.getItem('cz_tag')||''}catch{}
@@ -199,6 +201,8 @@ async function demoZip(){
 $$('#sub button').forEach(b=>b.onclick=()=>{$$('#sub button').forEach(x=>x.classList.toggle('on',x==b));['fl','api','wk','ai'].forEach(s=>$('#'+s).hidden=s!=b.dataset.s)});
 function renderWs(){renderFl();renderApi()}
 $('#zf').onchange=async e=>{const f=e.target.files[0];if(f){await loadZip(await f.arrayBuffer(),false);renderWs()}};
+$('#ezf').onchange=async e=>{const f=e.target.files[0];if(f){await loadZip(await f.arrayBuffer(),false);go('ed');edShow();log('ZIP dimuat ke Editor Code: '+f.name)}};
+$('#logmore').onclick=()=>{$('#errlog').style.maxHeight=$('#errlog').style.maxHeight?'':'420px';};
 $('#ex').onclick=async()=>{window.edSaveAll&&edSaveAll();const z=new JSZip();F.forEach(f=>z.file(f.p,f.d));z.file('mock-api.json',JSON.stringify(rules));dl('game-edit.zip',await z.generateAsync({type:'blob'}))};
 
 function renderFl(){
