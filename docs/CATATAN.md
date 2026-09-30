@@ -27,7 +27,7 @@ Browser (public/)  ──POST /api/collect──▶  Worker  ──dispatch─�
 | Tambahan | `public/extra.js` | Kelengkapan 6 lapisan, Setelan AI, Chat AI, perbaikan preview |
 | Worker | `worker/src/index.js` | Dispatch job, status, stream artifact, token akses, rate limit |
 | Collector | `tools/collect.mjs` | Membuka game, bermain, merekam semua resource dan API |
-| Workflow | `.github/workflows/collect.yml` | Menjalankan collector, mengunggah artifact |
+| Workflow | `.github/workflows/collect-run.yml` | Menjalankan collector, mengunggah artifact |
 | PWA | `manifest.webmanifest`, `icon-*.png`, `logo.png` | Logo utama dan ikon aplikasi |
 
 ---

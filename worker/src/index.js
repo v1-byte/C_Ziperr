@@ -10,7 +10,7 @@ const GH = (env, p, init = {}) => fetch(`https://api.github.com/repos/${env.GH_R
 });
 async function findRun(env, tag) {
   if (!tag) return null;
-  const r = await GH(env, '/actions/workflows/collect.yml/runs?event=workflow_dispatch&per_page=30');
+  const r = await GH(env, '/actions/workflows/collect-run.yml/runs?event=workflow_dispatch&per_page=30');
   if (!r.ok) throw new Error('GitHub HTTP ' + r.status);
   return ((await r.json()).workflow_runs || []).find((x) => (x.display_title || '').includes(tag)) || null;
 }
@@ -31,7 +31,7 @@ export default {
         RL.set(ip, [...hits, now]);
         const tag = crypto.randomUUID().slice(0, 8);
         const num = (v, d, max) => String(Math.min(max, Math.max(1, +v || d)));
-        const r = await GH(env, '/actions/workflows/collect.yml/dispatches', {
+        const r = await GH(env, '/actions/workflows/collect-run.yml/dispatches', {
           method: 'POST',
           body: JSON.stringify({ ref: env.GH_REF || 'main', inputs: {
             game_url: b.url, folder: String(b.folder || 'game-1').replace(/[^\w-]/g, '').slice(0, 40) || 'game-1',

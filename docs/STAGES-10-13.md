@@ -18,7 +18,7 @@ GitHub-only membutuhkan fine-grained token milik pengguna dengan Actions read/wr
 
 ## Tahap 11 — GitHub-only
 
-Isi owner, repo, ref, dan token GitHub pada Setelan. Endpoint Download dapat diisi `github`; tombol Mulai akan dispatch `collect.yml`, mencari run berdasarkan tag, menunggu selesai, mengambil artifact, dan memuat ZIP otomatis ke Workspace.
+Isi owner, repo, ref, dan token GitHub pada Setelan. Endpoint Download dapat diisi `github`; tombol Mulai akan dispatch `collect-run.yml`, mencari run berdasarkan tag, menunggu selesai, mengambil artifact, dan memuat ZIP otomatis ke Workspace.
 
 ## Tahap 12 — E2E contract
 
