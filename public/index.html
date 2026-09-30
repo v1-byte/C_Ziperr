@@ -15,7 +15,7 @@ main{padding:12px;max-width:820px;margin:auto}
 textarea{width:100%;min-height:300px;font:12px ui-monospace,monospace;white-space:pre}
 pre{background:var(--bg);padding:8px;border-radius:8px;overflow:auto;max-height:200px;font-size:12px;margin:6px 0 0}
 dialog{background:var(--p);color:var(--t);border:1px solid var(--e);border-radius:12px;max-width:92vw;width:520px}
-.brand{display:flex;align-items:center;gap:8px}.brand img{width:32px;height:32px;object-fit:contain;border-radius:8px;background:transparent;padding:0}.hero{background:linear-gradient(145deg,#101d28,#0b121c);border:1px solid #2b4854;border-radius:12px;text-align:center;padding:10px;margin-bottom:12px}.hero img{max-width:100%;height:150px;object-fit:contain}.hero small{display:block;color:var(--m);margin-top:4px}.err{color:var(--e)}[hidden]{display:none!important}.chips button{padding:4px 12px;border-radius:99px}small,#ts{color:var(--m)}
+.brand{display:flex;align-items:center;gap:8px}.brand img{width:32px;height:32px;object-fit:contain;border-radius:8px;background:transparent;padding:0}.hero{background:linear-gradient(145deg,#101d28,#0b121c);border:1px solid #2b4854;border-radius:12px;text-align:center;padding:10px;margin-bottom:12px}.hero-brand{display:flex;align-items:center;justify-content:center;gap:12px}.hero-brand img{width:68px;height:68px;object-fit:contain}.hero-brand strong{font-size:clamp(24px,6vw,38px);letter-spacing:.02em}.hero small{display:block;color:var(--m);margin-top:4px}.err{color:var(--e)}[hidden]{display:none!important}.chips button{padding:4px 12px;border-radius:99px}small,#ts{color:var(--m)}
 header{flex-wrap:wrap}header nav{width:100%;overflow-x:auto;flex-wrap:nowrap!important;margin:0!important}header nav button{white-space:nowrap;flex:1}
 select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);border-radius:8px;padding:8px 10px}
 #ed:not([hidden]){display:flex;flex-direction:column;height:calc(100dvh - 92px);background:#1e1e1e;color:#ccc}
@@ -24,7 +24,7 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
 .vb{flex:1;min-height:0;display:flex;position:relative}
 .ab{width:36px;background:#333;display:flex;flex-direction:column;gap:2px;padding:4px 2px;flex:none}.ab button{background:none!important;border:0!important;font-size:16px;opacity:.6}.ab button.on{opacity:1;border-left:2px solid #fff!important}
 #sb{width:230px;background:#252526;overflow:auto;flex:none}#sb.off{display:none}
-@media(max-width:700px){#sb{position:absolute;z-index:6;left:36px;top:0;bottom:0;width:78%}.collect-grid{grid-template-columns:1fr 1fr}header nav button{font-size:11px;padding:7px 5px}main{padding:9px}.hero img{height:112px}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){#sb{position:absolute;z-index:6;left:36px;top:0;bottom:0;width:78%}.collect-grid{grid-template-columns:1fr 1fr}header nav button{font-size:11px;padding:7px 5px}main{padding:9px}.hero-brand img{width:58px;height:58px}.stats{grid-template-columns:repeat(3,1fr)}}
 .ph2{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-size:11px;color:#bbb}.ph2 button{padding:2px 6px}
 #sb input{width:calc(100% - 12px);margin:0 6px 6px}
 #tr,#s-r{font-size:12px}#tr summary{cursor:pointer;padding:3px 4px}
@@ -40,7 +40,7 @@ select{font:inherit;color:inherit;background:var(--p);border:1px solid var(--b);
 <header><span class="brand"><img src="icon-192.png" alt=""><b>C_Ziperr</b></span><nav class="row"><button data-t="dl" class="on">Download</button><button data-t="pv">Preview</button><button data-t="ed">Editor Code</button><button data-t="cfg" title="Pengaturan">Pengaturan</button></nav></header>
 
 <main id="dl">
- <div class="hero"><img src="logo.png" alt="C_Ziperr"><small>Collect · Preview · Editor · Settings</small></div>
+ <div class="hero"><div class="hero-brand"><img src="icon-512.png" alt=""><strong>C_Ziperr</strong></div><small>Collect · Preview · Editor · Settings</small></div>
  <div class="card">
   <div class="row"><input id="url" placeholder="Game URL — https://example.com/game"></div>
   <div class="collect-grid"><label>Folder<input id="fd" value="game-1" placeholder="game-1"></label><label>Durasi (detik)<input id="ps" value="90" inputmode="numeric"></label><label>Auto-spins<input id="sp" value="30" inputmode="numeric"></label><label>API endpoint<input id="ep" placeholder="Default Worker API"></label></div>
