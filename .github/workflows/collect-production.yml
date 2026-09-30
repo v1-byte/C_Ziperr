@@ -1,4 +1,5 @@
 name: collect-production
+run-name: collect ${{ github.event.client_payload.tag }}
 'on': [repository_dispatch]
 
 jobs:
