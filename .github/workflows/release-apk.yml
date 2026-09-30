@@ -35,6 +35,9 @@ jobs:
           PWA_URL="${{ inputs.pwa_url }}"
           PWA_HOST="${PWA_URL#https://}"
           PWA_HOST="${PWA_HOST%%/*}"
+          PWA_PATH="${PWA_URL#https://$PWA_HOST}"
+          [ -n "$PWA_PATH" ] || PWA_PATH="/"
+          case "$PWA_PATH" in */) ;; *) PWA_PATH="$PWA_PATH/" ;; esac
           KEY_PASSWORD="$(openssl rand -hex 24)"
           printf '%s\n' "$KEY_PASSWORD" > twa/.key-password
           "$JAVA_HOME/bin/keytool" -genkeypair -keystore twa/android.keystore -storepass "$KEY_PASSWORD" -keypass "$KEY_PASSWORD" -alias android -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=C_Ziperr Release, OU=Engineering, O=C_Ziperr, C=US'
@@ -54,7 +57,7 @@ jobs:
             "backgroundColor": "#0f1115",
             "enableNotifications": true,
             "enableSiteSettingsShortcut": true,
-            "startUrl": "/",
+            "startUrl": "${PWA_PATH}",
             "iconUrl": "${PWA_URL}/icon-512.png",
             "splashScreenFadeOutDuration": 300,
             "signingKey": { "path": "./android.keystore", "alias": "android" },
