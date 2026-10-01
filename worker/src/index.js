@@ -19,7 +19,7 @@ export default {
   async fetch(req, env) {
     const u = new URL(req.url), p = u.pathname;
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
-    if (!p.startsWith('/api/')) return env.ASSETS.fetch(req);
+    if (!p.startsWith('/api/')) return env.ASSETS?.fetch ? env.ASSETS.fetch(req) : J({ service: 'c-ziperr-api', status: 'ok', ui: 'https://v1-byte.github.io/C_Ziperr/' });
     if (!env.GH_TOKEN || !env.GH_REPO) return J({ error: 'GH_TOKEN / GH_REPO belum diset' }, 500);
     if (env.ACCESS_TOKEN && req.headers.get('x-token') !== env.ACCESS_TOKEN) return J({ error: 'Token akses salah' }, 401);
     try {
