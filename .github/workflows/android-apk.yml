@@ -74,7 +74,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Game-Collector-Pro-release
+          name: C-Ziperr-release
           path: android-app/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
@@ -82,9 +82,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
-          name: Game Collector Pro APK release ${{ github.run_number }}
+          name: C.Ziperr APK release ${{ github.run_number }}
           body: |
-            APK release Game Collector Pro dari commit ${{ github.sha }}.
-            APK ini memuat web utama Game Collector Pro melalui WebView agar tampilan dan alur Collect tetap sama dengan deployment produksi.
+            APK release C.Ziperr dari commit ${{ github.sha }}.
+            APK ini memuat web utama C.Ziperr melalui WebView agar tampilan dan alur Collect tetap sama dengan deployment produksi.
           files: android-app/android/app/build/outputs/apk/release/app-release.apk
           generate_release_notes: false

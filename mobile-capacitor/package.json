@@ -2,7 +2,7 @@
   "name": "gc-pro-capacitor",
   "version": "1.0.0",
   "private": true,
-  "description": "Capacitor shell for Game Collector Pro (loads live Worker URL)",
+  "description": "Capacitor shell for C.Ziperr (loads live Worker URL)",
   "scripts": {
     "sync": "npx cap sync",
     "open:android": "npx cap open android",

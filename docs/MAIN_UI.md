@@ -1,4 +1,4 @@
-# Tampilan Utama Game Collector Pro
+# Tampilan Utama C.Ziperr
 
 URL tampilan utama aplikasi:
 
@@ -20,4 +20,4 @@ Repository ini memakai UI dan sistem yang sama dengan URL tersebut. Struktur uta
 - **AI Offline Readiness Assistant**
 - **Editor dan Custom API**
 
-Perubahan branding pada repository ini hanya mengganti aset gambar `/frostbyte-logo.png` dengan logo **C.Ziperr**. Layout, alur capture, preview bersamaan, workspace, pipeline offline, dan sistem AI tetap mengikuti Game Collector Pro.
+Perubahan branding pada repository ini hanya mengganti aset gambar `/frostbyte-logo.png` dengan logo **C.Ziperr**. Layout, alur capture, preview bersamaan, workspace, pipeline offline, dan sistem AI tetap mengikuti C.Ziperr.

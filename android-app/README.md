@@ -1,6 +1,6 @@
-# Game Collector Pro Android APK
+# C.Ziperr Android APK
 
-APK resmi mobile untuk membuka tampilan dan alur web utama Game Collector Pro di Android. Aplikasi memuat URL produksi yang sama melalui WebView, sehingga menu, branding, fitur Collect, Preview, Workspace, Activity, log, dan update web mengikuti deployment utama.
+APK resmi mobile untuk membuka tampilan dan alur web utama C.Ziperr di Android. Aplikasi memuat URL produksi yang sama melalui WebView, sehingga menu, branding, fitur Collect, Preview, Workspace, Activity, log, dan update web mengikuti deployment utama.
 
 ## URL web utama
 

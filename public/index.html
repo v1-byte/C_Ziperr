@@ -9,7 +9,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/frostbyte-logo.png">
   <link rel="apple-touch-icon" href="/frostbyte-logo.png">
-  <title>Game Collector Pro — Frostbyte Technologies</title>
+  <title>C.Ziperr — Frostbyte Technologies</title>
   
   <!-- Monaco Editor CDN: koneksi dipercepat agar editor lancar di HP -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -3749,7 +3749,7 @@
           <img src="/frostbyte-logo.png" alt="Frostbyte Technologies" class="logo-img" width="40" height="40">
           <div class="logo-text">
             <div class="brand">Frost<span>byte</span></div>
-            <div class="sub">Game Collector Pro</div>
+            <div class="sub">C.Ziperr</div>
           </div>
         </div>
         <div class="breadcrumb" id="breadcrumb">
@@ -3768,7 +3768,7 @@
       <div class="collect-wrapper">
         <div class="collect-hero">
           <img src="/frostbyte-logo.png" alt="Frostbyte" class="hero-logo">
-          <h2>Game Collector Pro</h2>
+          <h2>C.Ziperr</h2>
           <p>Preview, capture, audit, dan siapkan paket offline dari satu alur.</p>
           <div class="gc-primary-flow" aria-label="Kontrol capture utama">
             <button type="button" class="btn btn-primary gc-primary-preview" id="gc-primary-preview" onclick="gcUnifiedPreview()">▶ MULAI CAPTURE</button>
@@ -4061,7 +4061,7 @@
             <div class="title">Auto Repair</div>
             <div class="desc">Perbaiki dependency otomatis</div>
             <div class="gc-install-under-repair">
-              <button type="button" class="gc-install-app" id="gc-install-app" hidden aria-label="Instal Game Collector Pro ke HP">＋ Pasang ke HP</button>
+              <button type="button" class="gc-install-app" id="gc-install-app" hidden aria-label="Instal C.Ziperr ke HP">＋ Pasang ke HP</button>
             </div>
           </div>
         </div>
@@ -4721,10 +4721,10 @@
               <p class="fb-portfolio-tag">Software · Web game tools · Cloud automation</p>
               <p>
                 <b>Frostbyte Technologies</b> mengembangkan perangkat bantu untuk collect, perbaikan, dan preview resource game web
-                (Game Collector Pro), integrasi Cloudflare Workers, GitHub Actions, serta alur offline/hybrid.
+                (C.Ziperr), integrasi Cloudflare Workers, GitHub Actions, serta alur offline/hybrid.
               </p>
               <ul class="fb-portfolio-list">
-                <li>Game Collector Pro — capture, sandbox, AI assist, hosting EDU</li>
+                <li>C.Ziperr — capture, sandbox, AI assist, hosting EDU</li>
                 <li>Cloud deploy (Workers / Pages) &amp; otomasi collect</li>
                 <li>Workspace editor + offline conversion</li>
               </ul>
@@ -7387,7 +7387,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         }
 
         var system = [
-          'Anda asisten kode Game Collector Pro (Chat AI).',
+          'Anda asisten kode C.Ziperr (Chat AI).',
           'Bahasa Indonesia, ringkas.',
           'Jika ada KODE SAAT INI dan user minta perbaiki/edit, kembalikan FILE LENGKAP dalam satu code fence.',
           'Jangan bilang file tidak ada jika kode dilampirkan.'
@@ -8003,7 +8003,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           }
         }
         var system = [
-          'Anda asisten kode Game Collector Pro (Activity Chat AI).',
+          'Anda asisten kode C.Ziperr (Activity Chat AI).',
           'Bahasa Indonesia, ringkas.',
           'Jika ada KODE SAAT INI dan user minta perbaiki/edit, kembalikan FILE LENGKAP dalam satu code fence.',
           'Jangan bilang file tidak ada jika kode dilampirkan.'
@@ -8314,7 +8314,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         ? '{"summary":"...","issues":[{"severity":"error|warning|info","line":1,"message":"..."}],"suggestions":["..."],"repairedCode":"FULL FILE CONTENT"}'
         : '{"summary":"...","issues":[{"severity":"error|warning|info","line":1,"message":"..."}],"suggestions":["..."],"repairedCode":null}';
       const system = [
-        'You are a careful code review assistant inside Game Collector Pro.',
+        'You are a careful code review assistant inside C.Ziperr.',
         'Analyze only the supplied file. Never invent missing files.',
         'Return valid JSON only. Schema: ' + schema,
         'Reply in Bahasa Indonesia for summary/suggestions when possible.'
@@ -12154,7 +12154,7 @@ function isApiLike(u){
         const score = await gcComputeOfflineScore();
         const report = {
           generatedAt: new Date().toISOString(),
-          tool: 'Game Collector Pro · Auto Repair Strict',
+          tool: 'C.Ziperr · Auto Repair Strict',
           offlineScore: score,
           strictDownload: fetchReport,
           repairs: { files: filesTouched.length, patches: totalChanges, samples: detailLines.slice(0, 40) }
@@ -12761,7 +12761,7 @@ function isApiLike(u){
 
         // meta for manual hoster
         var meta = {
-          tool: 'Game Collector Pro — Auto Custom API/SDK',
+          tool: 'C.Ziperr — Auto Custom API/SDK',
           api_base: apiBase || null,
           game_id: gameId,
           patched_at: new Date().toISOString(),
@@ -13924,7 +13924,7 @@ function isApiLike(u){
       var names = Array.isArray(report && report.names) ? report.names.slice(0, 500) : [];
       var meta = context && context.collectMeta || {};
       return [
-        'Anda adalah AI Offline Readiness Assistant untuk Game Collector Pro.',
+        'Anda adalah AI Offline Readiness Assistant untuk C.Ziperr.',
         'Analisis hasil Collect URL berikut dan berikan rencana repair konkret agar paket game dapat diuji FULL_OFFLINE_READY.',
         'Jangan menganggap nama file sebagai bukti. Bedakan fakta capture, blocker, risiko, dan langkah verifikasi browser tanpa network.',
         'Jangan menyarankan credential, pembayaran, taruhan, atau bypass DRM. Jangan mengubah aturan payout tanpa bukti kontrak game.',
@@ -14695,7 +14695,7 @@ function isApiLike(u){
           deferredInstall = null;
           if (installButton) installButton.hidden = true;
         });
-        window.addEventListener('appinstalled', () => { deferredInstall = null; if (installButton) installButton.hidden = true; showUpdateNote('Game Collector Pro sudah terpasang di HP.'); });
+        window.addEventListener('appinstalled', () => { deferredInstall = null; if (installButton) installButton.hidden = true; showUpdateNote('C.Ziperr sudah terpasang di HP.'); });
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.register('/sw.js?v=6', { updateViaCache: 'none' }).then((registration) => {
           const hadController = Boolean(navigator.serviceWorker.controller);

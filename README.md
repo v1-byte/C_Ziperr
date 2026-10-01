@@ -1,4 +1,4 @@
-# Game Collector Pro
+# C.Ziperr
 
 Tools untuk **mengumpulkan, memisahkan, memperbaiki, dan menjalankan** resource game web (client-side) secara offline / hybrid.
 

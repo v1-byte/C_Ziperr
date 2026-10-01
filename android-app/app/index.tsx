@@ -11,7 +11,7 @@ export default function CollectorApp() {
   if (failed) {
     return (
       <View style={styles.error}>
-        <Text style={styles.title}>Game Collector Pro</Text>
+        <Text style={styles.title}>C.Ziperr</Text>
         <Text style={styles.message}>Web utama tidak dapat dibuka. Periksa koneksi internet lalu coba lagi.</Text>
         <Pressable style={styles.button} onPress={() => { setFailed(false); setLoading(true); }}>
           <Text style={styles.buttonText}>Coba lagi</Text>
@@ -39,7 +39,7 @@ export default function CollectorApp() {
         onError={() => { setLoading(false); setFailed(true); }}
         onHttpError={(event) => { if (event.nativeEvent.statusCode >= 500) { setLoading(false); setFailed(true); } }}
       />
-      {loading && <View style={styles.loading}><ActivityIndicator size="large" color="#5ee1c0" /><Text style={styles.loadingText}>Memuat Game Collector Pro…</Text></View>}
+      {loading && <View style={styles.loading}><ActivityIndicator size="large" color="#5ee1c0" /><Text style={styles.loadingText}>Memuat C.Ziperr…</Text></View>}
     </View>
   );
 }

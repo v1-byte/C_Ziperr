@@ -1,4 +1,4 @@
-/* Game Collector Pro — SW v6: shell + ZIP /__gc__/ + hybrid API policy */
+/* C.Ziperr — SW v6: shell + ZIP /__gc__/ + hybrid API policy */
 const SHELL = "gc-pro-shell-v9";
 const ZIP_CACHE = "gc-pro-zip-v5";
 const VENDOR_CACHE = "gc-pro-vendor-v1";

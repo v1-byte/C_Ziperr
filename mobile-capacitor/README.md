@@ -1,4 +1,4 @@
-# Game Collector Pro — Capacitor (Android APK)
+# C.Ziperr — Capacitor (Android APK)
 
 Membungkus **URL live Worker** sebagai app Android (WebView).  
 Update UI = deploy Worker; tidak perlu rebuild APK tiap perubahan frontend.
