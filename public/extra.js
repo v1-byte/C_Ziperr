@@ -80,7 +80,7 @@ $('#pfx').onclick=()=>{
  const {miss}=pvData(),host=$('#pe').value.split('/')[1]||'',out=[];let n=0;
  for(const s of new Set(miss)){
   const [meth,u]=s.split(' ');let x;try{x=new URL(u)}catch{continue}
-  const same=x.origin===location.origin,h=same?host:x.host,pth=decodeURIComponent(same?x.pathname.replace(/^\/__game/,''):x.pathname),full='assets/'+h+pth,base=pth.split('/').pop().toLowerCase();
+  const same=x.origin===location.origin,h=same?host:x.host,gameBase=new URL('./',location.href).pathname+'__game/',pth=decodeURIComponent(same&&x.pathname.startsWith(gameBase)?x.pathname.slice(gameBase.length):x.pathname),full='assets/'+h+pth,base=pth.split('/').pop().toLowerCase();
   if(F.has(full))continue;
   if(/\.[a-z0-9]{2,5}$/i.test(base)){
    const c=[...F.keys()].filter(k=>k.startsWith('assets/')&&k.split('/').pop().toLowerCase()==base);

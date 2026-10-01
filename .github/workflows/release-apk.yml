@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       pwa_url: { description: 'HTTPS URL root PWA', required: true, default: 'https://v1-byte.github.io/C_Ziperr/', type: string }
-      release_tag: { description: 'Release tag', required: true, default: 'v1.3.4', type: string }
+      release_tag: { description: 'Release tag', required: true, default: 'v1.3.5', type: string }
 permissions:
   contents: write
 jobs:
@@ -61,8 +61,8 @@ jobs:
             "iconUrl": "${PWA_URL}/icon-512.png",
             "splashScreenFadeOutDuration": 300,
             "signingKey": { "path": "./android.keystore", "alias": "android" },
-            "appVersion": "1.3.4",
-            "appVersionCode": 4,
+            "appVersion": "1.3.5",
+            "appVersionCode": 5,
             "generatorApp": "bubblewrap-cli",
             "webManifestUrl": "${PWA_URL}/manifest.webmanifest",
             "shortcuts": []
