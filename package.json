@@ -1,30 +1,38 @@
 {
-  "name": "c_ziperr",
+  "name": "game-resource-collector",
   "private": true,
-  "version": "1.2.0",
-  "description": "C_Ziperr \u2014 offline web archiver with local and GitHub Playwright collectors",
   "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
   "scripts": {
+    "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node --test tests/*.test.mjs",
-    "collect:local": "node tools/collect-local.mjs",
-    "collect:syntax": "node --check core/collector/engine.mjs && node --check tools/collect-local.mjs && node --check core/jobs/sqlite.mjs",
-    "jobs": "node tools/jobs.mjs",
-    "preview:local": "node tools/preview-local.mjs",
-    "mock:local": "node tools/mock-local.mjs",
-    "rewrite:package": "node tools/rewrite-package.mjs",
-    "scan:package": "node tools/scan-package.mjs",
-    "validate:offline": "node tools/validate-offline.mjs",
-    "collect:bridge": "node tools/collect-bridge.mjs"
+    "collect": "node scripts/collect.js",
+    "test": "npm run test:unit && npm run check:inline-js",
+    "test:unit": "node --test tests/*.mjs",
+    "check:inline-js": "node scripts/check-inline-js.cjs",
+    "test:offline": "node tests/offline-sw.test.mjs",
+    "test:stateful-api": "node tests/stateful-api.test.mjs",
+    "test:offline-gameplay": "node tests/offline-gameplay.test.mjs",
+    "test:api-replay": "node tests/api-replay.test.mjs",
+    "test:realtime": "node tests/realtime-adapter.test.mjs",
+    "test:runtime-interceptor": "node tests/runtime-interceptor.test.mjs",
+    "test:package-readiness": "node tests/package-readiness.test.mjs",
+    "test:collect-artifact": "node tests/collect-artifact-schema.test.mjs",
+    "test:collect-signed-assets": "node tests/collect-signed-assets.test.mjs",
+    "test:manus-api": "node tests/manus-api.test.mjs",
+    "test:collect-ai-assistant": "node tests/collect-ai-assistant.test.mjs",
+    "test:conformance-lab": "node tests/conformance-lab.test.mjs",
+    "test:security-evidence": "node tests/security-evidence.test.mjs",
+    "validate:offline-package": "node scripts/validate-offline-package.js",
+    "validate:native-package": "node scripts/validate-native-package.js",
+    "check:master-toolset": "node scripts/check-master-toolset.cjs",
+    "security:smoke": "node scripts/security-smoke.cjs"
   },
   "dependencies": {
-    "archiver": "^7.0.1",
-    "playwright": "^1.55.0"
+    "@cloudflare/playwright": "^1.3.0",
+    "fflate": "^0.8.2",
+    "playwright": "^1.49.0"
   },
   "devDependencies": {
-    "wrangler": "^4"
+    "wrangler": "^4.0.0"
   }
 }

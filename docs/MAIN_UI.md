@@ -1,21 +1,23 @@
-# Tampilan Utama C_Ziperr
+# Tampilan Utama Game Collector Pro
 
-URL tampilan utama aplikasi C_Ziperr:
+URL tampilan utama aplikasi:
 
 <https://game-resource-collector.technologiesfrostbyte.workers.dev/>
 
-URL tersebut menjadi referensi utama tampilan dan alur aplikasi, termasuk:
+Repository ini memakai UI dan sistem yang sama dengan URL tersebut. Struktur utama yang harus dipertahankan:
 
 - **Collect**
 - **Workspace**
 - **Activity**
-- **Preview Game**
-- **Proses Capture**
+- **Preview Game** di kiri
+- **Proses Capture** di kanan
 - **Mulai Capture** dan **Stop & Finalize**
 - **Download ZIP**
 - **Log Preview & Capture**
 - **Research & keamanan**
 - **Opsi lanjutan**
 - **Pipeline offline**
+- **AI Offline Readiness Assistant**
+- **Editor dan Custom API**
 
-Perubahan tampilan utama atau APK harus menjaga struktur dan alur visual yang dirujuk oleh URL ini.
+Perubahan branding pada repository ini hanya mengganti aset gambar `/frostbyte-logo.png` dengan logo **C.Ziperr**. Layout, alur capture, preview bersamaan, workspace, pipeline offline, dan sistem AI tetap mengikuti Game Collector Pro.

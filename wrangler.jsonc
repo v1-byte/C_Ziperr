@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "game-resource-collector",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "browser": {
+    "binding": "MYBROWSER"
+  },
+  "assets": {
+    "directory": "./public"
+  },
+  "kv_namespaces": [
+    { "binding": "GC_HISTORY", "id": "3869a97c9eaf49129a666476fcb672e8" }
+  ],
+  "vars": {
+    "GH_OWNER": "frostbyte-lab",
+    "GH_REPO": "frostbyte-lab-game--collector",
+    "GH_WORKFLOW": "collect.yml",
+    "PUBLIC_APP_NAME": "Game Collector Pro",
+    "OPENROUTER_MODEL": "openrouter/free",
+    "OPENROUTER_SITE_URL": "https://game-resource-collector.workers.dev",
+    "EDU_GH_OWNER": "frostbyte-lab",
+    "EDU_GH_REPO": "Edu-network",
+    "EDU_GH_BRANCH": "main",
+    "EDU_PAGES_URL": "https://ea29118c.edu-network.pages.dev"
+  }
+}

@@ -1,0 +1,95 @@
+CATATAN EMULATOR STATEFUL API LOKAL
+Repository: frostbyte-lab-game--collector
+Versi: stateful-v1
+
+1. TUJUAN
+Emulator ini menyediakan backend lokal sederhana untuk preview offline. Endpoint yang ditangani adalah init, balance, dan spin, dengan tambahan session/verifysession agar alur awal game dapat dimulai. Emulator ini bukan backend produksi dan bukan simulasi aturan game asli.
+
+2. ENDPOINT YANG DIDUKUNG
+Route /init, /gameinfo, dan /gamedata menghasilkan konfigurasi game serta saldo awal. Route /balance dan /gamewallet menghasilkan saldo terbaru. Route /spin, /bet, dan /play menjalankan satu putaran. Route /session dan /verifysession menghasilkan session ID serta token lokal.
+
+Kontrak API hasil capture disimpan pada field apiContract di manifest dan field contract di api-map.json. Kontrak mencatat version, kind, confidence, method, URL, origin, path, queryKeys, request headers yang sudah disaring, request body terbatas, status response, content type, response headers yang sudah disaring, top-level response keys, dan bentuk field response. Header sensitif seperti Authorization, Cookie, Set-Cookie, X-Api-Key, dan proxy-auth tidak disimpan dalam bentuk asli; nilainya diganti dengan <redacted>.
+
+Setiap kontrak memiliki order capture dan dapat dirangkum menjadi replaySequence pada api-map.json. Router lokal mendukung mode replay untuk mencocokkan method dan path, kemudian mengembalikan snapshot response asli jika tersedia. Jika method tidak cocok, router mengembalikan API_CONTRACT_MISMATCH. Mode replay berguna untuk menguji response asli secara berurutan, sedangkan mode emulator stateful berguna untuk mengubah saldo dan menjalankan spin lokal.
+
+Emulator dapat menerima apiContract melalui opsi createStatefulApiEmulator({ apiContract }), menyimpannya dalam snapshot, serta memakai target.path dan kind untuk mengenali endpoint game khusus yang tidak memakai nama /init, /balance, atau /spin standar.
+
+3. STATE YANG DISIMPAN
+State mencakup sessionId, token, balance, currency, round, lastWin, history maksimal 50 hasil, phase, lastAction, freeSpins, dan bonusMultiplier. State machine dasar menggunakan fase NEW → SESSION_READY → READY → RESULT. Spin hanya dapat dilakukan setelah session dan init berhasil. Endpoint /result atau /settle mengembalikan hasil spin terakhir. Request yang tidak mengikuti urutan menghasilkan INVALID_STATE HTTP 409, kecuali strictSequence dimatikan untuk kompatibilitas legacy.
+
+Free spin dasar dapat berjalan tanpa charge saldo ketika freeSpins tersedia. Payout match sesuai bonusTriggerMatch dapat menambah freeSpins sampai maxFreeSpins. Fitur bonus ini masih sandbox generik dan bukan aturan provider asli.
+
+State mencakup sessionId, token, balance, currency, round, lastWin, dan history maksimal 50 hasil. Saldo dikurangi sesuai nilai bet sebelum spin dan ditambah kembali sesuai win. Hasil spin memakai pseudo-random generator deterministic berdasarkan seed sehingga urutan hasil dapat diulang saat seed yang sama digunakan.
+
+Aturan spin dasar sekarang memakai payoutTable yang dapat dikonfigurasi. Default payoutTable adalah 3 simbol sama = 5x bet dan 2 simbol sama = 1x bet. Emulator mengembalikan balanceBefore, charged, win, winAmount, totalWin, payoutMultiplier, matchedSymbols, outcome, symbols, reels, rl, dan roundId. Bet divalidasi terhadap minBet, maxBet, dan saldo. Bet tidak valid menghasilkan HTTP 400, sedangkan saldo tidak mencukupi menghasilkan HTTP 409.
+
+Payout ini hanya aturan sandbox dasar. Aturan provider asli seperti paylines, scatter, wild, bonus, free spin, jackpot, multiplier khusus, dan server-side RNG belum otomatis direkonstruksi. Untuk game tertentu, payoutTable dan response schema harus diganti berdasarkan kontrak API serta aturan game yang berhasil dicapture.
+
+4. CARA PEMAKAIAN LOKAL
+Import createStatefulApiEmulator dari src/offline/stateful-api-emulator.js untuk memakai handler secara langsung. Gunakan installStatefulApiEmulator() pada sandbox browser atau test lokal untuk memasang interceptor global fetch. Contoh endpoint: fetch('/init'), fetch('/balance'), lalu fetch('/spin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({bet: 100}) }). Panggil emulator.snapshot() untuk melihat state terakhir.
+
+5. PERSISTENSI, RESET, DAN REPLAY STATE
+Emulator sekarang memiliki storage adapter dengan fallback memory untuk test lokal dan dukungan localStorage ketika berjalan di browser. Gunakan opsi storage dan storageKey untuk menentukan tempat penyimpanan. Fungsi persist() menyimpan state sandbox, loadPersisted() memulihkan state, clearPersisted() menghapus state, reset() mengosongkan session dan history, sedangkan replay() mengembalikan PRNG ke seed awal agar urutan hasil dapat diuji ulang.
+
+Token tidak disimpan ke storage persistence. Saat state dipulihkan, token sandbox yang sedang aktif dipertahankan. Jangan menggunakan storage ini untuk menyimpan credential produksi, cookie, Authorization header, atau data pribadi.
+
+6. VALIDASI OFFLINE PENUH DAN BATASAN KOMPATIBILITAS
+Modul src/offline/offline-validation.js menyediakan validasi alur session → init → balance → spin → balance-after dengan mode offline. Harness memeriksa status response, sessionId dan token, saldo sebelum dan sesudah, roundId, history, arithmetic saldo, serta memastikan tidak ada request yang lolos ke fallback network. Jika semua syarat terpenuhi, status menjadi FULL_OFFLINE_READY. Jika ada kegagalan, status menjadi NOT_READY dan detail kegagalan tersedia pada failures.
+
+Validasi ini tidak membuktikan semua aturan provider asli. Emulator tetap belum mengetahui paylines, bonus, free spin, jackpot, validasi signature, autentikasi server, atau format khusus provider tertentu. Nilai saldo dan hasil spin hanya untuk sandbox, tidak boleh digunakan untuk taruhan, pembayaran, atau sistem produksi. Game yang tidak dikenal oleh api-map harus diblokir pada mode offline atau diteruskan ke network pada mode hybrid.
+
+Adapter realtime tersedia pada src/offline/realtime-adapter.js. OfflineWebSocket dan OfflineEventSource dapat memutar ulang daftar event lokal melalui events dan intervalMs. createReplayPoller() menyediakan polling event yang deterministic. installOfflineRealtimeAdapters() memasang shim global WebSocket dan EventSource serta menyediakan restore(). Adapter tidak membuka koneksi server, tetapi juga tidak merekonstruksi protokol provider otomatis. Format event, urutan event, reconnect, heartbeat, ping/pong, dan acknowledgement harus dicapture atau dikonfigurasi per game.
+
+Runtime dependency interceptor tersedia pada src/offline/runtime-interceptor.js. Interceptor mencatat fetch, XMLHttpRequest, WebSocket, EventSource, blob URL, dan dynamic-import melalui trackedImport(). Mode offline dapat memblokir fetch external dengan RUNTIME_NETWORK_BLOCKED. Catatan dynamic import: JavaScript tidak menyediakan monkey patch universal untuk sintaks import(); kode game perlu memakai trackedImport() atau dicatat melalui static/runtime instrumentation. Interceptor menyediakan snapshot() dan restore() untuk audit tanpa meninggalkan patch global.
+
+7. UI COLLECT DAN FILE AKTUAL
+
+Toast Collect dan panel progress tidak lagi menganggap checklist seperti index.html, File JS game, atau api-map.json sebagai file yang sudah berhasil diambil. Selama capture, daftar menampilkan recentFiles yang dikirim backend, termasuk path lokal, tipe, ukuran, dan status. Setelah ZIP dibuka, daftar memakai names dari isi ZIP yang benar-benar terbaca. Jika belum ada recentFiles atau names, UI menampilkan pesan bahwa belum ada file aktual dan tidak menampilkan checklist sebagai bukti capture. Nilai fileCount berasal dari manifest/ZIP, sedangkan daftar live dibatasi pada file terbaru untuk menjaga performa HP.
+
+8. PENGUJIAN DAN KRITERIA BERHASIL
+Test minimal harus memverifikasi init mengembalikan saldo, balance membaca saldo yang sama, spin mengurangi atau menambah saldo secara konsisten, bet invalid mengembalikan status 400, saldo tidak cukup mengembalikan status 409, roundId bertambah, dan history tersimpan. Keberhasilan emulator tidak berarti seluruh game kompatibel; game tetap perlu diuji dengan request body, response schema, dan urutan endpoint asli.
+
+
+9. INTEGRASI MANUS AI PADA CUSTOM AI
+
+Custom AI sekarang memiliki provider Manus AI selain Groq, Gemini, dan Meta AI. Pada UI, email digunakan sebagai identitas atau label akun agar sesi dapat ditampilkan secara konsisten. Mode personal sekarang mengizinkan pengguna memasukkan API key Manus dari web. Key personal hanya disimpan selama sesi browser melalui sessionStorage dan dikirim ke endpoint proxy Worker; key tidak ditulis ke repository, ZIP, atau localStorage. Untuk keamanan lebih tinggi, field key dapat dikosongkan dan Worker memakai secret MANUS_API_KEY. Jangan menaruh key personal di public/index.html atau repository Git.
+
+Saat Manus dipilih, UI mengirim request ke POST /api/ai/manus. Browser mengirim prompt, title, locale, agent_profile, timeout_ms, dan hanya pada mode personal api_key dari sessionStorage aktif. Worker memprioritaskan secret MANUS_API_KEY jika tersedia, atau memakai api_key personal untuk request tersebut, lalu menggunakan header x-manus-api-key ke API Manus V2. Worker membuat task asynchronous, memantau task.listMessages, lalu mengembalikan assistant_message sebagai content. Jika kedua sumber key kosong, endpoint mengembalikan MANUS_NOT_CONFIGURED HTTP 503.
+
+Provider Manus ikut jalur callCustomAIWithFailover. Slot Manus diaktifkan dengan email label dan secret Worker; slot Groq, Gemini, atau Meta tetap memakai API key masing-masing. Ketika provider aktif gagal atau terkena rate limit, sistem mencoba slot provider berikutnya. Error konfigurasi Manus tidak boleh dianggap sebagai bukti bahwa email salah; periksa secret Worker dan deployment terlebih dahulu.
+
+Konfigurasi lokal menggunakan Wrangler secret, bukan variable publik. Jalankan `npx wrangler secret put MANUS_API_KEY` pada environment Worker yang benar, kemudian deploy ulang Worker. Untuk pengujian lokal, gunakan secret lokal sesuai mekanisme Wrangler dan jangan commit file `.dev.vars`. Smoke test helper Manus menggunakan fetch mock sehingga tidak mengirim task sungguhan dan tidak mengonsumsi quota.
+
+Sumber kontrak API dan catatan teknis lebih rinci tersedia di `docs/manus-api-integration-notes.txt`. Rujukan resmi adalah dokumentasi [authentication](https://open.manus.ai/docs/v2/authentication), [task.create](https://open.manus.ai/docs/v2/task.create), [task.listMessages](https://open.manus.ai/docs/v2/task.listMessages), dan [task lifecycle](https://open.manus.ai/docs/v2/task-lifecycle).
+
+Integrasi Manus berlaku untuk bantuan kode, analisis file, perbaikan error, dan chat AI melalui Custom AI. Integrasi ini tidak mengubah kriteria FULL_OFFLINE_READY: Manus adalah layanan bantuan online dan tidak boleh menjadi ketergantungan runtime game offline. Uji offline tetap harus memblokir network dan memakai asset, API contract, stateful emulator, realtime replay, serta runtime interceptor lokal.
+
+
+10. AI OFFLINE READINESS ASSISTANT PADA COLLECT URL
+
+Form Collect URL sekarang menyediakan opsi AI Offline Readiness Assistant yang aktif secara default. Setelah Capture Cloudflare atau Collect via GitHub menghasilkan ZIP, sistem membaca isi ZIP secara lokal, menjalankan pemeriksaan kelengkapan, lalu mengirim ringkasan aman kepada provider Custom AI yang aktif. Ringkasan berisi host target, sumber collect, jumlah file nyata, skor kelengkapan, item checklist yang gagal, metadata capture yang sudah tersedia, dan contoh path ZIP. Isi binary dan credential tidak dikirim sebagai bagian dari ringkasan assistant.
+
+AI mengembalikan Diagnosis, Repair Prioritas 1–5, kontrak API yang masih harus dicapture, serta test browser network-off yang wajib dijalankan. Hasilnya ditampilkan pada status Collect dan area laporan halaman FULL_OFFLINE_READY, serta dicatat ke Histories. Jika provider AI belum aktif atau Manus belum memiliki secret Worker, audit lokal tetap berjalan dan status menjelaskan bahwa saran AI belum tersedia.
+
+Assistant hanya membantu tahap persiapan, audit, dan repair. Ia tidak boleh dijadikan dependency runtime game. Status FULL_OFFLINE_READY tetap ditentukan oleh isi ZIP, API replay/stateful emulator, realtime replay, runtime interceptor, dan browser test tanpa network. AI tidak boleh mengubah payout, RNG, signature, DRM, atau aturan server-side tanpa bukti kontrak game yang dicapture.
+
+Alur yang direkomendasikan adalah Paste URL → Preview dan spin → Get data → Full Collect → AI audit otomatis → terapkan repair yang sudah ditinjau → browser test tanpa network → ulangi audit per ZIP sampai blocker terselesaikan. Untuk hasil maksimal, gunakan auto-spins dan buka History pada game yang memerlukannya, karena AI tidak dapat memperbaiki data API yang tidak pernah dicapture.
+
+
+11. STATUS IMPLEMENTASI PROVIDER TEST LAB
+Workflow `.github/workflows/quality-gates.yml` sekarang menghasilkan tiga required check dengan nama persis: `Unit and inline-JS tests`, `Secret scan`, dan `CodeQL analysis`. Semua check pada commit PR #4 berhasil. Unit test menjalankan security evidence, master toolset, collector/artifact, conformance, offline gameplay, native package, inline-JS, syntax, dan git diff validation. Secret scan memeriksa pola credential pada source tracked. CodeQL menganalisis JavaScript.
+
+12. MERGE DAN BRANCH PROTECTION
+PR #4 (`feat/security-evidence-provider-lab`) telah merged ke `main` pada commit `9f552e3b80e73ba62d09a5c65320a1bff280d6ee`. Karena branch protection mewajibkan satu approval code-owner dan tidak ada review yang tersedia, aturan review sempat dinonaktifkan sesuai otorisasi pengguna hanya untuk merge, kemudian dipulihkan. Konfigurasi aktif kembali: strict required checks, satu approval, code-owner review, dismiss stale review, dan enforce admins.
+
+13. VERIFIKASI PRODUCTION
+Deployment Worker dari commit merge berhasil. URL canonical: https://game-resource-collector.technologiesfrostbyte.workers.dev. Endpoint `/api/health` merespons `ok: true`, endpoint `/api/tools/master` merespons registry dengan `totalRequested: 50`, dan halaman utama production memuat marker `MASTER TOOLSET`. Deployment ini membuktikan fitur registry/security-evidence/conformance telah online; ini tidak mengubah batasan bahwa offline readiness harus dibuktikan per ZIP melalui browser network-off.
+
+14. DOKUMENTASI FINAL
+Blueprint lengkap tersedia di `PROVIDER_TEST_LAB_BLUEPRINT.md`. Dokumen tersebut menjelaskan pipeline collect → validate → rewrite → API capture → replay/emulator → security evidence → browser network-off → report, definisi quality gate, batas Authorized Research, 50 master tools, deployment, dan checklist operasional.
+
+
+15. POWER FULL AUDIT V2
+Engine `src/audit/power-full.js` dan endpoint `POST /api/audit/power-full` sekarang menggabungkan manifest ZIP, missing assets, API contract, network evidence, browser network-off, gameplay, dan security evidence. Quality gate memiliki lima gerbang: package, API, security, browser network-off, dan gameplay. Status `FULL_OFFLINE_READY` hanya diberikan jika seluruh blocker kosong, lima kontrak minimum session/init/balance/spin/result tersedia, browser network-off terbukti, gameplay lulus, dan tidak ada network violation.
+
+Activity → FULL_OFFLINE_READY sekarang memiliki tombol `Power Full Audit`. Tombol membaca api-map.json, security-evidence.json, serta network evidence dari ZIP terpilih. Evidence dikirim dalam bentuk ringkasan yang dibatasi; credential tetap tidak boleh dimasukkan. Sinyal DRM/license/anti-bot/signature/restriction tanpa otorisasi menghasilkan `AUTHORIZED_RESEARCH_REQUIRED`. Smoke test production endpoint berhasil menghasilkan `FULL_OFFLINE_READY` untuk evidence lengkap sintetis.

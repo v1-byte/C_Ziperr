@@ -1,5 +1,6 @@
-node_modules
-out
-.wrangler
-
-.dev.vars
+node_modules/
+.DS_Store
+*.log
+*.readiness.json
+coverage/
+artifacts/native/

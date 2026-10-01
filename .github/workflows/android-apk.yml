@@ -1,0 +1,80 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "android-app/**"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android app dependencies
+        working-directory: android-app
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Validate web wrapper
+        working-directory: android-app
+        run: |
+          pnpm run typecheck
+          pnpm test
+          node ../tests/android-editor.test.mjs
+
+      - name: Generate Android project
+        working-directory: android-app
+        env:
+          CI: "1"
+        run: |
+          pnpm exec expo prebuild --platform android --clean --no-install
+          pnpm install --no-frozen-lockfile
+
+      - name: Build release APK
+        working-directory: android-app/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Game-Collector-Pro-release
+          path: android-app/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish public APK release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Game Collector Pro APK release ${{ github.run_number }}
+          body: |
+            APK release Game Collector Pro dari commit ${{ github.sha }}.
+            APK ini memuat web utama Game Collector Pro melalui WebView agar tampilan dan alur Collect tetap sama dengan deployment produksi.
+          files: android-app/android/app/build/outputs/apk/release/app-release.apk
+          generate_release_notes: false
