@@ -52,8 +52,10 @@ GAME WEB
 
 - **Auto download:** artifact diunduh otomatis setelah job sukses.
 - **Crawl referensi:** membaca isi JS/HTML/data lalu mengambil file yang disebut tapi belum termuat (bahasa lain, chunk, bonus).
+- **Capture settings:** koordinat spin opsional, auto-lengkapi/crawl dengan batas, HAR network opsional, dan badge progress/API snapshot/ZIP report.
 - **Kelengkapan:** kartu ✅/⚠️ per lapisan + hitungan API (login/state/balance/spin/lain).
 - **Dialog error:** error asli (download, file gagal) muncul di dialog. Tebakan crawl 404 dipisah agar tidak mengganggu.
+- **Telemetry:** Google Analytics/Tag Manager/tracker tidak dimasukkan sebagai error atau asset; HTTP 401/403 tetap dicatat sebagai resource terlindungi.
 - **Cookie (opsional):** secret repo `COLLECT_COOKIES` (`a=b; c=d` atau JSON Playwright).
 
 Hasil ZIP:

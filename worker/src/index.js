@@ -36,7 +36,7 @@ export default {
           body: JSON.stringify({ event_type: 'collect', client_payload: {
             game_url: b.url, folder: String(b.folder || 'game-1').replace(/[^\w-]/g, '').slice(0, 40) || 'game-1',
             play_seconds: num(b.play_seconds, 90, 600), spins: num(b.spins, 30, 500),
-            spin_x: String(+b.spin_x || ''), spin_y: String(+b.spin_y || ''), har: String(b.har || '0'), crawl: '1', crawl_max: '400', tag } }),
+            spin_x: String(+b.spin_x || ''), spin_y: String(+b.spin_y || ''), har: String(b.har || '0'), crawl: String(b.crawl === '0' ? '0' : '1'), crawl_max: num(b.crawl_max, 400, 2000), tag } }),
         });
         if (r.status !== 204) return J({ error: 'Dispatch gagal (HTTP ' + r.status + ')', detail: await r.text() }, 502);
         return J({ tag });

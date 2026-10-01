@@ -22,6 +22,7 @@ function layerOf(u, ct = '') { const e = extOf(u); if (/^html?$/.test(e) || ct.i
 function safeName(v) { return v.replace(/[<>:"|?*]/g, '_'); }
 function filePath(out, u) { const x = new URL(u); let p = decodeURIComponent(x.pathname); p = path.posix.normalize('/' + p); if (p.endsWith('/')) p += 'index.html'; return path.join(out, 'assets', x.hostname, safeName(p)); }
 function parseCookies(raw, domain) { if (!raw) return []; try { const v = JSON.parse(raw); return Array.isArray(v) ? v : []; } catch { return raw.split(';').map(s => s.trim()).filter(Boolean).map(s => { const i = s.indexOf('='); return { name: s.slice(0, i), value: s.slice(i + 1), domain, path: '/' }; }); } }
+export function isTelemetryUrl(raw) { try { const h = new URL(raw).hostname.toLowerCase(); return /(^|\.)google-analytics\.com$|(^|\.)googletagmanager\.com$|(^|\.)doubleclick\.net$|(^|\.)facebook\.com$|(^|\.)facebook\.net$/.test(h); } catch { return false; } }
 
 export async function collectGame(config, { chromium, onProgress = () => {}, fsImpl = fs } = {}) {
   if (!chromium) throw new Error('Playwright chromium wajib diberikan');
@@ -45,7 +46,8 @@ export async function collectGame(config, { chromium, onProgress = () => {}, fsI
   page.on('response', async res => {
     const req = res.request(), url = res.url(); if (!/^https?:/.test(url) || (res.status() >= 300 && res.status() < 400)) return;
     try {
-      if (res.status() >= 400) { failed.push({ url, error: 'HTTP ' + res.status(), layer: new URL(url).hostname !== originHost ? 'cdn' : 'origin' }); return; }
+      if (isTelemetryUrl(url)) { onProgress({ phase: 'ignored', reason: 'telemetry', url }); return; }
+      if (res.status() >= 400) { const auth = /\/auth\/|session|verifySession|login|token/i.test(url); failed.push({ url, error: 'HTTP ' + res.status(), layer: new URL(url).hostname !== originHost ? 'cdn' : 'origin', protected: auth, kind: auth ? 'authentication' : 'resource' }); return; }
       const ct = res.headers()['content-type'] || ''; let body = await res.body();
       const isApi = req.method() !== 'GET' || (['fetch', 'xhr'].includes(req.resourceType()) && !STATIC.test(new URL(url).pathname));
       if (isApi) { const text = body.toString('utf8'); api.push({ n: api.length + 1, url, method: req.method(), status: res.status(), request: req.postData() || null, response: text.includes('\uFFFD') ? undefined : text, ...(text.includes('\uFFFD') ? { response_b64: body.toString('base64') } : {}) }); return; }
