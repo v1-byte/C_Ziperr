@@ -6,6 +6,8 @@ APK Android adalah produk utama. APK menampilkan UI C.Ziperr melalui WebView; Wo
 
 `https://c_zipper.corelink-ai.workers.dev/`
 
+Rilis APK ini menggunakan Worker dan alur Collect yang didefinisikan di repository `v1-byte/C_Ziperr` sendiri; tidak bergantung pada repository collector eksternal.
+
 ## Perilaku jaringan
 
 APK membutuhkan koneksi internet untuk memuat aplikasi web utama dan API capture. Jika web tidak dapat dibuka, APK menampilkan pesan error, tombol coba lagi, dan pilihan membuka web melalui browser. APK tidak menyalin atau mengeksekusi kode game secara lokal.
