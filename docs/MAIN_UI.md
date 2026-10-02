@@ -4,6 +4,13 @@ URL tampilan utama aplikasi:
 
 <https://game-resource-collector.technologiesfrostbyte.workers.dev/>
 
+## Sumber tampilan utama APK
+
+- Source of truth UI web: **[`public/index.html`](../public/index.html)**.
+- Acuan layout terbaru: file HTML yang dikirim pengguna, `game-collector-pro(1).html`.
+- APK resmi membuka URL produksi yang sama melalui WebView; APK mengikuti tampilan web setelah Worker diperbarui. APK tidak menyimpan salinan HTML lokal.
+- Alur utama memakai panel **Tahapan & bantuan capture**. Kontrol otorisasi dan keamanan tetap tersedia di bagian yang bisa dibuka pada panel tersebut.
+
 Repository ini memakai UI dan sistem yang sama dengan URL tersebut. Struktur utama yang harus dipertahankan:
 
 - **Collect**
@@ -14,7 +21,7 @@ Repository ini memakai UI dan sistem yang sama dengan URL tersebut. Struktur uta
 - **Mulai Capture** dan **Stop & Finalize**
 - **Download ZIP**
 - **Log Preview & Capture**
-- **Research & keamanan**
+- **Research & keamanan** (kontrol izin tetap dipertahankan)
 - **Opsi lanjutan**
 - **Pipeline offline**
 - **AI Offline Readiness Assistant**

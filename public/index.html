@@ -3849,8 +3849,10 @@
         </section>
 
         <div class="collect-card gc-advanced-card">
-          <div class="gc-advanced-heading"><span><strong>Research &amp; keamanan</strong><span>Otorisasi dan perlindungan capture otomatis.</span></span><button type="button" class="gc-accordion-toggle" onclick="gcToggleFold('gc-research-card', this)" aria-controls="gc-research-card" aria-expanded="true">v</button></div>
-          <div class="gc-research-card gc-fold-body" id="gc-research-card" style="margin-top:12px;padding:11px;border:1px solid rgba(96,165,250,.32);border-radius:10px;background:rgba(96,165,250,.06);">
+          <div class="gc-advanced-heading"><span><strong>Tahapan &amp; bantuan capture</strong><span>Alur Preview, Capture, dan ZIP ke Workspace.</span></span></div>
+          <details class="gc-research-settings" id="gc-research-card" style="margin:12px 0;padding:10px 11px;border:1px solid rgba(96,165,250,.32);border-radius:10px;background:rgba(96,165,250,.06);">
+            <summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);font-weight:700;">Research &amp; keamanan · Otorisasi dan perlindungan capture</summary>
+            <div class="gc-research-card" style="margin-top:10px;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;"><input type="checkbox" id="gc-authorized-research" checked> <b>Authorized Research Mode</b></label>
               <span style="font-size:11px;color:var(--text-muted);">Capture hanya untuk game yang Anda miliki atau memiliki izin tertulis.</span>
@@ -3865,7 +3867,8 @@
               <details style="width:100%;margin-top:8px;"><summary style="cursor:pointer;font-size:11px;color:var(--text-secondary);">Opsi lanjutan</summary><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);margin-top:7px;"><input type="checkbox" id="gc-mock-offline"> Siapkan mock offline dan replay API</label></details>
               <span id="gc-research-status" style="font-size:11px;color:var(--text-muted);">Izin belum dicatat · verifikasi akses belum dicatat</span>
             </div>
-          </div>
+            </div>
+          </details>
 
           <!-- Compatibility flow: Preview & Capture → ZIP → Workspace -->
           <div id="gc-flow-steps" class="gc-flow-steps" aria-label="Tahapan capture">
