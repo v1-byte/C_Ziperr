@@ -15,7 +15,7 @@ export async function openRouterChat(env, messages, options = {}) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": String(env.OPENROUTER_SITE_URL || "https://game-resource-collector.workers.dev"),
+        "HTTP-Referer": String(env.OPENROUTER_SITE_URL || "https://c_zipper.corelink-ai.workers.dev"),
         "X-OpenRouter-Title": "Game Collector Pro"
       },
       body: JSON.stringify({

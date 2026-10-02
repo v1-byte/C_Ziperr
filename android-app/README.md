@@ -1,10 +1,10 @@
 # C.Ziperr Android APK
 
-APK resmi mobile untuk membuka tampilan dan alur web utama C.Ziperr di Android. Aplikasi memuat URL produksi yang sama melalui WebView, sehingga menu, branding, fitur Collect, Preview, Workspace, Activity, log, dan update web mengikuti deployment utama.
+APK Android adalah produk utama. APK menampilkan UI C.Ziperr melalui WebView; Worker hanya menjadi alamat backend/tampilan yang dibuka APK. Setelah APK migrasi dipasang sekali, update UI pada Worker dapat diterima tanpa mengunduh APK lagi.
 
 ## URL web utama
 
-`https://game-resource-collector.technologiesfrostbyte.workers.dev/`
+`https://c_zipper.corelink-ai.workers.dev/`
 
 ## Perilaku jaringan
 

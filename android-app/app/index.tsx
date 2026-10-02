@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-const MAIN_WEB_URL = 'https://game-resource-collector.technologiesfrostbyte.workers.dev/';
+const MAIN_WEB_URL = 'https://c_zipper.corelink-ai.workers.dev/';
 
 export default function CollectorApp() {
   const [loading, setLoading] = useState(true);

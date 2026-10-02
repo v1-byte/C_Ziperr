@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "game-resource-collector",
+  "name": "c_zipper",
   "main": "src/index.js",
   "compatibility_date": "2026-08-13",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,7 +11,7 @@
     "directory": "./public"
   },
   "kv_namespaces": [
-    { "binding": "GC_HISTORY", "id": "3869a97c9eaf49129a666476fcb672e8" }
+    { "binding": "GC_HISTORY", "id": "91caf15349a146e9ba23ef1a69165b59" }
   ],
   "vars": {
     "GH_OWNER": "frostbyte-lab",
@@ -19,7 +19,7 @@
     "GH_WORKFLOW": "collect.yml",
     "PUBLIC_APP_NAME": "Game Collector Pro",
     "OPENROUTER_MODEL": "openrouter/free",
-    "OPENROUTER_SITE_URL": "https://game-resource-collector.workers.dev",
+    "OPENROUTER_SITE_URL": "https://c_zipper.corelink-ai.workers.dev",
     "EDU_GH_OWNER": "frostbyte-lab",
     "EDU_GH_REPO": "Edu-network",
     "EDU_GH_BRANCH": "main",
