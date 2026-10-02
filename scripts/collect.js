@@ -30,6 +30,11 @@ import {
   isCriticalApiUrl,
   classifyApiResource
 } from "./zip-aware-detect.js";
+import {
+  parseAtlas,
+  atlasImageCandidates,
+  makeRegionPath
+} from "../src/collect/sprite-atlas.js";
 import { buildApiMap } from "../src/package/api-map.js";
 import { detectSecurityEvidence } from "../src/analyze/security-evidence.js";
 
@@ -99,7 +104,7 @@ function neutralizeFrameBusters(text) {
   return { text: out, count: n };
 }
 
-async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests) {
+async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl) {
   const candidates = [];
   const seenCandidate = new Set();
   const add = (raw) => {
@@ -142,11 +147,23 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
     if (!/\.[a-z0-9]{1,8}$/i.test(name)) name += '.bin';
     const localPath = `assets/images/${String(Object.keys(zipFiles).length + 1).padStart(4, '0')}-${name}`;
     try {
-      const response = await page.request.get(url, {
-        timeout: 30000,
-        failOnStatusCode: false,
-        headers: { Referer: mainDocUrl, Accept: 'image/*,audio/*,font/*,*/*;q=0.8' }
-      });
+      let response;
+      let lastError;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          response = await page.request.get(url, {
+            timeout: 30000,
+            failOnStatusCode: false,
+            headers: { Referer: mainDocUrl, Accept: 'image/*,audio/*,font/*,*/*;q=0.8' }
+          });
+          if (response.status() >= 200 && response.status() < 300) break;
+          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+        } catch (error) {
+          lastError = error;
+          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+        }
+      }
+      if (!response) throw lastError || new Error('request returned no response');
       const status = response.status();
       const body = await response.body();
       if (status >= 200 && status < 300 && body && body.length > 0) {
@@ -166,6 +183,60 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
     }
   }
   return { candidates: candidates.length, fetched, reused, failed, details };
+}
+
+async function extractAtlasRegions(page, zipFiles, resources) {
+  const extracted = [];
+  const used = new Set(Object.keys(zipFiles));
+  const textEntries = Object.entries(zipFiles).filter(([path]) => /\.(atlas|json)$/i.test(path));
+  for (const [atlasPath, data] of textEntries) {
+    let atlas;
+    try { atlas = parseAtlas(new TextDecoder().decode(data), atlasPath); } catch { atlas = null; }
+    if (!atlas?.regions?.length) continue;
+    const images = atlasImageCandidates(atlasPath, atlas, resources);
+    for (const imageResource of images) {
+      const imageData = zipFiles[imageResource.localPath];
+      if (!imageData || imageResource.localPath.includes('/extracted/')) continue;
+      const maxRegions = atlas.regions.slice(0, 500);
+      const payload = Buffer.from(imageData).toString('base64');
+      const mime = imageResource.contentType || 'image/png';
+      try {
+        const crops = await page.evaluate(async ({ payload, mime, regions }) => {
+          const image = new Image();
+          image.src = `data:${mime};base64,${payload}`;
+          await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+          const output = [];
+          for (const region of regions) {
+            const canvas = document.createElement('canvas');
+            canvas.width = region.rotated ? region.h : region.w;
+            canvas.height = region.rotated ? region.w : region.h;
+            const ctx = canvas.getContext('2d');
+            if (region.rotated) {
+              ctx.translate(canvas.width, 0);
+              ctx.rotate(Math.PI / 2);
+            }
+            ctx.drawImage(image, region.x, region.y, region.w, region.h, 0, 0, region.w, region.h);
+            output.push({ name: region.name, data: (await new Promise((resolve) => canvas.toBlob(async (blob) => resolve(blob ? await blob.arrayBuffer() : null), 'image/png')))});
+          }
+          return output.map((item) => item.data ? { name: item.name, data: Array.from(new Uint8Array(item.data)) } : null).filter(Boolean);
+        }, { payload, mime, regions: maxRegions });
+        for (const crop of crops) {
+          const localPath = makeRegionPath(imageResource.localPath, crop.name, used);
+          zipFiles[localPath] = new Uint8Array(crop.data);
+          resources.push({
+            url: `${imageResource.url}#region=${encodeURIComponent(crop.name)}`,
+            type: 'image', status: 200, localPath, size: crop.data.length,
+            contentType: 'image/png', capturedBy: 'atlas-region-extractor',
+            sourceAtlas: atlasPath, sourceImage: imageResource.localPath
+          });
+          extracted.push({ atlas: atlasPath, source: imageResource.localPath, localPath, name: crop.name });
+        }
+      } catch (error) {
+        console.warn('PROGRESS: atlas_extract_failed', atlasPath, imageResource.localPath, String(error?.message || error).slice(0, 160));
+      }
+    }
+  }
+  return { atlases: new Set(extracted.map((item) => item.atlas)).size, regions: extracted.length, files: extracted };
 }
 
 function smartPackage(zipFiles, resources) {
@@ -544,8 +615,10 @@ async function main() {
   // Proactive fallback: asset static signed yang tetap tertulis di HTML diambil
   // ulang dengan referer target, meskipun request tidak muncul sebagai response event.
   console.log("PROGRESS: proactive_static_assets");
-  const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests);
+  const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl);
   console.log("PROGRESS: proactive_static_assets_done", JSON.stringify(proactiveAssets));
+  const atlasRegions = await extractAtlasRegions(page, zipFiles, resources);
+  console.log("PROGRESS: atlas_regions_done", JSON.stringify({ atlases: atlasRegions.atlases, regions: atlasRegions.regions }));
 
   // HTML akhir
   console.log("PROGRESS: capture_html");
@@ -667,6 +740,7 @@ async function main() {
     blockers: blockerReport,
     failedRequests,
     proactiveStaticAssets: proactiveAssets,
+    atlasRegions,
     securityEvidence
   };
   zipFiles["manifest.json"] = strToU8(JSON.stringify(manifest, null, 2));
@@ -680,7 +754,8 @@ Total: ${resources.length} file
 Critical API: ${criticalApis.length}
 API contracts: ${apiContracts.length} · replay exchanges: ${replaySequence.length}
 Smart rewrite: ${smart.rewritten} · frame-buster: ${smart.neutralized}
-Proactive static assets: ${proactiveAssets.fetched} fetched · ${proactiveAssets.reused} reused · ${proactiveAssets.failed} failed
+  Proactive static assets: ${proactiveAssets.fetched} fetched · ${proactiveAssets.reused} reused · ${proactiveAssets.failed} failed
+  Atlas regions: ${atlasRegions.regions} individual PNG files from ${atlasRegions.atlases} atlas(s)
 Security findings: ${securityEvidence.summary.total} · critical ${securityEvidence.summary.critical} · high ${securityEvidence.summary.high}
 Auto spins: ${AUTO_SPINS} · history: ${AUTO_HISTORY}
 Realtime sessions: ${realtimeSummary.length} · received frames: ${realtimeSummary.reduce((n, s) => n + s.received, 0)}

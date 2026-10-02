@@ -5,8 +5,8 @@ const MAX_PACKAGE_BYTES = 80 * 1024 * 1024;
 
 function cfg(env = {}) {
   return {
-    owner: env.GH_OWNER || "frostbyte-lab",
-    repo: env.GH_REPO || "frostbyte-lab-game--collector",
+    owner: env.GH_OWNER || "v1-byte",
+    repo: env.GH_REPO || "C_Ziperr",
     branch: env.GC_PACKAGE_BRANCH || DEFAULT_BRANCH
   };
 }

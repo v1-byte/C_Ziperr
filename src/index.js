@@ -126,8 +126,8 @@ function sanitizeCaptureObject(value, key = '', depth = 0) {
 /** Portable GH config — override via wrangler vars (domain/server baru) */
 function ghConfig(env = {}) {
   return {
-    owner: env.GH_OWNER || "frostbyte-lab",
-    repo: env.GH_REPO || "frostbyte-lab-game--collector",
+    owner: env.GH_OWNER || "v1-byte",
+    repo: env.GH_REPO || "C_Ziperr",
     workflow: env.GH_WORKFLOW || "collect.yml"
   };
 }
@@ -541,7 +541,9 @@ async function handleRequest(request, env) {
         // Ambil run terbaru (sedikit delay di client; di sini coba list)
         await new Promise(r => setTimeout(r, 1500));
         const runs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/runs?per_page=5&event=workflow_dispatch`);
-        const run = runs.data?.workflow_runs?.[0] || null;
+        const run = (runs.data?.workflow_runs || [])
+          .filter((item) => item.event === "workflow_dispatch" && item.head_branch === "main")
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0] || null;
         return Response.json({
           ok: true,
           message: "GitHub Actions dimulai. Tunggu 1–3 menit, lalu cek status.",
@@ -610,7 +612,9 @@ async function handleRequest(request, env) {
       let artifact = null;
       if (r.status === "completed" && r.conclusion === "success") {
         const arts = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}/artifacts`);
-        artifact = arts.data?.artifacts?.[0] || null;
+        artifact = (arts.data?.artifacts || [])
+          .filter((item) => !item.expired && item.name === "game-resources")
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0] || null;
       }
       return Response.json({
         ok: true,
@@ -2608,4 +2612,3 @@ export default {
     return withSecurityHeaders(response, request, env);
   }
 };
-

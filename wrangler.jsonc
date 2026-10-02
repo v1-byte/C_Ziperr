@@ -14,8 +14,8 @@
     { "binding": "GC_HISTORY", "id": "91caf15349a146e9ba23ef1a69165b59" }
   ],
   "vars": {
-    "GH_OWNER": "frostbyte-lab",
-    "GH_REPO": "frostbyte-lab-game--collector",
+    "GH_OWNER": "v1-byte",
+    "GH_REPO": "C_Ziperr",
     "GH_WORKFLOW": "collect.yml",
     "PUBLIC_APP_NAME": "Game Collector Pro",
     "OPENROUTER_MODEL": "openrouter/free",
