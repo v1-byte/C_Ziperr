@@ -7,6 +7,7 @@ import { classifyResource } from "../classify/resource.js";
 import { classifySlotSubfolder, folderOf } from "../classify/slot-folder.js";
 import { MAX_SINGLE_FILE, MAX_RAW_TOTAL, sumZipFilesBytes } from "./limits.js";
 import { verifyDownload, normalizeUrl, sha256 } from "../offline/strict-collector.js";
+import { fetchWithRetry } from "./fetch-retry.js";
 
 function guessType(url, ct = "") {
   const u = url.toLowerCase();
@@ -78,7 +79,7 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
     }
     report.attempted++;
     try {
-      const res = await fetch(abs, {
+      const res = await fetchWithRetry(abs, {
         headers: {
           "User-Agent": "GameCollectorPro-Resume/1.0",
           Accept: "*/*",

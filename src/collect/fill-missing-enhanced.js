@@ -2,9 +2,10 @@ import { fillMissingAssets } from "./fill-missing.js";
 import { buildDependencyQueue } from "./queue.js";
 import { isExcluded } from "../classify/resource.js";
 import { extractReferencedUrls } from "./urls.js";
+import { MAX_FILL_PER_PASS, MAX_FILL_PASSES, MAX_FILL_PER_PASS_CAP, MAX_FILL_PASSES_CAP } from "./limits.js";
 
-export const FILL_MISSING_V2_MAX_PER_PASS = 250;
-export const FILL_MISSING_V2_MAX_PASSES = 8;
+export const FILL_MISSING_V2_MAX_PER_PASS = MAX_FILL_PER_PASS;
+export const FILL_MISSING_V2_MAX_PASSES = MAX_FILL_PASSES;
 
 function collectTextDependencies(zipFiles, baseHref) {
   const urls = new Set();
@@ -39,11 +40,11 @@ export async function fillMissingAssetsV2(
   options = {}
 ) {
   const maxPerPass = Math.min(
-    FILL_MISSING_V2_MAX_PER_PASS,
+    MAX_FILL_PER_PASS_CAP,
     Math.max(1, Number(options.maxPerPass) || FILL_MISSING_V2_MAX_PER_PASS)
   );
   const maxPasses = Math.min(
-    FILL_MISSING_V2_MAX_PASSES,
+    MAX_FILL_PASSES_CAP,
     Math.max(1, Number(options.maxPasses) || FILL_MISSING_V2_MAX_PASSES)
   );
   const runtimeUrls = Array.isArray(options.seedUrls) ? options.seedUrls : [];
@@ -63,7 +64,11 @@ export async function fillMissingAssetsV2(
     selectAllowed,
     maxPerPass,
     maxPasses,
-    seedUrls
+    seedUrls,
+    {
+      maxSingleFile: options.maxSingleFile,
+      maxRawTotal: options.maxRawTotal
+    }
   );
 
   return {
