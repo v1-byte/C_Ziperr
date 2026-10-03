@@ -41,7 +41,7 @@ export function preflightResponse(request, env) {
   if (!allowed) return Response.json({ ok: false, error: "CORS_ORIGIN_NOT_ALLOWED" }, { status: 403 });
   const headers = headersFor(request, env, "application/json");
   headers["Access-Control-Allow-Methods"] = "GET,HEAD,POST,OPTIONS";
-  headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With";
+  headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, X-GC-GitHub-Token";
   headers["Access-Control-Max-Age"] = "600";
   return new Response(null, { status: 204, headers });
 }

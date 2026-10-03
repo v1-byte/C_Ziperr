@@ -516,6 +516,7 @@ async function handleRequest(request, env) {
       } catch {
         return Response.json({ error: "URL http/https tidak valid" }, { status: 400 });
       }
+      const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
 
       const dispatch = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/dispatches`, {
         method: "POST",
@@ -529,18 +530,15 @@ async function handleRequest(request, env) {
             auto_history: String(body.auto_history ?? body.autoHistory ?? "1"),
             spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2200"),
             seed_zip: String(body.seed_zip ?? body.seedZip ?? ""),
-            authorized_research: String(body.authorized_research ? "1" : "0"),
-            license_ref: String(body.license_ref || "").slice(0, 500),
-            challenge_manual_complete: String(body.challenge_manual_complete ? "1" : "0"),
             mock_offline: String(body.mock_offline === false ? "0" : "1")
           }
         })
-      });
+      }, sessionToken);
 
       if (dispatch.status === 204 || dispatch.ok) {
         // Ambil run terbaru (sedikit delay di client; di sini coba list)
         await new Promise(r => setTimeout(r, 1500));
-        const runs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/runs?per_page=5&event=workflow_dispatch`);
+        const runs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/runs?per_page=5&event=workflow_dispatch`, {}, sessionToken);
         const run = (runs.data?.workflow_runs || [])
           .filter((item) => item.event === "workflow_dispatch" && item.head_branch === "main")
           .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0] || null;
@@ -554,7 +552,8 @@ async function handleRequest(request, env) {
         });
       }
       return Response.json({
-        error: "Gagal trigger GitHub Actions",
+        error: dispatch.data?.error || "Gagal trigger GitHub Actions",
+        code: dispatch.data?.code || null,
         detail: dispatch.data
       }, { status: dispatch.status || 500 });
     }
@@ -563,15 +562,16 @@ async function handleRequest(request, env) {
     if (request.method === "GET" && url.pathname === "/api/github/status") {
       const runId = url.searchParams.get("run_id");
       if (!runId) return Response.json({ error: "run_id wajib" }, { status: 400 });
-      const run = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}`);
-      if (!run.ok) return Response.json({ error: "Gagal ambil status", detail: run.data }, { status: run.status });
+      const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
+      const run = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}`, {}, sessionToken);
+      if (!run.ok) return Response.json({ error: run.data?.error || "Gagal ambil status", code: run.data?.code || null, detail: run.data }, { status: run.status });
       const r = run.data;
 
       // Detail job + steps (apa yang sedang dijalankan)
       let jobsOut = [];
       let currentStep = null;
       try {
-        const jobs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}/jobs`);
+        const jobs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}/jobs`, {}, sessionToken);
         const list = jobs.data?.jobs || [];
         for (const job of list) {
           const steps = (job.steps || []).map(s => ({
@@ -611,7 +611,7 @@ async function handleRequest(request, env) {
 
       let artifact = null;
       if (r.status === "completed" && r.conclusion === "success") {
-        const arts = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}/artifacts`);
+        const arts = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/runs/${runId}/artifacts`, {}, sessionToken);
         artifact = (arts.data?.artifacts || [])
           .filter((item) => !item.expired && item.name === "game-resources")
           .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0] || null;
@@ -635,8 +635,10 @@ async function handleRequest(request, env) {
     if (request.method === "GET" && url.pathname === "/api/github/artifact") {
       const artifactId = url.searchParams.get("artifact_id");
       if (!artifactId) return Response.json({ error: "artifact_id wajib" }, { status: 400 });
-      const token = env.GITHUB_TOKEN;
-      if (!token) return Response.json({ error: "GITHUB_TOKEN belum di-set" }, { status: 500 });
+      const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
+      const token = sessionToken || env.GITHUB_TOKEN || "";
+      if (!token) return Response.json({ error: "Token GitHub diperlukan untuk unduh artifact", code: "GITHUB_TOKEN_REQUIRED" }, { status: 401 });
+      if (token.length > 1024) return Response.json({ error: "Token GitHub terlalu panjang", code: "GITHUB_TOKEN_INVALID" }, { status: 400 });
       const res = await fetch(`https://api.github.com/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/artifacts/${artifactId}/zip`, {
         headers: {
           Accept: "application/vnd.github+json",
@@ -648,7 +650,12 @@ async function handleRequest(request, env) {
       });
       if (!res.ok) {
         const t = await res.text();
-        return Response.json({ error: "Gagal download artifact", detail: t.slice(0, 300) }, { status: res.status });
+        let responseData = null;
+        try { responseData = t ? JSON.parse(t) : null; } catch {}
+        const responseMessage = String(responseData?.message || t || "");
+        if (res.status === 401) return Response.json({ error: "Token GitHub tidak valid", code: "GITHUB_TOKEN_INVALID" }, { status: 401 });
+        if (res.status === 403 && /resource not accessible|insufficient permission|must have|not permitted/i.test(responseMessage)) return Response.json({ error: "Token tidak memiliki izin Actions read/write pada repository ini", code: "GITHUB_TOKEN_SCOPE" }, { status: 403 });
+        return Response.json({ error: "Gagal download artifact", detail: responseMessage.slice(0, 300) }, { status: res.status });
       }
       const outerBuf = new Uint8Array(await res.arrayBuffer());
       let outBytes = outerBuf;
@@ -1246,16 +1253,7 @@ async function handleRequest(request, env) {
       return Response.json({ error: "URL http/https tidak valid" }, { status: 400 });
     }
 
-    const researchMode = {
-      enabled: !!body.authorized_research,
-      licenseRef: String(body.license_ref || "").trim().slice(0, 500),
-      challengeManualComplete: !!body.challenge_manual_complete,
-      mockOffline: body.mock_offline !== false,
-      attestedAt: body.authorized_research ? new Date().toISOString() : null
-    };
-    if (researchMode.enabled && !researchMode.licenseRef) {
-      return Response.json({ error: "Authorized Research Mode memerlukan referensi license/izin resmi.", code: "LICENSE_REFERENCE_REQUIRED" }, { status: 400 });
-    }
+    const mockOffline = body.mock_offline !== false;
 
     // Selective collect filter (include/exclude by category or subfolder)
     const { allowed: selectAllowed, rawInclude, rawExclude } = buildAllowedSet(
@@ -2158,7 +2156,6 @@ async function handleRequest(request, env) {
         },
         smartRewrite: smart,
         autoFill: fillReport,
-        authorizedResearch: researchMode,
         collectAudit: collectAudit
           ? sanitizeCaptureObject({
               ok: collectAudit.ok,
@@ -2177,8 +2174,7 @@ async function handleRequest(request, env) {
         resources: safeManifest
       };
       zipFiles["manifest.json"] = strToU8(JSON.stringify(manifestData, null, 2));
-      zipFiles["authorized-research.json"] = strToU8(JSON.stringify({ version: 1, ...researchMode, targetHost: target.host, note: "Self-attestation metadata; verify license independently before distribution." }, null, 2));
-      if (researchMode.mockOffline) zipFiles["mock-offline-config.json"] = strToU8(JSON.stringify({ version: 1, enabled: true, source: "collector", apiMap: "api-map.json", note: "Mock/replay preparation only; not a production backend." }, null, 2));
+      if (mockOffline) zipFiles["mock-offline-config.json"] = strToU8(JSON.stringify({ version: 1, enabled: true, source: "collector", apiMap: "api-map.json", note: "Mock/replay preparation only; not a production backend." }, null, 2));
       zipFiles["keterangan.json"] = strToU8(JSON.stringify(ket.json, null, 2));
       // api-map.json — peta endpoint + snapshot untuk Sandbox mock (Sprint process 2)
       let apiMapFinal = null;
@@ -2346,7 +2342,7 @@ ${formatCollectAuditSummary(collectAudit)}
 
       // Guard raw total — hanya hard-fail jika TIDAK ada R2
       // (dengan R2 kita tetap coba packaging, memory tetap batas praktis ~50-60MB)
-      if (!hasR2 && rawTotal > MAX_RAW_TOTAL * 1.15) {
+      if (!hasR2 && rawTotal > limRaw * 1.15) {
         return tooLargeResponse({
           id,
           totalFiles: manifest.length,
@@ -2389,7 +2385,7 @@ ${formatCollectAuditSummary(collectAudit)}
             overallScore: analysis?.scores?.overall ?? null,
             stillMissing: (fillReport.stillMissing || []).slice(0, 30),
             message: resumeSessionId ? `session ${resumeSessionId}` : null,
-            via: hasR2 && zipData.byteLength > MAX_ZIP_RESPONSE ? "r2" : "worker"
+            via: hasR2 && zipData.byteLength > limZip ? "r2" : "worker"
           });
         }
       } catch {}
@@ -2540,7 +2536,7 @@ ${formatCollectAuditSummary(collectAudit)}
       };
 
       // ZIP terlalu besar untuk response Worker → pakai R2 (Poin 1)
-      if (zipData.byteLength > MAX_ZIP_RESPONSE) {
+      if (zipData.byteLength > limZip) {
         if (hasR2) {
           const downloadUrl = `/api/r2/download?key=${encodeURIComponent(zipKey)}`;
           return Response.json(

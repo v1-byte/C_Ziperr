@@ -28,11 +28,13 @@ test("Power Full Audit blocks missing API and network-off proof", () => {
   assert.ok(report.blockers.some((item) => item.code === "BROWSER_NETWORK_OFF_NOT_PROVEN"));
 });
 
-test("Power Full Audit requires authorized research for protected signals", () => {
+test("Power Full Audit blocks protected signals without requesting an authorization attestation", () => {
   const report = buildPowerFullAudit({
     ...completeEvidence,
     securityEvidence: { blocked: true, signals: [{ type: "DRM" }] }
   });
-  assert.equal(report.status, "AUTHORIZED_RESEARCH_REQUIRED");
-  assert.ok(report.blockers.some((item) => item.code === "AUTHORIZED_RESEARCH_REQUIRED"));
+  assert.equal(report.status, "NOT_READY");
+  assert.ok(report.blockers.some((item) => item.code === "PROTECTED_RESOURCE_BLOCKED"));
+  assert.equal(report.policy.protectedResourceBlocksRelease, true);
+  assert.equal(report.policy.authorizedResearchRequired, undefined);
 });

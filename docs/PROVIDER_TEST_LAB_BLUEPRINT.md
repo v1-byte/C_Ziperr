@@ -10,7 +10,7 @@ Game Collector Pro dikembangkan menjadi **Game Provider Test Lab** untuk menguji
 
 | Mode | Tujuan | Network | Output |
 |---|---|---|---|
-| Authorized Research | Capture game yang dimiliki atau diizinkan | Diizinkan sesuai target | ZIP, manifest, license reference, capture log |
+| Protected access | Resource/DRM/CAPTCHA terdeteksi | dicatat lalu diblokir; tidak ada bypass | security evidence, blocker report |
 | Hybrid Test | Menguji asset lokal dengan API provider | API eksternal diizinkan | Perbandingan local/remote dan error log |
 | Contract Capture | Merekam request/response dan urutan state | Hanya target berizin | `api-map.json`, contract, replay sequence |
 | Mock Offline | Menjalankan client dengan emulator lokal | Network diblokir | Mock API, state machine, realtime replay |
@@ -43,9 +43,9 @@ WebSocket, SSE, polling, reconnect, heartbeat, out-of-order event, duplicate eve
 
 Proof menggabungkan static package audit, runtime network interception, API mock coverage, realtime coverage, dynamic import coverage, Service Worker cache, gameplay smoke test, dan network-off browser run. `FULL_OFFLINE_READY` hanya sah bila seluruh mandatory checks lulus untuk ZIP tersebut.
 
-## Guardrail Otorisasi
+## Guardrail Teknis
 
-Authorized Research Mode mewajibkan pengguna menyatakan target berizin dan mencatat URL/ID license. Challenge manual hanya mencatat bahwa pengguna menyelesaikan challenge; sistem tidak melakukan bypass CAPTCHA, anti-bot, DRM, auth pihak lain, atau rate limit. Uji beban dan pengujian negatif hanya boleh diarahkan ke sandbox/staging yang diberi izin dan memiliki batas request.
+Form self-attestation/referensi lisensi tidak lagi menjadi syarat collect atau audit. Secara teknis, target yang menolak akses, meminta challenge/CAPTCHA, atau menggunakan DRM tetap diblokir; sistem tidak melakukan bypass. Uji beban dan pengujian negatif hanya boleh diarahkan ke sandbox/staging yang diberi izin dan memiliki batas request.
 
 ## Roadmap Implementasi
 

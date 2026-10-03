@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { resolveLimits } from "../src/collect/limits.js";
 import { fillMissingAssetsV2 } from "../src/collect/fill-missing-enhanced.js";
 import { fetchWithRetry } from "../src/collect/fetch-retry.js";
@@ -6,6 +7,7 @@ import { fetchWithRetry } from "../src/collect/fetch-retry.js";
 const standard = resolveLimits({}, {});
 const unlimitedWorker = resolveLimits({}, { unlimited: true });
 const unlimitedR2 = resolveLimits({ COLLECTOR_BUCKET: {} }, { mode: "unlimited" });
+const workerSource = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
 
 assert.equal(standard.fillPerPass, 250);
 assert.equal(standard.fillPasses, 8);
@@ -15,6 +17,8 @@ assert.equal(unlimitedWorker.maxRawTotal, 72 * 1024 * 1024);
 assert.equal(unlimitedR2.fillPerPass, 400);
 assert.equal(unlimitedR2.fillPasses, 10);
 assert.equal(unlimitedR2.maxRawTotal, 120 * 1024 * 1024);
+assert.match(workerSource, /if \(!hasR2 && rawTotal > limRaw \* 1\.15\)/);
+assert.match(workerSource, /if \(zipData\.byteLength > limZip\)/);
 
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async () => new Response("{}", {

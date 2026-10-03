@@ -15,7 +15,7 @@ Tools untuk **mengumpulkan, memisahkan, memperbaiki, dan menjalankan** resource 
 ### Prioritas 1 — Fondasi produk (kerjakan dulu)
 | No | Item | Status | Catatan untuk langkah berikutnya |
 |----|------|--------|----------------------------------|
-| 1.1 | **ZIP besar (>~25MB)** | ✅ via GitHub | Tanpa R2. Capture Worker → TOO_LARGE → auto-failover **Collect via GitHub Actions** (artifact). |
+| 1.1 | **ZIP besar (>~25MB)** | ✅ via GitHub | Capture Worker → quota/TOO_LARGE → auto-failover **Collect via GitHub Actions**. Jika Worker belum punya secret GitHub, UI meminta token sesi; token tidak disimpan. |
 | 1.2 | **History server-side (KV)** | ✅ Aktif | KV `GC_HISTORY` dan progress store terdeteksi aktif pada health check live; API history tersedia untuk sesi capture. |
 | 1.3 | **Progress collect real (polling)** | ✅ Aktif | Frontend memakai polling `/api/progress`; progress capture, file tertangkap, dan fase pipeline ditampilkan pada Preview. |
 
@@ -51,7 +51,7 @@ Tools untuk **mengumpulkan, memisahkan, memperbaiki, dan menjalankan** resource 
 - [x] Frame-buster neutralize saat package
 - [x] **Klasifikasi otomatis** game vs API vs server → folder `assets/` vs `server/`
 - [x] **KETERANGAN.md** + **keterangan.json** (host, endpoint, total per kategori)
-- [x] **Auto-lengkapi** referensi yang belum terunduh (`fillMissingAssets`, max 40) + `kelengkapan.json`
+- [x] **Auto-lengkapi** referensi yang belum terunduh dengan multi-pass, batas byte per mode, retry transient, dan daftar resume + `kelengkapan.json`
 - [x] Header meta: `X-GC-Game-Files`, `X-GC-Api-Files`, `X-GC-Fill-Ok`, dll.
 - [x] ZIP binary langsung (tanpa R2); R2 opsional jika bucket di-bind
 

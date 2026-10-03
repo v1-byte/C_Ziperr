@@ -3867,25 +3867,6 @@
 
         <div class="collect-card gc-advanced-card">
           <div class="gc-advanced-heading"><span><strong>Tahapan &amp; bantuan capture</strong><span>Alur Preview, Capture, dan ZIP ke Workspace.</span></span></div>
-          <details class="gc-research-settings" id="gc-research-card" style="margin:12px 0;padding:10px 11px;border:1px solid rgba(96,165,250,.32);border-radius:10px;background:rgba(96,165,250,.06);">
-            <summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);font-weight:700;">Research &amp; keamanan · Otorisasi dan perlindungan capture</summary>
-            <div class="gc-research-card" style="margin-top:10px;">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;"><input type="checkbox" id="gc-authorized-research"> <b>Authorized Research Mode</b></label>
-              <span style="font-size:11px;color:var(--text-muted);">Capture hanya untuk game yang Anda miliki atau memiliki izin tertulis.</span>
-            </div>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:8px;align-items:end;">
-              <label style="font-size:11px;color:var(--text-muted);">License / izin resmi (URL atau ID referensi)
-                <input id="gc-license-ref" type="text" placeholder="https://... atau LICENSE-REF-001" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
-              </label>
-              <button type="button" class="btn btn-secondary btn-sm" id="gc-challenge-manual" onclick="gcMarkManualChallenge()" title="Catat bahwa Anda telah memverifikasi akses secara sah; sistem tidak melewati CAPTCHA atau DRM">Tandai verifikasi akses</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;">
-              <details style="width:100%;margin-top:8px;"><summary style="cursor:pointer;font-size:11px;color:var(--text-secondary);">Opsi lanjutan</summary><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);margin-top:7px;"><input type="checkbox" id="gc-mock-offline"> Siapkan mock offline dan replay API</label></details>
-              <span id="gc-research-status" style="font-size:11px;color:var(--text-muted);">Izin belum dicatat · verifikasi akses belum dicatat</span>
-            </div>
-            </div>
-          </details>
 
           <!-- Compatibility flow: Preview & Capture → ZIP → Workspace -->
           <div id="gc-flow-steps" class="gc-flow-steps" aria-label="Tahapan capture">
@@ -3916,6 +3897,17 @@
               </select>
             </div>
           </div>
+          <details style="margin:8px 0 10px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;">
+            <summary style="cursor:pointer;font-size:11px;color:var(--text-secondary);">Opsi tambahan</summary>
+            <label style="display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--text-secondary);margin-top:8px;">
+              <input type="checkbox" id="collect-unlimited">
+              <span><b>Mode collect besar</b><br><span style="color:var(--text-muted);">Naikkan batas Worker; paket yang melewati kapasitas otomatis dialihkan ke GitHub Actions.</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-secondary);margin-top:8px;">
+              <input type="checkbox" id="gc-mock-offline">
+              <span>Siapkan mock offline dan replay API</span>
+            </label>
+          </details>
           <p style="font-size:11px;color:var(--text-muted);margin:0 0 10px;">
             Alur: <b>Paste URL</b> → <b>Preview &amp; Capture</b> → <b>Download ZIP</b> → <b>Workspace</b>.
             Preview tetap aktif selama proses capture. Auto-spins default 10.
@@ -3951,6 +3943,19 @@
             <button class="btn btn-secondary" onclick="clearStatus()">Clear</button>
           </div>
 
+          <div id="gc-github-token-modal" role="dialog" aria-modal="true" aria-labelledby="gc-github-token-title" style="display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.82);">
+            <div style="width:min(100%,480px);padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--panel,#111827);box-shadow:0 24px 80px rgba(0,0,0,.55);">
+              <strong id="gc-github-token-title" style="font-size:16px;">GitHub diperlukan untuk collect besar</strong>
+              <p style="font-size:12px;line-height:1.55;color:var(--text-secondary);">Worker belum terhubung ke GitHub. Gunakan Fine-grained token dengan akses hanya ke repository <b>v1-byte/C_Ziperr</b> dan izin <b>Actions: Read and write</b>. Token dipakai lewat HTTPS hanya selama tab ini berjalan; tidak disimpan ke browser atau Worker.</p>
+              <label for="gc-github-token-input" style="display:block;font-size:11px;color:var(--text-muted);margin:10px 0 5px;">Token GitHub (jangan kirim lewat chat)</label>
+              <input id="gc-github-token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" onkeydown="if(event.key==='Enter')gcResolveGithubToken(true)" style="box-sizing:border-box;width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="gcResolveGithubToken(false)">Batal</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="gcResolveGithubToken(true)">Lanjutkan Collect</button>
+              </div>
+            </div>
+          </div>
+
           <div class="collect-help gc-help-professional" id="collect-help">
             <button type="button" class="collect-help-toggle" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">
               <span>Cara pakai fitur Collect</span>
@@ -3963,7 +3968,7 @@
               </details>
               <details class="collect-help-item" open>
                 <summary>Alur offline (tanpa EDU)</summary>
-                <p>1) Masukkan URL dan referensi izin.<br>
+                <p>1) Masukkan URL game milik Anda atau yang Anda berhak kelola.<br>
                 2) Klik <b>PREVIEW &amp; CAPTURE</b>; game tampil dan capture berjalan otomatis.<br>
                 3) Mainkan fitur utama dan pantau progress capture di Preview.<br>
                 4) Tekan <b>STOP &amp; FINALIZE</b> untuk mengakhiri sesi.<br>
@@ -13912,36 +13917,68 @@ function isApiLike(u){
     // ========== Collect via Cloudflare (Playwright) ==========
     // ========== Collect via Cloudflare (Playwright) ==========
     // Semua status & unduhan tetap di web ini — tidak buka tab GitHub.
-    function gcValidateResearchOptions(opts) {
-      if (!opts || !opts.authorized_research) return true;
-      if (!opts.license_ref) {
-        var status = document.getElementById('gc-research-status');
-        if (status) status.textContent = 'Referensi license/izin resmi wajib diisi.';
-        alert('Authorized Research Mode aktif. Isi URL atau ID license/izin resmi terlebih dahulu.');
-        var field = document.getElementById('gc-license-ref');
-        if (field) field.focus();
-        return false;
-      }
-      return true;
-    }
-    function gcMarkManualChallenge() {
-      window.__gcManualChallengeComplete = true;
-      var btn = document.getElementById('gc-challenge-manual');
-      if (btn) { btn.textContent = 'Verifikasi akses dicatat ✓'; btn.classList.add('is-done'); }
-      var status = document.getElementById('gc-research-status');
-      if (status) status.textContent = (document.getElementById('gc-license-ref')?.value || '').trim() ? 'Izin tercatat · verifikasi akses dicatat' : 'Izin belum dicatat · verifikasi akses dicatat';
-      try { if (typeof actRecord === 'function') actRecord('research', 'Verifikasi akses dicatat', 'User mengonfirmasi akses yang sah di browser.'); } catch (_) {}
-    }
     function gcCollectOptions() {
       const wait = String(Math.min(180, Math.max(3, Number(document.getElementById('collect-wait')?.value) || 22)));
       const spins = String(Math.min(50, Math.max(0, Number(document.getElementById('collect-spins')?.value) || 6)));
       const spinDelay = String(Math.min(8000, Math.max(500, Number(document.getElementById('collect-spin-delay')?.value) || 2200)));
       const history = String(document.getElementById('collect-history')?.value === '0' ? '0' : '1');
       const unlimited = !!(document.getElementById('collect-unlimited') && document.getElementById('collect-unlimited').checked);
-      const authorizedResearch = !!document.getElementById('gc-authorized-research')?.checked;
-      const licenseRef = String(document.getElementById('gc-license-ref')?.value || '').trim().slice(0, 500);
       const mockOffline = !!document.getElementById('gc-mock-offline')?.checked;
-      return { wait_seconds: wait, auto_spins: spins, spin_delay_ms: spinDelay, auto_history: history, unlimited: unlimited, mode: unlimited ? 'unlimited' : undefined, authorized_research: authorizedResearch, license_ref: licenseRef, challenge_manual_complete: !!window.__gcManualChallengeComplete, mock_offline: mockOffline };
+      return { wait_seconds: wait, auto_spins: spins, spin_delay_ms: spinDelay, auto_history: history, unlimited: unlimited, mode: unlimited ? 'unlimited' : undefined, mock_offline: mockOffline };
+    }
+
+    let _gcGithubTokenResolve = null;
+    function gcRequestGithubToken() {
+      const modal = document.getElementById('gc-github-token-modal');
+      const input = document.getElementById('gc-github-token-input');
+      if (!modal || !input) return Promise.resolve('');
+      input.value = '';
+      modal.style.display = 'flex';
+      return new Promise(function (resolve) {
+        _gcGithubTokenResolve = resolve;
+        setTimeout(function () { try { input.focus(); } catch (_) {} }, 30);
+      });
+    }
+    function gcResolveGithubToken(accept) {
+      const modal = document.getElementById('gc-github-token-modal');
+      const input = document.getElementById('gc-github-token-input');
+      const token = String(input?.value || '').trim();
+      const resolve = _gcGithubTokenResolve;
+      _gcGithubTokenResolve = null;
+      if (modal) modal.style.display = 'none';
+      if (input) input.value = '';
+      const acceptedToken = accept && token.length <= 1024 ? token : '';
+      if (acceptedToken) window.__gcGithubCollectToken = acceptedToken;
+      if (resolve) resolve(acceptedToken);
+    }
+    window.gcResolveGithubToken = gcResolveGithubToken;
+    function gcClearGithubToken() {
+      window.__gcGithubCollectToken = '';
+      const input = document.getElementById('gc-github-token-input');
+      if (input) input.value = '';
+    }
+    window.addEventListener('pagehide', gcClearGithubToken);
+    function gcGithubAuthHeaders() {
+      const token = String(window.__gcGithubCollectToken || '').trim();
+      return token ? { 'X-GC-GitHub-Token': token } : {};
+    }
+    async function gcFetchGithubCollect(url, init) {
+      const send = function (token) {
+        const headers = Object.assign({}, init.headers || {});
+        if (token) headers['X-GC-GitHub-Token'] = token;
+        return fetch(url, Object.assign({}, init, { headers: headers }));
+      };
+      let token = String(window.__gcGithubCollectToken || '').trim();
+      let res = await send(token);
+      let data = await res.json().catch(function () { return {}; });
+      if (res.status === 401 && data.code === 'GITHUB_TOKEN_REQUIRED' && !token) {
+        token = await gcRequestGithubToken();
+        if (!token) return { res: res, data: data, cancelled: true };
+        res = await send(token);
+        data = await res.json().catch(function () { return {}; });
+      }
+      if (data.code === 'GITHUB_TOKEN_INVALID' || data.code === 'GITHUB_TOKEN_SCOPE') gcClearGithubToken();
+      return { res: res, data: data, cancelled: false };
     }
 
     function gcCollectAIEnabled() {
@@ -14055,7 +14092,6 @@ function isApiLike(u){
       const statusEl = document.getElementById('status');
       const gameUrl = (urlInput && urlInput.value || '').trim();
       const opts = gcCollectOptions();
-      if (!gcValidateResearchOptions(opts)) return;
 
       if (!gameUrl) {
         alert('Masukkan URL game dulu');
@@ -14118,7 +14154,7 @@ function isApiLike(u){
 
         let res = null;
         let requestError = null;
-        const retryableStatuses = new Set([408, 425, 429, 500, 502, 504, 520, 522, 524]);
+        const retryableStatuses = new Set([408, 425, 500, 502, 504, 520, 522, 524]);
         for (let attempt = 1; attempt <= 2; attempt += 1) {
           const captureController = new AbortController();
           captureTimeout = setTimeout(() => captureController.abort(), 8 * 60 * 1000);
@@ -14148,15 +14184,18 @@ function isApiLike(u){
         if (!res.ok) {
           let errMsg = res.statusText;
           let rawErr = '';
+          let err = {};
           try { rawErr = await res.clone().text(); } catch (_) {}
-          try {
-            const err = await res.json();
-            errMsg = err.error || err.message || errMsg;
-          } catch (_) { if (rawErr) errMsg = rawErr.slice(0, 240); }
-          if (res.status === 503 && /1102|cpu|worker.*limit|script.*exceeded/i.test(String(errMsg) + ' ' + rawErr)) {
-            statusEl.textContent = 'Status: Worker mencapai batas proses · beralih ke Collect via GitHub…';
+          try { err = await res.json(); } catch (_) { if (rawErr) errMsg = rawErr.slice(0, 240); }
+          errMsg = err.message || err.error || errMsg;
+          const errCode = err.code || err.error || '';
+          const runtimeLimit = res.status === 503 && /1102|cpu|worker.*limit|script.*exceeded/i.test(String(errMsg) + ' ' + rawErr);
+          const browserQuota = res.status === 429 && String(errCode) === 'LIMIT_BROWSER';
+          const packageTooLarge = res.status === 413 && String(errCode) === 'TOO_LARGE';
+          if (runtimeLimit || browserQuota || packageTooLarge) {
+            statusEl.textContent = 'Status: Batas Worker tercapai · beralih ke Collect via GitHub…';
             try { gcUpdateCapturePreviewProgress(5, '5% · Beralih ke runner GitHub untuk capture besar…'); } catch (_) {}
-            try { appendLog('Worker mencapai batas CPU (1102); fallback otomatis ke GitHub Actions dimulai.', 'warn'); } catch (_) {}
+            try { appendLog('Kapasitas Worker tercapai (' + (errCode || res.status) + '); fallback ke GitHub Actions dimulai.', 'warn'); } catch (_) {}
             try { await runGitHubCollect(); return; } catch (fallbackError) { errMsg = 'Fallback GitHub gagal: ' + (fallbackError?.message || fallbackError); }
           }
           statusEl.textContent = 'Status: Gagal — ' + errMsg;
@@ -14330,7 +14369,6 @@ function isApiLike(u){
       const statusEl = document.getElementById('status');
       const gameUrl = (urlInput && urlInput.value || '').trim();
       const opts = gcCollectOptions();
-      if (!gcValidateResearchOptions(opts)) return;
 
       if (!gameUrl) {
         alert('Masukkan URL game dulu');
@@ -14340,6 +14378,7 @@ function isApiLike(u){
         alert('URL tidak valid (harus http/https)');
         return;
       }
+      if (!(await gcPreflightTarget(gameUrl))) return;
       try { gcCockpitSetPreview(gameUrl, 'Preview aktif · proses GitHub dimulai…'); } catch (_) {}
       try {
         gcSetCaptureResultActions(false, false);
@@ -14355,7 +14394,7 @@ function isApiLike(u){
       try { gcCollectToastShow('Collect via GitHub…'); gcUpdateCollectProgress({ pct: 5, fileCount: 0, items: GC_PACK_CHECKLIST.map(function(c){ return { label: c.label, ok: false, optional: !!c.optional }; }) }, 'antrian'); } catch (_) {}
 
       try {
-        const res = await fetch('/api/github/collect', {
+        const authResult = await gcFetchGithubCollect('/api/github/collect', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -14364,16 +14403,21 @@ function isApiLike(u){
             auto_spins: opts.auto_spins,
             spin_delay_ms: opts.spin_delay_ms,
             auto_history: opts.auto_history,
-            authorized_research: opts.authorized_research,
-            license_ref: opts.license_ref,
-            challenge_manual_complete: opts.challenge_manual_complete,
             mock_offline: opts.mock_offline
           })
         });
-
-        const data = await res.json().catch(() => ({}));
+        const res = authResult.res;
+        const data = authResult.data;
+        if (authResult.cancelled) {
+          const cancelledMessage = 'Collect besar belum dimulai. GitHub belum terhubung; Capture Cloudflare tetap tersedia untuk paket kecil/sedang.';
+          statusEl.textContent = 'Status: ' + cancelledMessage;
+          gcUpdateCapturePreviewProgress(0, '0% · ' + cancelledMessage);
+          gcSetCapturePreviewStatus(cancelledMessage, 'error');
+          return;
+        }
         if (!res.ok || !data.ok) {
-          const msg = data.error || (data.detail && JSON.stringify(data.detail)) || res.status;
+          const msg = data.message || data.error || (data.detail && JSON.stringify(data.detail)) || res.status;
+          gcClearGithubToken();
           statusEl.textContent = 'Status: Gagal trigger — ' + msg;
           gcSetCaptureResultActions(false, false);
           gcUpdateCapturePreviewProgress(0, '0% · Collect GitHub gagal · ' + msg);
@@ -14393,6 +14437,7 @@ function isApiLike(u){
           gcSetCapturePreviewStatus(missingRunId, 'error');
         }
       } catch (e) {
+        gcClearGithubToken();
         statusEl.textContent = 'Status: Error — ' + e.message;
         gcSetCaptureResultActions(false, false);
         gcUpdateCapturePreviewProgress(0, '0% · Collect GitHub error · ' + e.message);
@@ -14411,15 +14456,16 @@ function isApiLike(u){
       _ghPollTimer = setInterval(async () => {
         tries++;
         try {
-          const res = await fetch('/api/github/status?run_id=' + encodeURIComponent(runId));
+          const res = await fetch('/api/github/status?run_id=' + encodeURIComponent(runId), { headers: gcGithubAuthHeaders() });
           const data = await res.json();
           if (!data.ok) {
-            statusEl.textContent = 'Status: Gagal cek status';
+            statusEl.textContent = 'Status: ' + (data.error || 'Gagal cek status');
             gcSetCaptureResultActions(false, false);
             gcUpdateCapturePreviewProgress(0, '0% · Gagal membaca status Collect GitHub');
-            gcSetCapturePreviewStatus('Gagal membaca status Collect GitHub.', 'error');
+            gcSetCapturePreviewStatus(data.error || 'Gagal membaca status Collect GitHub.', 'error');
             clearInterval(_ghPollTimer);
             _ghPollTimer = null;
+            gcClearGithubToken();
             return;
           }
 
@@ -14444,13 +14490,16 @@ function isApiLike(u){
                 var artUrl = '/api/github/artifact?artifact_id=' + encodeURIComponent(artId);
                 var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
                 var to = setTimeout(function () { try { if (ctrl) ctrl.abort(); } catch (_) {} }, 180000);
-                const zipRes = await fetch(artUrl, ctrl ? { signal: ctrl.signal } : undefined);
+                const artifactOptions = { headers: gcGithubAuthHeaders() };
+                if (ctrl) artifactOptions.signal = ctrl.signal;
+                const zipRes = await fetch(artUrl, artifactOptions);
                 clearTimeout(to);
                 if (!zipRes.ok) {
                   var errTxt = '';
                   try { errTxt = await zipRes.text(); } catch (_) {}
                   var artifactError = 'Gagal unduh artifact (' + zipRes.status + ') ' + String(errTxt).slice(0, 120);
                   statusEl.textContent = 'Status: Selesai tapi ' + artifactError;
+                  gcClearGithubToken();
                   gcSetCaptureResultActions(false, false);
                   gcUpdateCapturePreviewProgress(0, '0% · ' + artifactError);
                   gcSetCapturePreviewStatus(artifactError, 'error');
@@ -14499,6 +14548,7 @@ function isApiLike(u){
                 } catch (_) {}
                 // 2) Coba load ke Workspace
                 var loadedWs = await gcLoadCaptureBlobToWorkspace(blob, 'game-resources.zip', true);
+                gcClearGithubToken();
                 gcSetCaptureResultActions(true, loadedWs);
                 gcUpdateCapturePreviewProgress(100, loadedWs ? '100% · ZIP diunduh · paket siap di Workspace' : '100% · ZIP diunduh · buka Workspace untuk Load ZIP');
                 var githubPreviewStatus = document.getElementById('gc-cockpit-preview-status');
@@ -14521,6 +14571,7 @@ function isApiLike(u){
                 try { setTimeout(gcCollectToastHide, 2500); } catch (_) {}
                 }
               } catch (dlErr) {
+                gcClearGithubToken();
                 var msg = (dlErr && dlErr.name === 'AbortError')
                   ? 'timeout unduh (jaringan lambat). Coba WiFi / Capture (Cloudflare).'
                   : (dlErr && dlErr.message ? dlErr.message : String(dlErr));
@@ -14528,6 +14579,7 @@ function isApiLike(u){
               }
             } else {
                   var noArtifact = 'Collect selesai tetapi artifact tidak tersedia.';
+                  gcClearGithubToken();
                   statusEl.textContent = 'Status: ' + noArtifact;
                   gcSetCaptureResultActions(false, false);
                   gcUpdateCapturePreviewProgress(0, '0% · ' + noArtifact);
@@ -14545,6 +14597,7 @@ function isApiLike(u){
         if (tries >= maxTries) {
           clearInterval(_ghPollTimer);
           _ghPollTimer = null;
+          gcClearGithubToken();
           var pollTimeout = 'Timeout — proses Collect GitHub terlalu lama.';
           statusEl.textContent = 'Status: ' + pollTimeout;
           gcSetCaptureResultActions(false, false);
