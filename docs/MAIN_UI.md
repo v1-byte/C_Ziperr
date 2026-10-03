@@ -9,7 +9,7 @@ URL tampilan utama aplikasi:
 - Source of truth UI web: **[`public/index.html`](../public/index.html)**.
 - Acuan layout terbaru: file HTML yang dikirim pengguna, `game-collector-pro(1).html`.
 - Produk yang diminta adalah **APK Android**. APK membungkus tampilan utama melalui WebView pada URL Worker di atas, sehingga tampilan dan perubahan berikutnya mengikuti deployment Worker tanpa membangun APK ulang setelah migrasi awal.
-- Alur utama memakai panel **Tahapan & bantuan capture**. Kontrol otorisasi dan keamanan tetap tersedia di bagian yang bisa dibuka pada panel tersebut.
+- Alur utama memakai panel **Tahapan & bantuan capture**. Form referensi lisensi/self-attestation telah dihapus; blokir teknis untuk 401/403, challenge, dan DRM tetap aktif.
 
 Repository ini memakai UI dan sistem yang sama dengan URL tersebut. Struktur utama yang harus dipertahankan:
 
@@ -21,7 +21,6 @@ Repository ini memakai UI dan sistem yang sama dengan URL tersebut. Struktur uta
 - **Mulai Capture** dan **Stop & Finalize**
 - **Download ZIP**
 - **Log Preview & Capture**
-- **Research & keamanan** (kontrol izin tetap dipertahankan)
 - **Opsi lanjutan**
 - **Pipeline offline**
 - **AI Offline Readiness Assistant**

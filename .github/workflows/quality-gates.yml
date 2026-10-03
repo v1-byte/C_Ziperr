@@ -37,6 +37,7 @@ jobs:
         run: npm audit
       - name: Run repository tests
         run: |
+          npm run test:unit
           npm run test:security-evidence
           node tests/master-toolset.test.mjs
           npm run test:collect-signed-assets

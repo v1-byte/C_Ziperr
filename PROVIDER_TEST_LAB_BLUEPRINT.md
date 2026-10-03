@@ -21,31 +21,31 @@ Kemampuan utama meliputi Chromium/Playwright, CDP, mitmproxy, Wireshark, Ghidra,
 | URL rewrite | Tidak ada asset signed CDN, iframe eksternal, worker eksternal, atau dynamic import wajib online | external dependency blocker |
 | API capture | Session, init, balance, spin/play, result/settle, body, response, urutan, dan transport tercatat | API contract incomplete |
 | Local replay/emulator | Kontrak replay atau stateful emulator sesuai schema game yang diuji | API contract mismatch |
-| Security evidence | DRM, license server, anti-bot, signature, dan restriction signal tercatat | `AUTHORIZED_RESEARCH_REQUIRED` atau blocked |
+| Security evidence | DRM, license server, anti-bot, signature, dan restriction signal tercatat | blocked/manual action; kontrol tidak dilewati |
 | Browser network-off | load → session → init → balance → spin → result tanpa request keluar | `NOT_READY` |
 | Report | manifest, evidence, log, findings, hash, dan keputusan quality gate tersimpan | final report incomplete |
 
 ## Aturan security evidence
 
-Detector `src/analyze/security-evidence.js` menandai sinyal DRM, license server, anti-bot/challenge, token signature, dan restriction. Jika sinyal ditemukan, mode Authorized Research harus memuat referensi lisensi/izin resmi dan konfirmasi challenge manual. Sistem hanya mencatat bukti dan mengarahkan pengujian ke jalur yang sah; sistem tidak menghapus atau mengakali kontrol tersebut.
+Detector `src/analyze/security-evidence.js` menandai sinyal DRM, license server, anti-bot/challenge, token signature, dan restriction. Form lisensi/self-attestation UI telah dihapus agar tidak menghambat collect biasa; sinyal teknis yang menunjukkan akses ditolak atau kontrol terlindungi tetap memblokir jalur otomatis. Sistem tidak menghapus atau mengakali kontrol tersebut.
 
 Header credential dan data sensitif harus disaring. Contract snapshot menyimpan method, URL/path, query keys, header yang telah direda​ksi, body terbatas, response status/content type, top-level keys, dan bentuk field. Nilai Authorization, Cookie, Set-Cookie, X-Api-Key, proxy-auth, token, dan secret tidak boleh dimasukkan ke ZIP, repository, laporan publik, atau localStorage.
 
 ## Quality gate offline
 
-Validator menetapkan `FULL_OFFLINE_READY` hanya bila seluruh bukti tersedia: ZIP valid, manifest lengkap, analisis offline tersimpan, dependency blocker terselesaikan, API replay/emulator tersedia, runtime interceptor aktif, dan browser test network-off berhasil. Satu request jaringan yang lolos, satu asset wajib yang hilang, kontrak API yang tidak cocok, atau bukti keamanan yang belum diotorisasi harus menurunkan status menjadi `NOT_READY` atau `AUTHORIZED_RESEARCH_REQUIRED`.
+Validator menetapkan `FULL_OFFLINE_READY` hanya bila seluruh bukti tersedia: ZIP valid, manifest lengkap, analisis offline tersimpan, dependency blocker terselesaikan, API replay/emulator tersedia, runtime interceptor aktif, dan browser test network-off berhasil. Satu request jaringan yang lolos, satu asset wajib yang hilang, kontrak API yang tidak cocok, atau resource terlindungi yang terdeteksi harus menurunkan status menjadi `NOT_READY` atau blocked.
 
 AI Offline Readiness Assistant hanya membantu audit, diagnosis, dan prioritas perbaikan. AI tidak menentukan kelulusan sendiri, tidak mengubah payout/RNG/signature, dan tidak boleh menjadi dependency runtime game. Manus AI menggunakan secret server-side atau session key personal yang hanya hidup selama sesi; key tidak ditulis ke repository atau ZIP.
 
 ## Deployment dan verifikasi
 
-Deployment Worker berjalan melalui `.github/workflows/deploy-worker.yml` pada push ke `main`. URL canonical production adalah [game-resource-collector.technologiesfrostbyte.workers.dev](https://game-resource-collector.technologiesfrostbyte.workers.dev). Endpoint health yang harus merespons sukses adalah `/api/health`, sedangkan registry dapat diverifikasi melalui `/api/tools/master` dan marker UI `MASTER TOOLSET` pada halaman utama.
+Deployment Worker berjalan melalui `.github/workflows/deploy-worker.yml` pada push ke `main`. URL canonical production adalah [c-zipper.corelink-ai.workers.dev](https://c-zipper.corelink-ai.workers.dev). Endpoint health yang harus merespons sukses adalah `/api/health`, sedangkan registry dapat diverifikasi melalui `/api/tools/master` dan marker UI `MASTER TOOLSET` pada halaman utama.
 
 Required checks untuk `main` adalah `Unit and inline-JS tests`, `Secret scan`, dan `CodeQL analysis`. Branch protection tetap ketat setelah proses merge: strict status checks aktif, satu approval diperlukan, code-owner review tetap diwajibkan, stale review didismiss, dan admin enforcement aktif.
 
 ## Checklist operasional
 
-Sebelum menguji provider, pastikan URL dan game memang berizin, challenge manual diselesaikan melalui browser resmi, dan data credential tidak direkam. Setelah collect, periksa `manifest.json`, `api-map.json`, `research-metadata.json`, `security-evidence.json`, log network, dan report validator. Jalankan browser network-off pada setiap ZIP secara terpisah. Jangan menyatakan semua game offline hanya karena satu demo atau emulator generik berhasil.
+Sebelum menguji provider, gunakan target yang dimiliki atau yang memang boleh diuji; jangan mengirim credential ke collector. Jika target meminta login/challenge/DRM, hentikan jalur otomatis dan gunakan integrasi resmi. Setelah collect, periksa `manifest.json`, `api-map.json`, `security-evidence.json`, log network, dan report validator. Jalankan browser network-off pada setiap ZIP secara terpisah. Jangan menyatakan semua game offline hanya karena satu demo atau emulator generik berhasil.
 
 ## Referensi kode
 
@@ -65,6 +65,6 @@ Sebelum menguji provider, pastikan URL dan game memang berizin, challenge manual
 
 Engine `src/audit/power-full.js` menggabungkan evidence manifest, asset gaps, API contract, network timeline, browser network-off, security evidence, dan gameplay result menjadi satu laporan deterministik. Endpoint production-nya adalah `POST /api/audit/power-full`; payload dibatasi agar evidence tidak membebani Worker dan harus sudah direda​ksi sebelum dikirim.
 
-Audit v2 memeriksa lima gerbang: package, API, security, browser network-off, dan gameplay. Audit hanya menghasilkan `FULL_OFFLINE_READY` bila semua blocker kosong, lima kontrak API minimum (`session`, `init`, `balance`, `spin`, `result`) tersedia, browser benar-benar network-isolated, gameplay berhasil, dan tidak ada network violation. Sinyal DRM/license/anti-bot/signature/restriction tanpa otorisasi menghasilkan `AUTHORIZED_RESEARCH_REQUIRED`. Selain status, laporan menghasilkan score, counts, blockers, warnings, next actions, serta policy flags.
+Audit v2 memeriksa lima gerbang: package, API, protected-resource detection, browser network-off, dan gameplay. Audit hanya menghasilkan `FULL_OFFLINE_READY` bila semua blocker kosong, lima kontrak API minimum (`session`, `init`, `balance`, `spin`, `result`) tersedia, browser benar-benar network-isolated, gameplay berhasil, dan tidak ada network violation. Sinyal DRM/license/anti-bot/signature/restriction menghasilkan `PROTECTED_RESOURCE_BLOCKED`; audit tidak meminta referensi izin dan tidak melewati kontrol. Selain status, laporan menghasilkan score, counts, blockers, warnings, next actions, serta policy flags.
 
 Activity → FULL_OFFLINE_READY sekarang memiliki tombol **Power Full Audit**. Tombol membaca `api-map.json`, `security-evidence.json`, dan network evidence dari ZIP yang dipilih, mengirim ringkasan evidence ke engine, lalu menampilkan status dan JSON report. Tombol tersebut tidak memalsukan browser test; bukti network-off tetap harus berasal dari test yang benar-benar dijalankan.

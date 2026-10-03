@@ -9,6 +9,7 @@ assert.equal(report.summary.total, 50);
 assert.ok(report.summary.active > 0);
 assert.ok(report.summary.partial > 0);
 assert.ok(report.summary.external > 0);
-assert.equal(report.policy.authorizedResearchRequired, true);
+assert.equal(report.policy.protectedResourceDetectionRequired, true);
+assert.equal(report.policy.authorizedResearchRequired, undefined);
 assert.equal(report.policy.bypassControls, false);
 console.log("master toolset test passed");

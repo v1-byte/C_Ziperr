@@ -151,12 +151,14 @@ Game yang wajib server tiap aksi → perlu mock/backend sendiri (sandbox).
 ================================================================================
 
 --------------------------------------------------------------------------------
-13. AUTHORIZED RESEARCH MODE
+13. COLLECT FLOW (UI TERBARU)
 --------------------------------------------------------------------------------
-Authorized Research Mode terintegrasi langsung di form Collect URL. Mode ini hanya untuk game yang dimiliki pengguna atau memiliki izin tertulis. Isi referensi license/izin resmi sebelum menjalankan Capture Cloudflare atau Collect via GitHub. Referensi dicatat sebagai metadata `authorized-research.json` di dalam ZIP dan tidak dianggap sebagai verifikasi legal otomatis.
+Form Collect tidak lagi meminta checkbox Authorized Research, referensi lisensi, atau tombol attestasi challenge. Mode collect besar menaikkan batas Worker yang dikonfigurasi dan otomatis mencoba GitHub Actions saat quota Worker atau ukuran paket memerlukan runner yang lebih besar.
 
-Jika halaman target menampilkan CAPTCHA, Cloudflare challenge, atau challenge lain, selesaikan secara manual pada browser/preview yang disediakan lalu tekan tombol `Challenge manual selesai`. Tombol ini hanya mencatat konfirmasi pengguna dan tidak melakukan bypass challenge, CAPTCHA, anti-bot, DRM, atau mekanisme keamanan pihak ketiga.
+Jika Worker belum dikonfigurasi dengan `GITHUB_TOKEN`, Collect via GitHub meminta Fine-grained token di UI: pilih hanya repository `v1-byte/C_Ziperr` dan beri izin Actions read/write. Token hanya berada di memori tab selama proses; jangan kirim melalui chat dan jangan simpan ke repository atau APK. Alternatifnya, pemilik deployment dapat menambahkan `GITHUB_TOKEN` sebagai secret Worker.
 
-Opsi `Siapkan mock offline dan replay API` menambahkan `mock-offline-config.json` serta membantu proses API map, replay request/response, dan stateful emulator. File ini hanya persiapan sandbox dan bukan backend production. Setelah ZIP selesai, buka Workspace/Sandbox atau Activity → FULL_OFFLINE_READY → Play Review, jalankan gameplay lokal, lalu lakukan browser test tanpa network.
+Collector tetap berhenti ketika target menolak akses (401/403), memunculkan CAPTCHA/challenge, atau menggunakan DRM/license server. Sistem tidak mem-bypass, mencoba kredensial, atau mengalihkan permintaan semacam itu ke jalur lain. Security evidence tetap tersedia di hasil untuk diagnosis teknis.
 
-Alur: masukkan URL → aktifkan Authorized Research Mode → isi license/izin → Preview dan spin → selesaikan challenge manual jika muncul → aktifkan mock offline → Full Collect → periksa `authorized-research.json`, `api-map.json`, dan `mock-offline-config.json` → Play Review → Auto Repair bila diperlukan → browser test network-off. Status FULL_OFFLINE_READY tetap harus dibuktikan per ZIP.
+Opsi `Siapkan mock offline dan replay API` menambahkan `mock-offline-config.json` untuk sandbox; file tersebut bukan backend production. Setelah ZIP selesai, buka Workspace/Sandbox atau Activity → FULL_OFFLINE_READY → Play Review, jalankan gameplay lokal, lalu lakukan browser test tanpa network. Status FULL_OFFLINE_READY tetap harus dibuktikan per ZIP.
+
+Alur: masukkan URL → Preview/Collect → pantau progress → unduh ZIP → periksa `manifest.json`, `security-evidence.json`, `api-map.json`, dan bila diaktifkan `mock-offline-config.json` → Play Review → Auto Repair bila diperlukan → browser test network-off.

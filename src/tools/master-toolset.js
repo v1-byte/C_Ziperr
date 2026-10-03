@@ -82,9 +82,9 @@ export function getMasterToolsetReport() {
     tools: MASTER_TOOLSET,
     summary: counts,
     policy: {
-      authorizedResearchRequired: true,
+      protectedResourceDetectionRequired: true,
       bypassControls: false,
-      note: "External tools require explicit authorization and local installation. The platform detects and reports controls; it does not bypass DRM, CAPTCHA, anti-bot, authentication, or access restrictions."
+      note: "External tools require local installation. The platform detects and reports controls; it does not require a license-reference form and does not bypass DRM, CAPTCHA, anti-bot, authentication, or access restrictions."
     }
   };
 }

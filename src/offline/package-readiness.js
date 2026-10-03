@@ -37,7 +37,6 @@ export function validatePackageFiles(files = {}, { browserTest = null } = {}) {
   const statusReport = jsonFile(files, "collect-status.json");
   const replicationReport = jsonFile(files, "replication-report.json");
   const protectedResourceReport = jsonFile(files, "protected-resource-report.json");
-  const authorizedResearch = jsonFile(files, "authorized-research.json");
   const indexHtml = lowerNames.some((name) => /(^|\/)index\.html?$/.test(name));
   const texts = names.filter((name) => TEXT_EXT.test(name)).map((name) => textOf(files[name]).slice(0, 500000));
   const externalRefs = listExternalRefs(files);
@@ -100,7 +99,7 @@ export function validatePackageFiles(files = {}, { browserTest = null } = {}) {
     assets: { files: names.length, indexHtml, unresolved, failed, externalRefs: externalRefs.length },
     api: { detected: hasApi, endpoints: apiEndpoints.length, snapshots: snapshots.length, contracts: Array.isArray(apiMap?.contracts) ? apiMap.contracts.length : 0, replaySequence: Array.isArray(apiMap?.replaySequence) ? apiMap.replaySequence.length : 0 },
     realtime: { detected: hasRealtime, adapterPresent: hasRuntimeInterceptor },
-    sourceReports: { hasManifest: Boolean(manifest), hasApiMap: Boolean(apiMap), hasOfflineSuper: Boolean(superReport), hasCollectStatus: Boolean(statusReport), hasReplicationReport: Boolean(replicationReport), hasProtectedResourceReport: Boolean(protectedResourceReport), hasAuthorizedResearch: Boolean(authorizedResearch) },
+    sourceReports: { hasManifest: Boolean(manifest), hasApiMap: Boolean(apiMap), hasOfflineSuper: Boolean(superReport), hasCollectStatus: Boolean(statusReport), hasReplicationReport: Boolean(replicationReport), hasProtectedResourceReport: Boolean(protectedResourceReport) },
     strictGate,
     blockers: [...blockers, ...strictBlockers.filter((item) => !blockers.includes(item))],
     externalRefs

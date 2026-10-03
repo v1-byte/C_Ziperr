@@ -18,6 +18,7 @@ test("preflight allows only configured origin", async () => {
   const response = preflightResponse(allowed, env);
   assert.equal(response.status, 204);
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), env.CORS_ORIGIN);
+  assert.match(response.headers.get("Access-Control-Allow-Headers"), /X-GC-GitHub-Token/);
   const denied = preflightResponse(new Request(allowed.url, { method: "OPTIONS", headers: { Origin: "https://evil.example" } }), env);
   assert.equal(denied.status, 403);
 });
