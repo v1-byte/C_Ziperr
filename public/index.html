@@ -3808,6 +3808,7 @@
             </div>
             <div class="gc-cockpit-footer gc-capture-footer">
               <div class="gc-capture-status-group">
+                <strong class="gc-capture-status-primary" id="gc-capture-session-state" aria-live="polite">SIAP · Menunggu URL dan sesi dimulai</strong>
                 <span class="gc-cockpit-status" id="gc-cockpit-preview-status">Masukkan URL, lalu tekan Mulai Capture.</span>
                 <div class="gc-capture-progress-track" role="progressbar" aria-label="Progress capture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                   <span class="gc-capture-progress-bar" id="gc-capture-progress-bar"></span>
@@ -5415,7 +5416,11 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
 
     function gcSetCapturePreviewStatus(message, state) {
       var status = document.getElementById('gc-cockpit-preview-status');
+      var primary = document.getElementById('gc-capture-session-state');
       var badge = document.getElementById('gc-cockpit-preview-badge');
+      if (state === 'error') window.__gcUnifiedCaptureFailed = true;
+      var primaryText = state === 'error' ? 'ERROR · Capture gagal' : state === 'ready' ? (/selesai|siap|hasil/i.test(String(message || '')) ? 'SELESAI · Hasil capture siap diperiksa' : 'SIAP · Menunggu sesi capture') : 'LIVE · Capture sedang berjalan';
+      if (primary) primary.textContent = primaryText;
       var pane = document.querySelector('.gc-capture-pane');
       var liveBadge = document.getElementById('gc-capture-live-badge');
       var liveTitle = document.getElementById('gc-capture-live-title');
@@ -5482,16 +5487,23 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
     }
     function gcUnifiedPreview() {
       if (__gcUnifiedCaptureRunning) return;
+      window.__gcUnifiedCaptureFailed = false;
       var started = gcCockpitStartManualPreview();
       if (!started) return;
       __gcUnifiedCaptureRunning = true;
       gcSetUnifiedCaptureUi(true, '0% · Preview aktif · progress capture tampil di bawah preview');
       try { appendLog('Sesi capture dimulai. Mainkan game; resource yang tertangkap akan ditampilkan.', 'info'); } catch (_) {}
       __gcUnifiedCapturePromise = Promise.resolve().then(function () { return runCollect(); }).finally(function () {
+        var failed = window.__gcUnifiedCaptureFailed === true;
         __gcUnifiedCaptureRunning = false;
         __gcUnifiedCapturePromise = null;
-        gcSetUnifiedCaptureUi(false, 'Sesi selesai · periksa audit dan Workspace');
-        gcSetCapturePreviewStatus('Sesi selesai · hasil capture siap diperiksa.', 'ready');
+        if (failed) {
+          gcSetUnifiedCaptureUi(false, 'Capture gagal · periksa log untuk detail');
+          gcSetCapturePreviewStatus('Capture gagal · periksa log untuk detail.', 'error');
+        } else {
+          gcSetUnifiedCaptureUi(false, 'Sesi selesai · periksa audit dan Workspace');
+          gcSetCapturePreviewStatus('Sesi selesai · hasil capture siap diperiksa.', 'ready');
+        }
       });
       return __gcUnifiedCapturePromise;
     }
@@ -15196,6 +15208,49 @@ function isApiLike(u){
       .nav-btn { padding: 7px 12px !important; font-size: 12px !important; }
       .collect-card { margin-bottom: 12px; }
       .activity-hub { padding: 16px 14px 24px !important; }
+    }
+
+    /* Mobile header: pisahkan brand dan nav agar tidak bertabrakan dengan status bar HP. */
+    @media (max-width: 560px) {
+      header {
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        row-gap: 8px !important;
+        column-gap: 8px !important;
+        padding: 8px 10px 9px !important;
+      }
+      .header-left { flex: 1 1 auto !important; min-width: 0 !important; }
+      .logo { gap: 8px !important; }
+      .logo-img { width: 34px !important; height: 34px !important; border-radius: 8px !important; }
+      .logo-text .brand { font-size: 15px !important; }
+      nav {
+        order: 3;
+        flex: 1 0 100% !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px !important;
+      }
+      .nav-btn {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 8px 4px !important;
+        font-size: 11px !important;
+        line-height: 1.15 !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .gc-capture-status-primary {
+        display: block;
+        margin-bottom: 3px;
+        color: #f8fafc;
+        font-size: 11px;
+        line-height: 1.35;
+        letter-spacing: .02em;
+      }
+      .gc-cockpit-status { font-size: 10px !important; line-height: 1.35; }
+      .gc-capture-progress-label { font-size: 10px !important; font-weight: 600; color: #cbd5e1; }
     }
 
 </style>
