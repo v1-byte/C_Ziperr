@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { addCapabilityScopes, checkRateLimit, preflightResponse, withSecurityHeaders } from "../src/security/response-hardening.js";
 
-const env = { CORS_ORIGIN: "https://c_zipper.corelink-ai.workers.dev" };
+const env = { CORS_ORIGIN: "https://c-zipper.corelink-ai.workers.dev" };
 
 test("security headers are added to API responses", async () => {
-  const request = new Request("https://c_zipper.corelink-ai.workers.dev/api/health");
+  const request = new Request("https://c-zipper.corelink-ai.workers.dev/api/health");
   const response = withSecurityHeaders(Response.json({ ok: true }), request, env);
   assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff");
   assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000; includeSubDomains");
@@ -14,7 +14,7 @@ test("security headers are added to API responses", async () => {
 });
 
 test("preflight allows only configured origin", async () => {
-  const allowed = new Request("https://c_zipper.corelink-ai.workers.dev/api/health", { method: "OPTIONS", headers: { Origin: env.CORS_ORIGIN } });
+  const allowed = new Request("https://c-zipper.corelink-ai.workers.dev/api/health", { method: "OPTIONS", headers: { Origin: env.CORS_ORIGIN } });
   const response = preflightResponse(allowed, env);
   assert.equal(response.status, 204);
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), env.CORS_ORIGIN);
@@ -29,7 +29,7 @@ test("capability report declares execution scope", () => {
 });
 
 test("rate limit returns 429 after configured threshold", async () => {
-  const request = () => new Request("https://c_zipper.corelink-ai.workers.dev/api/test-rate", { headers: { "CF-Connecting-IP": "198.51.100.44" } });
+  const request = () => new Request("https://c-zipper.corelink-ai.workers.dev/api/test-rate", { headers: { "CF-Connecting-IP": "198.51.100.44" } });
   let limited = null;
   for (let i = 0; i < 61; i += 1) limited = checkRateLimit(request(), env, { limit: 60, windowMs: 60_000 });
   assert.equal(limited?.status, 429);

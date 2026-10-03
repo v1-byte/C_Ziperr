@@ -4,8 +4,8 @@ import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../android-app/app/index.tsx', import.meta.url), 'utf8');
 
-test('Android APK opens C.Ziperr through the c_zipper Worker', () => {
-  assert.match(source, /c_zipper\.corelink-ai\.workers\.dev/);
+test('Android APK opens C.Ziperr through the c-zipper Worker', () => {
+  assert.match(source, /c-zipper\.corelink-ai\.workers\.dev/);
   assert.match(source, /<WebView/);
   assert.match(source, /javaScriptEnabled/);
   assert.match(source, /domStorageEnabled/);

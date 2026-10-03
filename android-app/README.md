@@ -4,7 +4,7 @@ APK Android adalah produk utama. APK menampilkan UI C.Ziperr melalui WebView; Wo
 
 ## URL web utama
 
-`https://c_zipper.corelink-ai.workers.dev/`
+`https://c-zipper.corelink-ai.workers.dev/`
 
 Rilis APK ini menggunakan Worker dan alur Collect yang didefinisikan di repository `v1-byte/C_Ziperr` sendiri; tidak bergantung pada repository collector eksternal.
 

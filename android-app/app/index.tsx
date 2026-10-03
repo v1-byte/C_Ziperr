@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'r
 import { WebView } from 'react-native-webview';
 
 // Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
-const MAIN_WEB_URL = 'https://c_zipper.corelink-ai.workers.dev/?app_release=apk-7';
+const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=apk-8';
 
 export default function CollectorApp() {
   const [loading, setLoading] = useState(true);

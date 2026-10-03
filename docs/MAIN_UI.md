@@ -2,7 +2,7 @@
 
 URL tampilan utama aplikasi:
 
-<https://c_zipper.corelink-ai.workers.dev/>
+<https://c-zipper.corelink-ai.workers.dev/>
 
 ## Sumber tampilan utama APK
 

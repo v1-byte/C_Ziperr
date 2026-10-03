@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../app/index.tsx', import.meta.url), 'utf8');
-assert.match(source, /c_zipper\.corelink-ai\.workers\.dev/);
+assert.match(source, /c-zipper\.corelink-ai\.workers\.dev/);
 assert.match(source, /<WebView/);
 assert.match(source, /javaScriptEnabled/);
 assert.match(source, /domStorageEnabled/);

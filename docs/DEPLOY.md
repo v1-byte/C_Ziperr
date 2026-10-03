@@ -1,6 +1,6 @@
 # Deploy Checklist — Game Collector Pro
 
-Worker baru untuk APK: `https://c_zipper.corelink-ai.workers.dev`
+Worker baru untuk APK: `https://c-zipper.corelink-ai.workers.dev`
 
 ## 1. Prasyarat
 
@@ -16,7 +16,7 @@ npm install
 
 ## 2. Binding & secrets (Cloudflare)
 
-Di [Workers dashboard](https://dash.cloudflare.com) → Worker `c_zipper` **atau** via `wrangler.jsonc`:
+Di [Workers dashboard](https://dash.cloudflare.com) → Worker `c-zipper` **atau** via `wrangler.jsonc`:
 
 | Binding / secret | Wajib? | Fungsi |
 |------------------|--------|--------|

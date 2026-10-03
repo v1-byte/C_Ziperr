@@ -1,4 +1,4 @@
-const DEFAULT_ORIGIN = "https://c_zipper.corelink-ai.workers.dev";
+const DEFAULT_ORIGIN = "https://c-zipper.corelink-ai.workers.dev";
 const buckets = new Map();
 
 function originAllowed(request, env) {
