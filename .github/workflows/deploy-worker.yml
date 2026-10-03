@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: "22"
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
