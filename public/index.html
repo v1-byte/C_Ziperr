@@ -3613,6 +3613,12 @@
     }
     .gc-update-note { position: fixed; left: 50%; bottom: 18px; z-index: 1201; transform: translateX(-50%); padding: 10px 14px; border: 1px solid rgba(74,222,128,.4); border-radius: 10px; background: #123322; color: #d1fae5; font-size: 12px; box-shadow: 0 10px 28px rgba(0,0,0,.28); }
     .gc-update-note[hidden] { display: none; }
+    .gc-update-modal { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 20px; background: rgba(2,6,23,.72); backdrop-filter: blur(4px); }
+    .gc-update-modal[hidden] { display: none; }
+    .gc-update-modal-card { width: min(420px, 100%); padding: 20px; border: 1px solid rgba(94,225,192,.38); border-radius: 16px; background: #101923; color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+    .gc-update-modal-card h3 { margin: 0 0 8px; font-size: 18px; }
+    .gc-update-modal-card p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+    .gc-update-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
     /* ===== UTILITY ===== */
     .hidden {
@@ -3741,6 +3747,16 @@
       <div class="gc-loading-card"><div class="gc-loading-spinner" aria-hidden="true"></div><div class="gc-loading-title" id="gc-loading-title">Memproses file...</div><div class="gc-loading-detail" id="gc-loading-detail">Mohon tunggu sebentar</div><div class="gc-ai-stage-list" id="gc-ai-stage-list" hidden></div><div class="gc-loading-track" aria-hidden="true"><div class="gc-loading-bar"></div></div></div>
     </div>
   <div class="gc-update-note" id="gc-update-note" hidden role="status"></div>
+  <div class="gc-update-modal" id="gc-update-modal" hidden role="dialog" aria-modal="true" aria-labelledby="gc-update-title">
+    <div class="gc-update-modal-card">
+      <h3 id="gc-update-title">Versi baru tersedia</h3>
+      <p id="gc-update-message">Perbaikan C.Ziperr sudah tersedia. Muat ulang sekarang untuk menerapkannya.</p>
+      <div class="gc-update-modal-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="gc-update-later">Nanti</button>
+        <button type="button" class="btn btn-primary btn-sm" id="gc-update-now">Perbarui sekarang</button>
+      </div>
+    </div>
+  </div>
   <div class="app-container">
     <!-- Header -->
     <header>
@@ -3855,7 +3871,7 @@
             <summary style="cursor:pointer;font-size:12px;color:var(--text-secondary);font-weight:700;">Research &amp; keamanan · Otorisasi dan perlindungan capture</summary>
             <div class="gc-research-card" style="margin-top:10px;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;"><input type="checkbox" id="gc-authorized-research" checked> <b>Authorized Research Mode</b></label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;"><input type="checkbox" id="gc-authorized-research"> <b>Authorized Research Mode</b></label>
               <span style="font-size:11px;color:var(--text-muted);">Capture hanya untuk game yang Anda miliki atau memiliki izin tertulis.</span>
             </div>
             <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:8px;align-items:end;">
@@ -14067,8 +14083,6 @@ function isApiLike(u){
       try {
         progressId = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         window.__gcActiveProgressId = progressId;
-        var captureController = new AbortController();
-        captureTimeout = setTimeout(function () { captureController.abort(); }, 8 * 60 * 1000);
         gcShowLiveCapture(true);
         gcRenderLiveFiles([], 0, 2);
         // Poll progress + live file list
@@ -14102,12 +14116,32 @@ function isApiLike(u){
           } catch (_) {}
         }, 600);
 
-        const res = await fetch('/api/collect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: gameUrl, progressId, ...opts }),
-          signal: captureController.signal
-        });
+        let res = null;
+        let requestError = null;
+        const retryableStatuses = new Set([408, 425, 429, 500, 502, 504, 520, 522, 524]);
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+          const captureController = new AbortController();
+          captureTimeout = setTimeout(() => captureController.abort(), 8 * 60 * 1000);
+          try {
+            statusEl.textContent = 'Status: [2/6 Capture] Collecting' + (attempt > 1 ? ' · percobaan ulang' : '') + ' · wait ' + opts.wait_seconds + 's · spins ' + opts.auto_spins + '...';
+            res = await fetch('/api/collect', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url: gameUrl, progressId, ...opts }),
+              signal: captureController.signal
+            });
+            if (!retryableStatuses.has(res.status) || attempt === 2) break;
+            try { appendLog('Server collect mengembalikan HTTP ' + res.status + '; mencoba ulang otomatis.', 'warn'); } catch (_) {}
+          } catch (error) {
+            requestError = error;
+            if (attempt === 2) throw error;
+            try { appendLog('Koneksi collect terputus; mencoba ulang otomatis dalam 2 detik.', 'warn'); } catch (_) {}
+          } finally {
+            if (captureTimeout) { clearTimeout(captureTimeout); captureTimeout = null; }
+          }
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+        if (!res) throw requestError || new Error('Collect tidak mengembalikan respons.');
         if (captureTimeout) { clearTimeout(captureTimeout); captureTimeout = null; }
         clearInterval(progressTimer);
 
@@ -14688,6 +14722,11 @@ function isApiLike(u){
       (function setupPWA() {
         const installButton = document.getElementById('gc-install-app');
         const updateNote = document.getElementById('gc-update-note');
+        const updateModal = document.getElementById('gc-update-modal');
+        const updateMessage = document.getElementById('gc-update-message');
+        const updateNow = document.getElementById('gc-update-now');
+        const updateLater = document.getElementById('gc-update-later');
+        const buildStorageKey = 'gc_worker_build_seen_v1';
         let deferredInstall = null;
         const showUpdateNote = (message) => {
           if (!updateNote) return;
@@ -14695,6 +14734,26 @@ function isApiLike(u){
           updateNote.hidden = false;
           setTimeout(() => { if (updateNote) updateNote.hidden = true; }, 4500);
         };
+        const closeUpdateModal = () => { if (updateModal) updateModal.hidden = true; };
+        updateLater?.addEventListener('click', closeUpdateModal);
+        updateNow?.addEventListener('click', () => { closeUpdateModal(); showUpdateNote('Memuat perbaikan terbaru…'); setTimeout(() => location.reload(), 120); });
+        const checkWorkerBuild = async () => {
+          try {
+            const response = await fetch('/api/build?ts=' + Date.now(), { cache: 'no-store', headers: { 'Accept': 'application/json' } });
+            if (!response.ok) return;
+            const data = await response.json().catch(() => ({}));
+            const currentBuild = String(data.build || '').trim();
+            if (!currentBuild) return;
+            const previousBuild = localStorage.getItem(buildStorageKey);
+            if (previousBuild && previousBuild !== currentBuild && updateModal) {
+              if (updateMessage) updateMessage.textContent = 'Perbaikan baru sudah tersedia (' + currentBuild.slice(0, 18) + '). Muat ulang sekarang agar UI dan alur collect terbaru digunakan.';
+              updateModal.hidden = false;
+            }
+            localStorage.setItem(buildStorageKey, currentBuild);
+          } catch (_) {}
+        };
+        checkWorkerBuild();
+        setInterval(checkWorkerBuild, 2 * 60 * 1000);
         window.addEventListener('beforeinstallprompt', (event) => {
           event.preventDefault();
           deferredInstall = event;
