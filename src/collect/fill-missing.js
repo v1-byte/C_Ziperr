@@ -10,7 +10,9 @@ import {
   MAX_FILL_PER_PASS,
   MAX_FILL_PASSES,
   MAX_FILL_PER_PASS_CAP,
-  MAX_FILL_PASSES_CAP
+  MAX_FILL_PASSES_CAP,
+  MAX_CONFIGURED_SINGLE_FILE,
+  MAX_CONFIGURED_RAW_TOTAL
 } from "./limits.js";
 import { verifyDownload, normalizeUrl, sha256 } from "../offline/strict-collector.js";
 
@@ -29,7 +31,8 @@ export async function fillMissingAssets(
   selectAllowed = null,
   maxPerPass = MAX_FILL_PER_PASS,
   maxPasses = MAX_FILL_PASSES,
-  seedUrls = []
+  seedUrls = [],
+  limits = {}
 ) {
   const report = {
     scanned: 0,
@@ -44,6 +47,13 @@ export async function fillMissingAssets(
 
   const MAX_FILL = Math.min(MAX_FILL_PER_PASS_CAP, Math.max(20, Number(maxPerPass) || MAX_FILL_PER_PASS));
   const PASSES = Math.min(MAX_FILL_PASSES_CAP, Math.max(1, Number(maxPasses) || MAX_FILL_PASSES));
+  const maxSingleFile = Number.isFinite(Number(limits.maxSingleFile)) && Number(limits.maxSingleFile) > 0
+    ? Math.min(MAX_CONFIGURED_SINGLE_FILE, Math.floor(Number(limits.maxSingleFile)))
+    : MAX_SINGLE_FILE;
+  const maxRawTotal = Number.isFinite(Number(limits.maxRawTotal)) && Number(limits.maxRawTotal) > 0
+    ? Math.min(MAX_CONFIGURED_RAW_TOTAL, Math.floor(Number(limits.maxRawTotal)))
+    : MAX_RAW_TOTAL;
+  let rawBytes = sumZipFilesBytes(zipFiles);
 
   // Content-hash index for dedup (signed URL variants → one local file)
   const hashIndex = new Map();
@@ -126,13 +136,13 @@ export async function fillMissingAssets(
           report.stillMissing.push({ url: u, error: "empty", pass });
           continue;
         }
-        if (buffer.byteLength > MAX_SINGLE_FILE) {
+        if (buffer.byteLength > maxSingleFile) {
           report.failed++;
           passReport.failed++;
           report.stillMissing.push({ url: u, error: "too-large-file", pass });
           continue;
         }
-        if (sumZipFilesBytes(zipFiles) + buffer.byteLength > MAX_RAW_TOTAL) {
+        if (rawBytes + buffer.byteLength > maxRawTotal) {
           report.stillMissing.push({ url: u, error: "raw-total-limit", pass });
           hitLimit = true;
           break;
@@ -219,6 +229,7 @@ export async function fillMissingAssets(
 
         const localPath = `${folder}/${String(manifest.length + 1).padStart(4, "0")}-fill${pass}-${name}`;
         zipFiles[localPath] = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+        rawBytes += buffer.byteLength;
         if (verified.hash) hashIndex.set(verified.hash, localPath);
         seen.add(u);
         manifest.push({

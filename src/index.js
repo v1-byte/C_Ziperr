@@ -1815,8 +1815,10 @@ async function handleRequest(request, env) {
           env,
           selectAllowed,
           {
-            maxPerPass: Math.min(250, fillPerPass),
-            maxPasses: Math.min(8, fillPasses)
+            maxPerPass: fillPerPass,
+            maxPasses: fillPasses,
+            maxSingleFile: limSingle,
+            maxRawTotal: limRaw
           }
         );
         await report(

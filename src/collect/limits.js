@@ -6,6 +6,8 @@
 export const MAX_SINGLE_FILE = 32 * 1024 * 1024;
 export const MAX_RAW_TOTAL = 56 * 1024 * 1024;
 export const MAX_ZIP_RESPONSE = 28 * 1024 * 1024;
+export const MAX_CONFIGURED_SINGLE_FILE = 80 * 1024 * 1024;
+export const MAX_CONFIGURED_RAW_TOTAL = 120 * 1024 * 1024;
 
 export const UNLIMITED = {
   maxSingleFile: 80 * 1024 * 1024,
