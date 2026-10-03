@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "c_zipper",
+  "name": "c-zipper",
   "main": "src/index.js",
   "compatibility_date": "2026-08-13",
   "compatibility_flags": ["nodejs_compat"],
@@ -19,7 +19,7 @@
     "GH_WORKFLOW": "collect.yml",
     "PUBLIC_APP_NAME": "Game Collector Pro",
     "OPENROUTER_MODEL": "openrouter/free",
-    "OPENROUTER_SITE_URL": "https://c_zipper.corelink-ai.workers.dev",
+    "OPENROUTER_SITE_URL": "https://c-zipper.corelink-ai.workers.dev",
     "EDU_GH_OWNER": "frostbyte-lab",
     "EDU_GH_REPO": "Edu-network",
     "EDU_GH_BRANCH": "main",

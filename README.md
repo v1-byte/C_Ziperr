@@ -2,11 +2,11 @@
 
 Tools untuk **mengumpulkan, memisahkan, memperbaiki, dan menjalankan** resource game web (client-side) secara offline / hybrid.
 
-**Worker APK (canonical):** https://c_zipper.corelink-ai.workers.dev
+**Worker APK (canonical):** https://c-zipper.corelink-ai.workers.dev
 
 **Repo:** https://github.com/v1-byte/C_Ziperr
 
-**Catatan URL:** APK Android memuat tampilan dari Worker c_zipper. Setelah instalasi migrasi satu kali, perubahan UI pada repo ini dapat diterbitkan ke Worker tanpa membangun APK ulang.
+**Catatan URL:** APK Android memuat tampilan dari Worker `c-zipper`. Update UI berikutnya dapat diterbitkan ke Worker tanpa membangun ulang APK; perubahan hostname ini memerlukan APK baru karena URL ditanam di aplikasi.
 
 ---
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "C.Ziperr",
     "slug": "c-ziperr",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gamecollectorpro",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.fblabb.zipscope",
-      "versionCode": 7,
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#08111f"

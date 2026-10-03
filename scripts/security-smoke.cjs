@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const base = (process.env.SECURITY_SMOKE_BASE || "https://game-resource-collector.technologiesfrostbyte.workers.dev").replace(/\/$/, "");
+const base = (process.env.SECURITY_SMOKE_BASE || "https://c-zipper.corelink-ai.workers.dev").replace(/\/$/, "");
 const failures = [];
 async function check(path, options = {}, predicate = () => true) {
   const response = await fetch(`${base}${path}`, { redirect: "manual", ...options });
