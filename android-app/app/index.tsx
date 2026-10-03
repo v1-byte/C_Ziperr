@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-const MAIN_WEB_URL = 'https://c_zipper.corelink-ai.workers.dev/';
+// Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
+const MAIN_WEB_URL = 'https://c_zipper.corelink-ai.workers.dev/?app_release=apk-7';
 
 export default function CollectorApp() {
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,8 @@ export default function CollectorApp() {
         source={{ uri: MAIN_WEB_URL }}
         style={styles.webview}
         originWhitelist={['https://*']}
+        cacheEnabled={false}
+        cacheMode="LOAD_NO_CACHE"
         javaScriptEnabled
         domStorageEnabled
         setSupportMultipleWindows={false}
