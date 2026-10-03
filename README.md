@@ -24,7 +24,7 @@ Tools untuk **mengumpulkan, memisahkan, memperbaiki, dan menjalankan** resource 
 |----|------|--------|----------------------------------|
 | 2.1 | **Service Worker asset di Preview** | ✅ Aktif | Service Worker mendukung cache asset ZIP dan kebijakan preview offline/hybrid. |
 | 2.2 | **Proxy asset same-origin** | ✅ Aktif | Worker menyediakan endpoint `/api/asset-proxy`; health live mengonfirmasi asset proxy aktif. |
-| 2.3 | **Auto-fill lebih dalam** | ✅ Multi-pass, quota sesuai mode | Standard: 250 URL/pass × 8 pass; unlimited tanpa R2: 300 × 8; unlimited dengan R2: 400 × 10. Ada hard cap 400 × 12 dan total-size cap per mode; URL gagal dicatat untuk resume. |
+| 2.3 | **Auto-fill lebih dalam** | ✅ Multi-pass, quota sesuai mode | Standard: 250 URL/pass × 8 pass; unlimited tanpa R2: 300 × 8; unlimited dengan R2: 400 × 10. Ada hard cap 400 × 12, batas byte per mode, retry terbatas untuk gangguan transient, dan URL gagal dicatat untuk resume. |
 | 2.4 | **Engine-specific repair** | ⚠️ Deteksi engine ada; auto-repair khusus belum | Deteksi Phaser / Unity WebGL / Pixi / Construct → template path + loader fix khusus di Auto Repair Deep. |
 
 ### Prioritas 3 — Polish & skala

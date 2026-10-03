@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { resolveLimits } from "../src/collect/limits.js";
 import { fillMissingAssetsV2 } from "../src/collect/fill-missing-enhanced.js";
+import { fetchWithRetry } from "../src/collect/fetch-retry.js";
 
 const standard = resolveLimits({}, {});
 const unlimitedWorker = resolveLimits({}, { unlimited: true });
@@ -40,5 +41,31 @@ try {
 } finally {
   globalThis.fetch = originalFetch;
 }
+
+let attempts = 0;
+const delays = [];
+const recovered = await fetchWithRetry("https://owned-game.example/retry", {}, {
+  fetchImpl: async () => {
+    attempts++;
+    if (attempts === 1) return new Response("busy", { status: 503 });
+    if (attempts === 2) return new Response("slow down", { status: 429, headers: { "retry-after": "0" } });
+    return new Response("ok", { status: 200 });
+  },
+  sleep: async (ms) => delays.push(ms)
+});
+assert.equal(recovered.status, 200);
+assert.equal(attempts, 3, "transient server/rate failures should be retried with a bounded attempt count");
+assert.deepEqual(delays, [250, 0]);
+
+let deniedAttempts = 0;
+const denied = await fetchWithRetry("https://owned-game.example/private", {}, {
+  fetchImpl: async () => {
+    deniedAttempts++;
+    return new Response("forbidden", { status: 403 });
+  },
+  sleep: async () => assert.fail("permanent access denial must not be retried")
+});
+assert.equal(denied.status, 403);
+assert.equal(deniedAttempts, 1);
 
 console.log("capture scale limits test passed");

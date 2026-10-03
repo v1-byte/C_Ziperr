@@ -15,6 +15,7 @@ import {
   MAX_CONFIGURED_RAW_TOTAL
 } from "./limits.js";
 import { verifyDownload, normalizeUrl, sha256 } from "../offline/strict-collector.js";
+import { fetchWithRetry } from "./fetch-retry.js";
 
 /**
  * Multi-pass auto-fill: scan HTML/JS/CSS → fetch missing → scan newly fetched → pass 2.
@@ -109,7 +110,7 @@ export async function fillMissingAssets(
     for (const u of missing.slice(0, MAX_FILL)) {
       passReport.attempted++;
       try {
-        const res = await fetch(u, {
+        const res = await fetchWithRetry(u, {
           headers: {
             "User-Agent": "Mozilla/5.0 (compatible; GameCollectorPro/1.0)",
             Accept: "*/*",
