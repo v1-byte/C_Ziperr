@@ -9,7 +9,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/frostbyte-logo.png">
   <link rel="apple-touch-icon" href="/frostbyte-logo.png">
-  <title>C.Ziperr — Frostbyte Technologies</title>
+  <title>C.Ziperr — Game Resource Toolkit</title>
   
   <!-- Monaco Editor CDN: koneksi dipercepat agar editor lancar di HP -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -3762,9 +3762,9 @@
     <header>
       <div class="header-left">
         <div class="logo">
-          <img src="/frostbyte-logo.png" alt="Frostbyte Technologies" class="logo-img" width="40" height="40">
+          <img src="/frostbyte-logo.png" alt="C.Ziperr" class="logo-img" width="40" height="40">
           <div class="logo-text">
-            <div class="brand">Frost<span>byte</span></div>
+            <div class="brand">C.Ziperr</div>
             <div class="sub">C.Ziperr</div>
           </div>
         </div>
@@ -3783,7 +3783,7 @@
     <section id="panel-collect" class="panel active">
       <div class="collect-wrapper">
         <div class="collect-hero">
-          <img src="/frostbyte-logo.png" alt="Frostbyte" class="hero-logo">
+          <img src="/frostbyte-logo.png" alt="C.Ziperr" class="hero-logo">
           <h2>C.Ziperr</h2>
           <p>Preview, capture, audit, dan siapkan paket offline dari satu alur.</p>
           <div class="gc-primary-flow" aria-label="Kontrol capture utama">
@@ -4176,7 +4176,7 @@
         <div class="hosting-card">
           <h3>Upload ke EDU Network (Git)</h3>
           <p style="margin-bottom:10px;">
-            Commit file game ke repo <code>frostbyte-lab/Edu-network</code> path <code>game-N/</code>.
+            Commit file game ke repo EDU yang telah dikonfigurasi path <code>game-N/</code>.
             Cloudflare Pages akan deploy ke
             <a href="https://ea29118c.edu-network.pages.dev/" target="_blank" rel="noopener" style="color:#22d3ee;">ea29118c.edu-network.pages.dev</a>.
           </p>
@@ -4210,7 +4210,7 @@
           </ul>
         </div>
 
-        <div class="hosting-brand-foot">Frostby<span class="te">TE</span> hostingers</div>
+        <div class="hosting-brand-foot">C.Ziperr Hosting</div>
         </div><!-- /hosting-form-page -->
 
         <!-- Halaman progress upload detail -->
@@ -4689,7 +4689,7 @@
       <div class="activity-wrap">
         <div class="activity-hub" id="activity-hub">
           <h2 class="activity-title">Activity</h2>
-          <p class="activity-sub">Pilih area kerja · Frostbyte Technologies</p>
+          <p class="activity-sub">Pilih area kerja · C.Ziperr</p>
           <div class="activity-cards">
             <button type="button" class="activity-card activity-card-chat" id="btn-activity-chat" onclick="openActivityChat()">
               <span class="activity-card-icon" aria-hidden="true">
@@ -4738,15 +4738,15 @@
             <summary>
               <span class="fb-portfolio-logo"><img src="/frostbyte-logo.png" alt="" width="28" height="28"></span>
               <span>
-                <strong>Frostbyte Technologies</strong>
+                <strong>C.Ziperr</strong>
                 <small>Portofolio &amp; kontak</small>
               </span>
             </summary>
             <div class="fb-portfolio-body">
               <p class="fb-portfolio-tag">Software · Web game tools · Cloud automation</p>
               <p>
-                <b>Frostbyte Technologies</b> mengembangkan perangkat bantu untuk collect, perbaikan, dan preview resource game web
-                (C.Ziperr), integrasi Cloudflare Workers, GitHub Actions, serta alur offline/hybrid.
+                <b>C.Ziperr</b> menyediakan perangkat bantu untuk capture, perbaikan, dan preview resource game web yang berizin,
+                serta integrasi Cloudflare Workers, GitHub Actions, dan alur offline/hybrid.
               </p>
               <ul class="fb-portfolio-list">
                 <li>C.Ziperr — capture, sandbox, AI assist, hosting EDU</li>
@@ -4877,7 +4877,7 @@
             <button type="button" class="btn btn-secondary btn-sm" onclick="actClearLog(); renderActivityTerminal();" title="Clear">Clear</button>
           </div>
           <div class="act-term" id="act-term">
-            <div class="act-term-head">frostbyte@collector — log session</div>
+            <div class="act-term-head">cziperr@workspace — log session</div>
             <pre class="act-term-body" id="act-term-body">$ # Console menampilkan log aktivitas app
 $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
 </pre>
@@ -5058,7 +5058,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
 
         const isMobile = window.innerWidth <= 768;
         editor = monaco.editor.create(host, {
-          value: '// Load a file — syntax berwarna (JS / HTML / CSS / JSON)\nfunction hello() {\n  return "Frostbyte";\n}\n',
+          value: '// Load a file — syntax berwarna (JS / HTML / CSS / JSON)\nfunction hello() {\n  return "C.Ziperr";\n}\n',
           language: 'javascript',
           theme: 'fb-vscode-dark',
           fontSize: isMobile ? 13 : 14,
@@ -7832,7 +7832,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var body = document.getElementById('act-term-body');
       if (!body) return;
       var lines = [
-        '$ frostbyte collector console',
+        '$ c-ziperr workspace console',
         '$ # Browser/Worker — bukan shell untuk apt/npm install',
         '$ session ' + new Date().toISOString(),
         ''
