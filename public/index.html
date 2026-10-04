@@ -4382,7 +4382,7 @@
               <button type="button" class="btn btn-success btn-sm footer-ai-main" id="btn-ai-zip-repair" onclick="runAiZipRepair()" title="AI perbaiki ZIP lalu auto Sandbox">AI</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-strict-offline" onclick="runStrictOfflineMode()" title="Offline Seal: reuse ZIP + unduh + rewrite sekali jalan">Seal</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-deteksi-ai" onclick="runDeteksiAI()" title="Lacak file error dari Scan">Deteksi</button>
-              <button type="button" class="btn btn-secondary btn-sm footer-more" onclick="autoCustomApiSdk()" title="Custom API path">API</button>
+              <button type="button" class="btn btn-secondary btn-sm footer-more" onclick="openCustomApiManager()" title="Custom API dan paket hosting">API</button>
             </div>
           </div>
         </div>
@@ -15827,5 +15827,42 @@ function isApiLike(u){
 .file-tree-item.scan-error .file-tree-name{color:#ffd1cb!important}
 @media(max-width:900px){.file-tree-item .file-tree-ai-repair{opacity:1!important;min-width:34px;height:26px}.file-tree-item .file-tree-error-mark{min-height:22px}}
 </style>
+<script>
+  // Bridge kecil untuk modul Custom API. Layar awal/Collect dan wrapper Android tetap tidak berubah.
+  window.__GC_CUSTOM_API_BRIDGE = {
+    getZip: function () { return typeof currentZip !== 'undefined' ? currentZip : null; },
+    readFiles: async function () {
+      if (typeof currentZip === 'undefined' || !currentZip || typeof zipFileMap === 'undefined') throw new Error('ZIP belum dimuat ke Workspace.');
+      var result = {};
+      for (var path of Object.keys(zipFileMap)) {
+        var entry = zipFileMap[path];
+        if (!entry || entry.dir) continue;
+        if (/\.(html?|m?js|cjs|css|json|ya?ml|md|txt|xml|svg|env|toml|ini)$/i.test(path)) {
+          try { result[path] = typeof openFiles !== 'undefined' && openFiles.has(path) ? openFiles.get(path) : await entry.async('string'); }
+          catch (_) { result[path] = ''; }
+        } else result[path] = '[binary asset]';
+      }
+      return result;
+    },
+    writeFiles: function (files) {
+      if (typeof currentZip === 'undefined' || !currentZip) throw new Error('ZIP belum dimuat ke Workspace.');
+      for (var path of Object.keys(files || {})) {
+        var text = String(files[path]);
+        currentZip.file(path, text);
+        zipFileMap[path] = currentZip.file(path);
+        if (typeof openFiles !== 'undefined') openFiles.set(path, text);
+        if (typeof currentFile !== 'undefined' && currentFile === path && typeof editor !== 'undefined' && editor) editor.setValue(text);
+      }
+      try { renderFileTree(Object.keys(zipFileMap)); } catch (_) {}
+      if (typeof appendLog === 'function') appendLog('Custom API: file kontrak/config hosting disimpan ke Workspace.', 'ok');
+      return true;
+    },
+    download: async function (filename) {
+      if (typeof downloadWorkspaceZip !== 'function') throw new Error('Ekspor ZIP tidak tersedia.');
+      return downloadWorkspaceZip(filename);
+    }
+  };
+</script>
+<script type="module" src="/custom-api-manager.js?v=20261004a"></script>
 </body>
 </html>
