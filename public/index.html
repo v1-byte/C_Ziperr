@@ -4382,7 +4382,7 @@
               <button type="button" class="btn btn-success btn-sm footer-ai-main" id="btn-ai-zip-repair" onclick="runAiZipRepair()" title="AI perbaiki ZIP lalu auto Sandbox">AI</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-strict-offline" onclick="runStrictOfflineMode()" title="Offline Seal: reuse ZIP + unduh + rewrite sekali jalan">Seal</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-deteksi-ai" onclick="runDeteksiAI()" title="Lacak file error dari Scan">Deteksi</button>
-              <button type="button" class="btn btn-secondary btn-sm footer-more" onclick="autoCustomApiSdk()" title="Custom API path">API</button>
+              <button type="button" class="btn btn-secondary btn-sm footer-more" onclick="openCustomApiManager()" title="Custom API dan paket hosting">API</button>
             </div>
           </div>
         </div>
@@ -15370,7 +15370,88 @@ function isApiLike(u){
     }
 
 </style>
-<script>(function(){var a=[],s=null,o=window.appendLog;function add(v){var t=String(v||""),u=t.toLowerCase(),k=u.indexOf("python")>=0||u.indexOf("numpy")>=0?"PY3":u.indexOf(".css")>=0?"CSS":u.indexOf(".html")>=0||u.indexOf("tag")>=0?"HTML":u.indexOf("fetch")>=0||u.indexOf("404")>=0?"NET":"JS";var f="runtime output",m=t.match(/[A-Za-z0-9_./-]+\.(html?|css|m?js|py3?)/i);if(m)f=m[0];return{kind:k,file:f,title:t,detail:t}}function draw(){var box=document.getElementById("preview-diagnostics-list"),q=document.getElementById("preview-log-filter");if(!box)return;var n=q?q.value.toLowerCase():"",v=a.filter(function(x){return!n||(x.kind+" "+x.file+" "+x.title).toLowerCase().indexOf(n)>=0});box.innerHTML=v.length?v.map(function(x){return"<button type=\"button\" class=\"preview-diagnostic"+ (x===s?" active":"") +" data-i=\""+a.indexOf(x)+"\"><b class=\"preview-diagnostic-kind\">"+x.kind+"</b><span><strong class=\"preview-diagnostic-title\">"+x.title+"</strong><small class=\"preview-diagnostic-meta\">"+x.file+"</small></span></button>"}).join(""):"<div style=\"padding:18px;color:var(--text-muted)\">No diagnostics yet.</div>";Array.prototype.forEach.call(box.querySelectorAll("[data-i]"),function(b){b.onclick=function(){s=a[Number(b.getAttribute("data-i"))];var d=document.getElementById("preview-error-detail");if(d)d.textContent=s.detail+"\n\nFile: "+s.file;draw()}})}window.appendLog=function(v){if(typeof o==="function")o.apply(this,arguments);s=add(v);a.push(s);draw()};var sw=window.switchPreviewMode;window.switchPreviewMode=function(m){var r=sw?sw.apply(this,arguments):null,w=document.querySelector("#preview-mode .preview-workspace");if(w)w.classList.toggle("preview-web",m==="web");return r};var f=document.getElementById("preview-log-filter");if(f)f.oninput=draw;var c=document.getElementById("preview-log-clear");if(c)c.onclick=function(){a=[];s=null;draw()};draw()})();</script>
+<script>
+(function () {
+  var entries = [];
+  var selected = null;
+  var originalAppendLog = window.appendLog;
+
+  function makeEntry(value) {
+    var text = String(value || "");
+    var lower = text.toLowerCase();
+    var kind = lower.indexOf("python") >= 0 || lower.indexOf("numpy") >= 0 ? "PY3" :
+      lower.indexOf(".css") >= 0 ? "CSS" :
+      lower.indexOf(".html") >= 0 || lower.indexOf("tag") >= 0 ? "HTML" :
+      lower.indexOf("fetch") >= 0 || lower.indexOf("404") >= 0 ? "NET" : "JS";
+    var file = "runtime output";
+    var match = text.match(/[A-Za-z0-9_./-]+\.(html?|css|m?js|py3?)/i);
+    if (match) file = match[0];
+    return { kind: kind, file: file, title: text, detail: text };
+  }
+
+  function draw() {
+    var box = document.getElementById("preview-diagnostics-list");
+    var filter = document.getElementById("preview-log-filter");
+    if (!box) return;
+    var query = filter ? filter.value.toLowerCase() : "";
+    var visible = entries.filter(function (item) {
+      return !query || (item.kind + " " + item.file + " " + item.title).toLowerCase().indexOf(query) >= 0;
+    });
+    box.replaceChildren();
+    if (!visible.length) {
+      var empty = document.createElement("div");
+      empty.style.cssText = "padding:18px;color:var(--text-muted)";
+      empty.textContent = "No diagnostics yet.";
+      box.appendChild(empty);
+      return;
+    }
+    visible.forEach(function (item) {
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "preview-diagnostic" + (item === selected ? " active" : "");
+      button.dataset.i = String(entries.indexOf(item));
+      var kind = document.createElement("b");
+      kind.className = "preview-diagnostic-kind";
+      kind.textContent = item.kind;
+      var content = document.createElement("span");
+      var title = document.createElement("strong");
+      title.className = "preview-diagnostic-title";
+      title.textContent = item.title;
+      var file = document.createElement("small");
+      file.className = "preview-diagnostic-meta";
+      file.textContent = item.file;
+      content.append(title, file);
+      button.append(kind, content);
+      button.addEventListener("click", function () {
+        selected = item;
+        var detail = document.getElementById("preview-error-detail");
+        if (detail) detail.textContent = item.detail + "\n\nFile: " + item.file;
+        draw();
+      });
+      box.appendChild(button);
+    });
+  }
+
+  window.appendLog = function (value) {
+    if (typeof originalAppendLog === "function") originalAppendLog.apply(this, arguments);
+    selected = makeEntry(value);
+    entries.push(selected);
+    draw();
+  };
+  var originalSwitchPreviewMode = window.switchPreviewMode;
+  window.switchPreviewMode = function (mode) {
+    var result = originalSwitchPreviewMode ? originalSwitchPreviewMode.apply(this, arguments) : null;
+    var workspace = document.querySelector("#preview-mode .preview-workspace");
+    if (workspace) workspace.classList.toggle("preview-web", mode === "web");
+    return result;
+  };
+  var filterInput = document.getElementById("preview-log-filter");
+  if (filterInput) filterInput.oninput = draw;
+  var clearButton = document.getElementById("preview-log-clear");
+  if (clearButton) clearButton.onclick = function () { entries = []; selected = null; draw(); };
+  draw();
+})();
+</script>
 
   <!-- ANALISA GAME popups -->
   
@@ -15827,5 +15908,42 @@ function isApiLike(u){
 .file-tree-item.scan-error .file-tree-name{color:#ffd1cb!important}
 @media(max-width:900px){.file-tree-item .file-tree-ai-repair{opacity:1!important;min-width:34px;height:26px}.file-tree-item .file-tree-error-mark{min-height:22px}}
 </style>
+<script>
+  // Bridge kecil untuk modul Custom API. Layar awal/Collect dan wrapper Android tetap tidak berubah.
+  window.__GC_CUSTOM_API_BRIDGE = {
+    getZip: function () { return typeof currentZip !== 'undefined' ? currentZip : null; },
+    readFiles: async function () {
+      if (typeof currentZip === 'undefined' || !currentZip || typeof zipFileMap === 'undefined') throw new Error('ZIP belum dimuat ke Workspace.');
+      var result = {};
+      for (var path of Object.keys(zipFileMap)) {
+        var entry = zipFileMap[path];
+        if (!entry || entry.dir) continue;
+        if (/\.(html?|m?js|cjs|css|json|ya?ml|md|txt|xml|svg|env|toml|ini)$/i.test(path)) {
+          try { result[path] = typeof openFiles !== 'undefined' && openFiles.has(path) ? openFiles.get(path) : await entry.async('string'); }
+          catch (_) { result[path] = ''; }
+        } else result[path] = '[binary asset]';
+      }
+      return result;
+    },
+    writeFiles: function (files) {
+      if (typeof currentZip === 'undefined' || !currentZip) throw new Error('ZIP belum dimuat ke Workspace.');
+      for (var path of Object.keys(files || {})) {
+        var text = String(files[path]);
+        currentZip.file(path, text);
+        zipFileMap[path] = currentZip.file(path);
+        if (typeof openFiles !== 'undefined') openFiles.set(path, text);
+        if (typeof currentFile !== 'undefined' && currentFile === path && typeof editor !== 'undefined' && editor) editor.setValue(text);
+      }
+      try { renderFileTree(Object.keys(zipFileMap)); } catch (_) {}
+      if (typeof appendLog === 'function') appendLog('Custom API: file kontrak/config hosting disimpan ke Workspace.', 'ok');
+      return true;
+    },
+    download: async function (filename) {
+      if (typeof downloadWorkspaceZip !== 'function') throw new Error('Ekspor ZIP tidak tersedia.');
+      return downloadWorkspaceZip(filename);
+    }
+  };
+</script>
+<script type="module" src="/custom-api-manager.js?v=20261004a"></script>
 </body>
 </html>

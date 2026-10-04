@@ -69,7 +69,8 @@ Tools untuk **mengumpulkan, memisahkan, memperbaiki, dan menjalankan** resource 
 - [x] Auto Repair **Deep**: path index, attr/srcset, import, JSON walk, missing report, offline bootstrap
 - [x] Perbandingan sebelum/sesudah repair
 - [x] **View kelengkapan** panel setelah load ZIP
-- [x] Packaging ulang
+- [x] **Packaging ulang**
+- [x] **Custom API Workspace**: editor endpoint/contract, deteksi dari ZIP, uji endpoint dengan gate untuk request tulis, config hosting, checklist, readiness gate, serta scaffold backend demo non-monetary. Detail: **[docs/CUSTOM_API_WORKSPACE.md](docs/CUSTOM_API_WORKSPACE.md)**.
 - [x] AI Assistant (endpoint OpenAI-compatible / Groq)
 - [x] Protected-resource policy: deteksi DRM/license/token/cookie/private-key, sanitasi nilai sensitif, audit `protected-resource-report.json`, dan release gate `BLOCKED` tanpa bypass kontrol akses
 - [x] Native API substitute `/api/game/*`: session, player, balance, bet, spin, result, history, collect, bonus dengan idempotency dan ledger server-authoritative
