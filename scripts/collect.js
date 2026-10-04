@@ -703,7 +703,7 @@ async function main() {
   zipFiles["replication-report.json"] = strToU8(JSON.stringify({
     version: 1, generatedAt: new Date().toISOString(), target: safeTargetUrl,
     status: blockerReport.some((item) => item.severity === 'critical') ? 'MANUAL_ACTION_REQUIRED' : blockerReport.length ? 'PARTIAL' : 'CAPTURED',
-    blockers: blockerReport, failedRequests, proactiveStaticAssets, securityEvidence, realtime: { sessions: realtimeSummary.length, framesReceived: realtimeSummary.reduce((n, s) => n + s.received, 0), framesSent: realtimeSummary.reduce((n, s) => n + s.sent, 0) }
+    blockers: blockerReport, failedRequests, proactiveStaticAssets: proactiveAssets, securityEvidence, realtime: { sessions: realtimeSummary.length, framesReceived: realtimeSummary.reduce((n, s) => n + s.received, 0), framesSent: realtimeSummary.reduce((n, s) => n + s.sent, 0) }
   }, null, 2));
 
   const manifest = {
