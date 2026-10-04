@@ -1,7 +1,7 @@
 {
-  "name": "C.Ziperr — Frostbyte Technologies",
+  "name": "C.Ziperr",
   "short_name": "C.Ziperr",
-  "description": "Collect, repair, and play web games offline. Powered by Frostbyte Technologies.",
+  "description": "Capture, audit, preview, dan siapkan paket offline untuk resource game web berizin.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0d12",
