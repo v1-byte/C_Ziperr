@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -140,4 +140,16 @@ test('generated demo Worker serves demo login, balance, idempotent spin, result,
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('preview diagnostics use textContent rather than dynamic HTML injection', () => {
+  const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
+  const start = html.indexOf('<script>\n(function () {\n  var entries = [];\n  var selected = null;');
+  assert.notEqual(start, -1);
+  const end = html.indexOf('</script>', start);
+  const diagnosticsScript = html.slice(start, end);
+  assert.ok(diagnosticsScript.includes('kind.textContent = item.kind'));
+  assert.ok(diagnosticsScript.includes('title.textContent = item.title'));
+  assert.ok(diagnosticsScript.includes('file.textContent = item.file'));
+  assert.ok(!diagnosticsScript.includes('innerHTML'));
 });
