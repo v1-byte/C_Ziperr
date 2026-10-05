@@ -13952,17 +13952,9 @@ function isApiLike(u){
     }
 
     let _gcGithubTokenResolve = null;
-    function gcRequestGithubToken() {
-      const modal = document.getElementById('gc-github-token-modal');
-      const input = document.getElementById('gc-github-token-input');
-      if (!modal || !input) return Promise.resolve('');
-      input.value = '';
-      modal.style.display = 'flex';
-      return new Promise(function (resolve) {
-        _gcGithubTokenResolve = resolve;
-        setTimeout(function () { try { input.focus(); } catch (_) {} }, 30);
-      });
-    }
+    // Collect tidak lagi meminta PAT/token melalui popup.
+    // Jalur otomatis hanya memakai GITHUB_TOKEN yang sudah dikonfigurasi di Worker.
+    function gcRequestGithubToken() { return Promise.resolve(''); }
     function gcResolveGithubToken(accept) {
       const modal = document.getElementById('gc-github-token-modal');
       const input = document.getElementById('gc-github-token-input');
@@ -13995,12 +13987,8 @@ function isApiLike(u){
       let token = String(window.__gcGithubCollectToken || '').trim();
       let res = await send(token);
       let data = await res.json().catch(function () { return {}; });
-      if (res.status === 401 && data.code === 'GITHUB_TOKEN_REQUIRED' && !token) {
-        token = await gcRequestGithubToken();
-        if (!token) return { res: res, data: data, cancelled: true };
-        res = await send(token);
-        data = await res.json().catch(function () { return {}; });
-      }
+      // Jangan membuka popup token saat collect. Jika secret Worker belum ada,
+      // tampilkan error konfigurasi agar admin memperbaiki Worker sekali saja.
       if (data.code === 'GITHUB_TOKEN_INVALID' || data.code === 'GITHUB_TOKEN_SCOPE') gcClearGithubToken();
       return { res: res, data: data, cancelled: false };
     }
