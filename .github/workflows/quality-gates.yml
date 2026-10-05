@@ -45,8 +45,18 @@ jobs:
           npm run test:package-readiness
           npm run test:conformance-lab
           npm run test:offline-gameplay
+          npm run test:security-auditor
           npm run validate:native-package
           node --test tests/native-game-package.test.mjs
+      - name: Run DRM and Android security posture audit
+        run: npm run security:audit
+      - name: Upload security posture report
+        uses: actions/upload-artifact@v4
+        with:
+          name: c-zipper-security-posture
+          path: audit/reports/project-security.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate inline JavaScript
         run: node scripts/check-inline-js.cjs
       - name: Production security smoke test

@@ -25,7 +25,9 @@
     "validate:offline-package": "node scripts/validate-offline-package.js",
     "validate:native-package": "node scripts/validate-native-package.js",
     "check:master-toolset": "node scripts/check-master-toolset.cjs",
-    "security:smoke": "node scripts/security-smoke.cjs"
+    "security:smoke": "node scripts/security-smoke.cjs",
+    "security:audit": "node scripts/security-audit.cjs . --json audit/reports/project-security.json",
+    "test:security-auditor": "node --test tests/security/*.test.cjs"
   },
   "dependencies": {
     "@cloudflare/playwright": "^1.3.0",
