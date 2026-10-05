@@ -15332,7 +15332,7 @@ function isApiLike(u){
     }
 
     @media (max-width: 768px) {
-      header { padding: 10px 12px !important; min-height: 56px !important; }
+      header { padding: max(30px, env(safe-area-inset-top)) 12px 10px !important; min-height: 56px !important; }
       .nav-btn { padding: 7px 12px !important; font-size: 12px !important; }
       .collect-card { margin-bottom: 12px; }
       .activity-hub { padding: 16px 14px 24px !important; }
@@ -15345,7 +15345,7 @@ function isApiLike(u){
         align-items: center !important;
         row-gap: 8px !important;
         column-gap: 8px !important;
-        padding: 8px 10px 9px !important;
+        padding: max(30px, env(safe-area-inset-top)) 10px 9px !important;
       }
       .header-left { flex: 1 1 auto !important; min-width: 0 !important; }
       .logo { gap: 8px !important; }
