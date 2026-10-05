@@ -10226,7 +10226,29 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
             if (parsedRt && Array.isArray(parsedRt.sessions)) realtimePayload = parsedRt;
           }
         } catch (_) {}
-        const previewBaseUrl = window.location.origin + '/';
+        // Game Cocos/engine modern sering memanggil loader dari JavaScript
+        // dengan path relatif (bukan src/href HTML). Jika dokumen preview
+        // memakai blob: sebagai base, path tersebut salah dan game menjadi
+        // blank. Pakai target asli dari manifest sebagai base resolver;
+        // bridge tetap memetakan request ke asset lokal ZIP.
+        let previewBaseUrl = window.location.origin + '/';
+        try {
+          const manifestPath = names.find(function (n) { return /(^|\/)manifest\.json$/i.test(n); });
+          if (manifestPath && zipFileMap[manifestPath]) {
+            const manifestRaw = openFiles.has(manifestPath) ? openFiles.get(manifestPath) : await zipFileMap[manifestPath].async('string');
+            const manifestJson = JSON.parse(manifestRaw);
+            if (manifestJson && manifestJson.target) {
+              const targetUrl = new URL(String(manifestJson.target));
+              targetUrl.hash = '';
+              previewBaseUrl = targetUrl.href;
+            }
+          }
+        } catch (_) {}
+        if (!/<base\b/i.test(html)) {
+          html = /<head[\s>]/i.test(html)
+            ? html.replace(/<head([^>]*)>/i, '<head$1><base href="' + previewBaseUrl.replace(/"/g, '&quot;') + '">')
+            : '<base href="' + previewBaseUrl.replace(/"/g, '&quot;') + '">' + html;
+        }
         const sandboxMode = activePreviewMode !== 'web';
         const hybridMode = Boolean(window.__gcHybridPreview);
 
