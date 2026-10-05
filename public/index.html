@@ -2761,12 +2761,10 @@
       background: #080c12;
     }
     @media (max-width: 768px) {
-      /* HP: susun Preview dan Capture vertikal agar tidak terjepit di antara
-         batas kiri/kanan dan tidak membuat isi bawah tertutup viewport. */
-      .gc-cockpit { grid-template-columns: minmax(0, 1fr); gap: 12px; overflow: visible; padding-bottom: 0; }
-      .gc-cockpit-card, .gc-preview-capture-card, .gc-capture-pane { min-height: 0; }
-      .gc-cockpit-preview { min-height: clamp(280px, 48svh, 420px); justify-content: center; align-items: stretch; }
-      .gc-cockpit-frame { width: 100%; height: clamp(280px, 48svh, 420px); min-height: 280px; margin: 0 auto; flex: 0 1 auto; }
+      .gc-cockpit { grid-template-columns: minmax(420px, 1.12fr) minmax(320px, .88fr); overflow-x: auto; padding-bottom: 6px; }
+      .gc-cockpit-card, .gc-preview-capture-card { min-height: 0; }
+      .gc-cockpit-preview { min-height: min(58svh, 500px); justify-content: center; align-items: stretch; }
+      .gc-cockpit-frame { width: min(100%, 360px); height: min(58svh, 500px); min-height: 360px; margin: 0 auto; flex: 0 1 360px; }
       .gc-capture-footer { grid-template-columns: 1fr; }
       .gc-capture-actions { width: 100%; }
       .gc-capture-actions .btn { flex: 1 1 0; }
@@ -2967,8 +2965,8 @@
       min-height: 44px;
       white-space: nowrap;
     }
-    @media (max-width: 860px) and (min-width: 769px) {
-      /* Tablet: tetap dua kolom; HP memakai susunan satu kolom di atas. */
+    @media (max-width: 860px) {
+      /* Selalu dua kolom: keduanya mengecil mengikuti lebar layar, tanpa scroll horizontal. */
       .gc-cockpit { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; overflow-x: hidden; }
       .gc-cockpit-card { min-width: 0; min-height: 0; }
       .gc-cockpit-preview { min-height: 300px; }
