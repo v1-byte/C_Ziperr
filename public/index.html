@@ -15336,6 +15336,9 @@ function isApiLike(u){
       .nav-btn { padding: 7px 12px !important; font-size: 12px !important; }
       .collect-card { margin-bottom: 12px; }
       .activity-hub { padding: 16px 14px 24px !important; }
+      /* APK/WebView dapat menggambar sampai di bawah navigation bar Android.
+         Sisakan ruang hanya di Workspace agar footer editor tetap terlihat. */
+      #panel-workspace.active { padding-bottom: max(36px, env(safe-area-inset-bottom)); }
     }
 
     /* Mobile header: pisahkan brand dan nav agar tidak bertabrakan dengan status bar HP. */
