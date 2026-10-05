@@ -131,7 +131,7 @@ function ghConfig(env = {}) {
     workflow: env.GH_WORKFLOW || "collect.yml"
   };
 }
-const AI_MODELS = { llama: "@cf/meta/llama-3.1-8b-instruct", "qwen3-coder": "@cf/meta/llama-3.1-8b-instruct" };
+const AI_MODELS = { llama: "@cf/meta/llama-3.1-8b-instruct-fast", "qwen3-coder": "@cf/meta/llama-3.1-8b-instruct-fast" };
 
 function cleanAiJson(text) {
   const raw = String(text || "").trim();

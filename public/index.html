@@ -6724,7 +6724,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       if (!res.ok || !result.ok) throw new Error(result.message || result.error || 'AI tidak dapat dihubungi. pastikan API key Cloudflare Workers AI sudah dikonfigurasi.');
       setAIProcess(3, result.repairedCode ? 'Menyiapkan kode perbaikan dan hasil offline…' : 'Menyiapkan laporan analisis offline…');
       aiSuggestedCode = result.repairedCode || null;
-      persistOfflineAIRecord({ at: new Date().toISOString(), action: action, file: context.filename, provider: 'cloudflare-workers-ai', model: result.model || '@cf/meta/llama-3.1-8b-instruct', result: result, applied: false });
+      persistOfflineAIRecord({ at: new Date().toISOString(), action: action, file: context.filename, provider: 'cloudflare-workers-ai', model: result.model || '@cf/meta/llama-3.1-8b-instruct-fast', result: result, applied: false });
       const applyButton = document.getElementById('ai-apply-fix');
       if (applyButton) applyButton.hidden = !aiSuggestedCode;
       if (response) {
@@ -8352,7 +8352,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       const body = await response.json().catch(function () { return {}; });
       if (!response.ok || !body.ok) throw new Error(body.message || body.error || 'Cloudflare Workers AI tidak tersedia.');
       if (typeof appendLog === 'function') appendLog('AI: sukses via Cloudflare Workers AI', 'ok');
-      return { content: String(body.result || ''), model: '@cf/meta/llama-3.1-8b-instruct', slotName: 'Cloudflare Workers AI' };
+      return { content: String(body.result || ''), model: '@cf/meta/llama-3.1-8b-instruct-fast', slotName: 'Cloudflare Workers AI' };
     }
 
     function parseCustomAIJson(text) {
@@ -12629,7 +12629,7 @@ function isApiLike(u){
           var aiRes = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'analyze', data: aiPayload, context: 'Pipeline Offline Game Collector; hasil wajib aman dan dapat dipakai untuk audit lokal.' }) });
           var aiBody = await aiRes.json().catch(function () { return {}; });
           if (!aiRes.ok || !aiBody.ok) throw new Error(aiBody.message || aiBody.error || 'Cloudflare Workers AI tidak tersedia');
-          xentinelReport = { generatedAt: new Date().toISOString(), provider: 'cloudflare-workers-ai', model: '@cf/meta/llama-3.1-8b-instruct', result: aiBody.result || null };
+          xentinelReport = { generatedAt: new Date().toISOString(), provider: 'cloudflare-workers-ai', model: '@cf/meta/llama-3.1-8b-instruct-fast', result: aiBody.result || null };
           currentZip.file('pipeline/xentinel-report.json', JSON.stringify(xentinelReport, null, 2));
           step(3, 'Xentinel menganalisis ' + aiFiles.length + ' entri dan laporan ditulis ke pipeline/xentinel-report.json', true);
         } catch (xe) {

@@ -1,4 +1,4 @@
-const DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+const DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
 const REQUEST_TIMEOUT_MS = 90000;
 
 function extractText(result) {

@@ -21,7 +21,7 @@
     "GH_REPO": "C_Ziperr",
     "GH_WORKFLOW": "collect.yml",
     "PUBLIC_APP_NAME": "Game Collector Pro",
-    "WORKERS_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct",
+    "WORKERS_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct-fast",
     "EDU_GH_OWNER": "frostbyte-lab",
     "EDU_GH_REPO": "Edu-network",
     "EDU_GH_BRANCH": "main",
