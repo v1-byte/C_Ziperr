@@ -12,6 +12,10 @@ Rilis APK ini menggunakan Worker dan alur Collect yang didefinisikan di reposito
 
 APK membutuhkan koneksi internet untuk memuat aplikasi web utama dan API capture. Jika web tidak dapat dibuka, APK menampilkan pesan error, tombol coba lagi, dan pilihan membuka web melalui browser. APK tidak menyalin atau mengeksekusi kode game secara lokal.
 
+## Penyimpanan ZIP hasil Collect
+
+Pada build native versi `1.2.3` atau lebih baru, ZIP hasil Collect dari WebView disimpan ke direktori internal aplikasi melalui `expo-file-system`. APK menampilkan notifikasi setelah file berhasil disimpan. Build APK lama tetap memakai perilaku download WebView biasa.
+
 ## Pengujian
 
 ```bash
