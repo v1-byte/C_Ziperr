@@ -10505,6 +10505,49 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
     } catch (err) {}
     return null;
   }
+  // Loader engine (terutama Cocos) sering membuat <script>, Image, atau
+  // audio secara dinamis. Interceptor fetch/XHR saja tidak menangkap
+  // resource element, sehingga loader akan meminta URL signed yang sudah
+  // kedaluwarsa dan iframe menjadi putih. Arahkan resource tersebut ke
+  // salinan lokal ZIP sebelum browser mulai mengunduhnya.
+  function gcDomAssetUrl(value){
+    if (typeof value !== 'string' || !value) return value;
+    var local = gcAssetUrl(value);
+    if (local) return local;
+    try {
+      var absolute = new URL(value, GC_BASE_URL).toString();
+      local = gcAssetUrl(absolute);
+      if (local) return local;
+      if (GC_HYBRID && isExternalHttp(absolute) && isStaticAssetUrl(absolute)) return viaProxy(absolute);
+    } catch (_) {}
+    return value;
+  }
+  try {
+    var nativeSetAttribute = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function(name, value){
+      var key = String(name || '').toLowerCase();
+      if (key === 'src' || key === 'href' || key === 'poster') value = gcDomAssetUrl(String(value || ''));
+      return nativeSetAttribute.call(this, name, value);
+    };
+    function patchResourceProperty(ctor, prop){
+      if (!ctor || !ctor.prototype) return;
+      var proto = ctor.prototype;
+      var desc = Object.getOwnPropertyDescriptor(proto, prop);
+      if (!desc || typeof desc.set !== 'function') return;
+      Object.defineProperty(proto, prop, {
+        configurable: desc.configurable,
+        enumerable: desc.enumerable,
+        get: desc.get,
+        set: function(value){ return desc.set.call(this, gcDomAssetUrl(String(value || ''))); }
+      });
+    }
+    patchResourceProperty(window.HTMLScriptElement, 'src');
+    patchResourceProperty(window.HTMLImageElement, 'src');
+    patchResourceProperty(window.HTMLLinkElement, 'href');
+    patchResourceProperty(window.HTMLAudioElement, 'src');
+    patchResourceProperty(window.HTMLVideoElement, 'src');
+    patchResourceProperty(window.HTMLSourceElement, 'src');
+  } catch (_) {}
   function gcSafeUrl(u){
     if (typeof u !== 'string' || !u) return u;
     // Host malformed tidak boleh keluar ke network pada Sandbox.
