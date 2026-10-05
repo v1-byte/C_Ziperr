@@ -4131,6 +4131,18 @@
         </div>
       </div>
 
+      <details class="collect-help-item" style="margin:8px 10px 10px;">
+        <summary>Catatan Server Baru · API, Offline &amp; Hosting</summary>
+        <div style="padding:9px 10px;font-size:11px;line-height:1.55;color:var(--text-secondary);">
+          <b>Yang tersedia:</b> POST /api/auth/login · GET /api/session · GET /api/wallet/balance · POST /api/game/spin · GET /api/game/result · GET /api/game/history · POST /api/license/verify.<br>
+          <b>Keamanan:</b> JWT session baru memakai <code>JWT_SECRET</code>; hasil spin memakai HMAC <code>SIGNING_KEY</code>; wallet demo non-monetary; RNG baru server-side; idempotency key tersedia.<br>
+          <b>File hosting:</b> <code>demo-backend/worker.js</code> · <code>demo-backend/wrangler.jsonc</code> · <code>hosting/api-contract.json</code> · <code>hosting-config.json</code> · <code>offline-config.json</code> · <code>API_HOSTING_README.md</code> · <code>env.example</code> · <code>server-checklist.md</code>.<br>
+          <b>Cara:</b> Load ZIP → API/Custom API → isi Base URL → Generate Hosting Package.<br>
+          <b>Demo:</b> username <code>demo</code> · password <code>demo</code> · license <code>demo-license</code> · saldo awal <code>10.000 DEMO_CREDIT</code>.<br>
+          <span style="color:var(--text-muted);">Mode ini memakai server baru/demo dan tidak memulihkan atau melewati DRM, token, wallet, atau server lama.</span>
+        </div>
+      </details>
+
       <!-- Halaman Hosting (kembali → editor) -->
       <div id="hosting-mode">
         <div class="hosting-top">
@@ -4733,6 +4745,18 @@
               <span class="activity-card-desc">AI Core mandiri · diagnosis evidence · skor readiness · rekomendasi yang dapat dijelaskan</span>
             </button>
           </div>
+
+          <details class="collect-help-item" style="margin:10px 0;">
+            <summary>Catatan Server Baru · API, Offline &amp; Hosting</summary>
+            <div style="padding:9px 10px;font-size:11px;line-height:1.55;color:var(--text-secondary);">
+              <b>Endpoint:</b> <code>POST /api/auth/login</code> · <code>GET /api/session</code> · <code>GET /api/wallet/balance</code> · <code>POST /api/game/spin</code> · <code>GET /api/game/result</code> · <code>GET /api/game/history</code> · <code>POST /api/license/verify</code>.<br>
+              <b>Server baru:</b> JWT session <code>JWT_SECRET</code> · HMAC hasil <code>SIGNING_KEY</code> · wallet demo · RNG server-side · idempotency key.<br>
+              <b>Hosting package:</b> <code>demo-backend/worker.js</code> · <code>demo-backend/wrangler.jsonc</code> · <code>hosting/api-contract.json</code> · <code>hosting-config.json</code> · <code>offline-config.json</code> · <code>API_HOSTING_README.md</code> · <code>env.example</code> · <code>server-checklist.md</code>.<br>
+              <b>Alur:</b> Workspace → Load ZIP → API/Custom API → Base URL → Generate Hosting Package.<br>
+              <b>Demo:</b> <code>demo / demo</code> · license <code>demo-license</code> · saldo <code>10.000 DEMO_CREDIT</code>.<br>
+              <span style="color:var(--text-muted);">Server baru/demo ini tidak memulihkan atau melewati DRM, token, wallet, atau server lama.</span>
+            </div>
+          </details>
 
           <details class="fb-portfolio">
             <summary>
