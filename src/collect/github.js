@@ -1,5 +1,5 @@
 export async function ghFetch(env, path, opts = {}, sessionToken = "") {
-  const token = String(sessionToken || env.GITHUB_TOKEN || "").trim();
+  const token = String(sessionToken || env.GITHUB_TOKEN || env.GH_TOKEN || "").trim();
   if (!token) {
     return {
       ok: false,

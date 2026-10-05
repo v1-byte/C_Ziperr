@@ -295,7 +295,7 @@ async function handleRequest(request, env) {
         sourceCommit: env.GC_SOURCE_COMMIT || null,
         provider: "cloudflare-workers-ai",
         workersAI: workersAiHealth(env),
-        github: Boolean(env.GITHUB_TOKEN),
+        github: Boolean(env.GITHUB_TOKEN || env.GH_TOKEN),
         assetProxy: true,
         limits: {
           mode: env.COLLECTOR_BUCKET
@@ -423,7 +423,7 @@ async function handleRequest(request, env) {
       const target = String(body.target || "cloudflare").toLowerCase(); // github | cloudflare
       // Token sekali kirim dari klien (sesi tab). Jangan log / jangan KV.
       const sessionToken = String(body.token || body.github_token || "").trim();
-      const token = sessionToken || env.GITHUB_TOKEN || "";
+      const token = sessionToken || env.GITHUB_TOKEN || env.GH_TOKEN || "";
       if (!token) {
         return Response.json(
           {
@@ -636,7 +636,7 @@ async function handleRequest(request, env) {
       const artifactId = url.searchParams.get("artifact_id");
       if (!artifactId) return Response.json({ error: "artifact_id wajib" }, { status: 400 });
       const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
-      const token = sessionToken || env.GITHUB_TOKEN || "";
+      const token = sessionToken || env.GITHUB_TOKEN || env.GH_TOKEN || "";
       if (!token) return Response.json({ error: "Token GitHub diperlukan untuk unduh artifact", code: "GITHUB_TOKEN_REQUIRED" }, { status: 401 });
       if (token.length > 1024) return Response.json({ error: "Token GitHub terlalu panjang", code: "GITHUB_TOKEN_INVALID" }, { status: 400 });
       const res = await fetch(`https://api.github.com/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/artifacts/${artifactId}/zip`, {
@@ -942,7 +942,7 @@ async function handleRequest(request, env) {
       return Response.json({
         ok: true,
         edu: cfg,
-        has_github_token: Boolean(env.GITHUB_TOKEN),
+        has_github_token: Boolean(env.GITHUB_TOKEN || env.GH_TOKEN),
         slots: { min: 1, max: 150 }
       });
     }
