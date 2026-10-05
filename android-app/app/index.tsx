@@ -1,54 +1,59 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
-const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=apk-8';
+const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=apk-9';
 
 export default function CollectorApp() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
-    return (
-      <View style={styles.error}>
-        <Text style={styles.title}>C.Ziperr</Text>
-        <Text style={styles.message}>Web utama tidak dapat dibuka. Periksa koneksi internet lalu coba lagi.</Text>
-        <Pressable style={styles.button} onPress={() => { setFailed(false); setLoading(true); }}>
-          <Text style={styles.buttonText}>Coba lagi</Text>
-        </Pressable>
-        <Pressable onPress={() => Linking.openURL(MAIN_WEB_URL)}>
-          <Text style={styles.link}>Buka di browser</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.root}>
-      <WebView
-        source={{ uri: MAIN_WEB_URL }}
-        style={styles.webview}
-        originWhitelist={['https://*']}
-        cacheEnabled={false}
-        cacheMode="LOAD_NO_CACHE"
-        javaScriptEnabled
-        domStorageEnabled
-        setSupportMultipleWindows={false}
-        sharedCookiesEnabled
-        thirdPartyCookiesEnabled
-        onLoadStart={() => { setLoading(true); setFailed(false); }}
-        onLoadEnd={() => setLoading(false)}
-        onError={() => { setLoading(false); setFailed(true); }}
-        onHttpError={(event) => { if (event.nativeEvent.statusCode >= 500) { setLoading(false); setFailed(true); } }}
-      />
-      {loading && <View style={styles.loading}><ActivityIndicator size="large" color="#5ee1c0" /><Text style={styles.loadingText}>Memuat C.Ziperr…</Text></View>}
-    </View>
+    <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor="#0e1116" />
+      <SafeAreaView style={styles.root} edges={['top', 'bottom', 'left', 'right']}>
+        {failed ? (
+          <View style={styles.error}>
+            <Text style={styles.title}>C.Ziperr</Text>
+            <Text style={styles.message}>Web utama tidak dapat dibuka. Periksa koneksi internet lalu coba lagi.</Text>
+            <Pressable style={styles.button} onPress={() => { setFailed(false); setLoading(true); }}>
+              <Text style={styles.buttonText}>Coba lagi</Text>
+            </Pressable>
+            <Pressable onPress={() => Linking.openURL(MAIN_WEB_URL)}>
+              <Text style={styles.link}>Buka di browser</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.content}>
+            <WebView
+              source={{ uri: MAIN_WEB_URL }}
+              style={styles.webview}
+              originWhitelist={['https://*']}
+              cacheEnabled={false}
+              cacheMode="LOAD_NO_CACHE"
+              javaScriptEnabled
+              domStorageEnabled
+              setSupportMultipleWindows={false}
+              sharedCookiesEnabled
+              thirdPartyCookiesEnabled
+              onLoadStart={() => { setLoading(true); setFailed(false); }}
+              onLoadEnd={() => setLoading(false)}
+              onError={() => { setLoading(false); setFailed(true); }}
+              onHttpError={(event) => { if (event.nativeEvent.statusCode >= 500) { setLoading(false); setFailed(true); } }}
+            />
+            {loading && <View style={styles.loading}><ActivityIndicator size="large" color="#5ee1c0" /><Text style={styles.loadingText}>Memuat C.Ziperr…</Text></View>}
+          </View>
+        )}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0e1116' },
+  content: { flex: 1, minHeight: 0 },
   webview: { flex: 1, backgroundColor: '#0e1116' },
   loading: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0e1116' },
   loadingText: { color: '#e6e9ee', marginTop: 14, fontSize: 14 },
