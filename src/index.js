@@ -1,5 +1,5 @@
 import { analyzeGame, repairMetadata, recommendGames, chatAboutGames } from "./ai.js";
-import { openRouterChat, openRouterHealth } from "./openrouter.js";
+import { workersAiChat, workersAiHealth } from "./workers-ai.js";
 /**
  * Game Collector Pro — Worker entry (modular Poin 5)
  */
@@ -131,7 +131,7 @@ function ghConfig(env = {}) {
     workflow: env.GH_WORKFLOW || "collect.yml"
   };
 }
-const AI_MODELS = { llama: "openrouter/free", "qwen3-coder": "openrouter/free" };
+const AI_MODELS = { llama: "@cf/meta/llama-3.1-8b-instruct", "qwen3-coder": "@cf/meta/llama-3.1-8b-instruct" };
 
 function cleanAiJson(text) {
   const raw = String(text || "").trim();
@@ -150,11 +150,11 @@ function cleanAiJson(text) {
 }
 
 async function analyzeWithAI(env, body) {
-  if (!env.OPENROUTER_API_KEY) {
+  if (!env.AI) {
     return Response.json({
       ok: false,
       error: "AI_NOT_CONFIGURED",
-      message: "OPENROUTER_API_KEY belum terhubung pada deployment ini."
+      message: "Binding Cloudflare Workers AI (AI) belum terhubung pada deployment ini."
     }, { status: 503 });
   }
 
@@ -197,13 +197,13 @@ async function analyzeWithAI(env, body) {
   ].filter(Boolean).join("\n\n");
 
   try {
-    const result = await openRouterChat(env, [
+    const result = await workersAiChat(env, [
       { role: "system", content: system },
       { role: "user", content: user }
     ], { model, maxTokens: action === "repair" ? 2000 : 1400, temperature: 0.2 });
     if (!result.ok) return Response.json({ ok: false, error: "AI_REQUEST_FAILED", message: result.error }, { status: result.status || 502 });
     const parsed = cleanAiJson(result.text);
-    return Response.json({ ok: true, model: result.model, modelKey, modelLabel: "OpenRouter", ...parsed });
+    return Response.json({ ok: true, model: result.model, modelKey, modelLabel: "Cloudflare Workers AI", ...parsed });
   } catch (error) {
     return Response.json({
       ok: false,
@@ -293,8 +293,8 @@ async function handleRequest(request, env) {
         version: "4.5-replication",
         build: env.GC_BUILD_ID || GC_BUILD_ID,
         sourceCommit: env.GC_SOURCE_COMMIT || null,
-        provider: "openrouter",
-        openRouter: openRouterHealth(env),
+        provider: "cloudflare-workers-ai",
+        workersAI: workersAiHealth(env),
         github: Boolean(env.GITHUB_TOKEN),
         assetProxy: true,
         limits: {
@@ -348,12 +348,12 @@ async function handleRequest(request, env) {
       }
       const prompt = String(body?.prompt || body?.question || "").trim().slice(0, 30000);
       if (!prompt) return Response.json({ ok: false, error: "PROMPT_REQUIRED", message: "Prompt AI wajib diisi." }, { status: 400 });
-      const result = await openRouterChat(env, [
+      const result = await workersAiChat(env, [
         { role: "system", content: "Anda adalah Xentinel, asisten AI Game Collector. Jawab dalam Bahasa Indonesia secara akurat dan ringkas." },
         { role: "user", content: prompt }
       ], { maxTokens: 2000, temperature: 0.2 });
       if (!result.ok) return Response.json({ ok: false, error: "AI_REQUEST_FAILED", message: result.error }, { status: result.status || 502 });
-      return Response.json({ ok: true, provider: "openrouter", content: result.text, model: result.model });
+      return Response.json({ ok: true, provider: "cloudflare-workers-ai", content: result.text, model: result.model });
     }
 
     if (request.method === "POST" && url.pathname === "/api/test/conformance") {

@@ -1,4 +1,4 @@
-import { openRouterChat } from "./openrouter.js";
+import { workersAiChat } from "./workers-ai.js";
 
 function clean(value, max = 18000) {
   if (value == null) return "";
@@ -18,7 +18,7 @@ function extractJson(text) {
 }
 
 async function askAI(env, system, user, options = {}) {
-  const result = await openRouterChat(env, [
+  const result = await workersAiChat(env, [
     { role: "system", content: system },
     { role: "user", content: user }
   ], { maxTokens: options.max_tokens || 1200, temperature: options.temperature ?? 0.2, model: options.model });

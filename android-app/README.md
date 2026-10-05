@@ -18,7 +18,7 @@ Pada build native versi `1.2.4` atau lebih baru, ZIP hasil System Collect, GitHu
 
 ## Konfigurasi AI Worker
 
-Semua fitur AI pada web utama diarahkan ke endpoint Worker same-origin (`/api/ai`, `/api/ai/analyze`, dan `/api/ai/manus`). Secret provider tidak ditanam di APK; deployment Worker perlu memiliki `OPENROUTER_API_KEY` dan opsional `OPENROUTER_MODEL`/`OPENROUTER_BASE_URL`.
+Semua fitur AI pada web utama diarahkan ke endpoint Worker same-origin (`/api/ai`, `/api/ai/analyze`, dan `/api/ai/manus`) dan diproses oleh Cloudflare Workers AI gratis melalui binding `AI`. Tidak ada API key AI yang ditanam di APK; deployment Worker perlu mengaktifkan binding `AI` dan dapat mengatur `WORKERS_AI_MODEL`.
 
 ## Pengujian
 

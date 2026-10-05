@@ -7,6 +7,9 @@
   "browser": {
     "binding": "MYBROWSER"
   },
+  "ai": {
+    "binding": "AI"
+  },
   "assets": {
     "directory": "./public"
   },
@@ -18,8 +21,7 @@
     "GH_REPO": "C_Ziperr",
     "GH_WORKFLOW": "collect.yml",
     "PUBLIC_APP_NAME": "Game Collector Pro",
-    "OPENROUTER_MODEL": "openrouter/free",
-    "OPENROUTER_SITE_URL": "https://c-zipper.corelink-ai.workers.dev",
+    "WORKERS_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct",
     "EDU_GH_OWNER": "frostbyte-lab",
     "EDU_GH_REPO": "Edu-network",
     "EDU_GH_BRANCH": "main",

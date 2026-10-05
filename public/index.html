@@ -4124,7 +4124,7 @@
           <input type="file" id="zip-input" accept=".zip,application/zip,*/*" style="display: none;">
           <button type="button" class="btn btn-secondary btn-sm" id="btn-analisa-game" onclick="runAnalisaGame()" title="Analisa dependency → offline sandbox">Analisa Game</button>
           <button type="button" class="btn btn-primary btn-sm" id="btn-offline-pipeline" onclick="runFullOfflinePipeline()" title="Collect→Analisa→Dep map→Sandbox→Preview">Pipeline Offline</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="btn-custom-ai-top" onclick="openCustomAIManager()" title="Buka Xentinel — OpenRouter">Xentinel AI</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-custom-ai-top" onclick="openCustomAIManager()" title="Buka Xentinel — Cloudflare Workers AI">Xentinel AI</button>
           <button type="button" class="btn btn-secondary btn-sm" id="btn-github-save-package" onclick="gcSaveCurrentWorkspaceToGitHub()" title="Simpan paket hasil edit ke GitHub">Simpan ke GitHub</button>
           <button type="button" class="btn btn-secondary btn-sm" id="btn-github-load-package" onclick="gcLoadGitHubPackage()" title="Muat paket dari GitHub">Muat GitHub</button>
           <button type="button" class="btn btn-success btn-sm" id="btn-run-file" onclick="startPreview('sandbox')" title="Run / Preview">Run File</button>
@@ -4459,12 +4459,12 @@
 
           <!-- AI Panel -->
           <div class="ai-panel hidden" id="ai-panel">
-            <div class="ai-label"><svg class="ui-icon ui-icon-sm" aria-hidden="true"><use href="#icon-bot"></use></svg> AI Assistant <span id="ai-panel-badge" style="font-weight:400;text-transform:none;color:var(--text-muted);">· OpenRouter API</span></div>
+            <div class="ai-label"><svg class="ui-icon ui-icon-sm" aria-hidden="true"><use href="#icon-bot"></use></svg> AI Assistant <span id="ai-panel-badge" style="font-weight:400;text-transform:none;color:var(--text-muted);">· Cloudflare Workers AI API</span></div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
               <label for="ai-model" style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Model AI</label>
-              <select id="ai-model" style="flex:1;padding:7px 9px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;" title="Model OpenRouter yang dipakai untuk analisis kode.">
-                <option value="llama">OpenRouter · Free model</option>
-                <option value="qwen3-coder">OpenRouter · Free model (coding)</option>
+              <select id="ai-model" style="flex:1;padding:7px 9px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;" title="Model Cloudflare Workers AI yang dipakai untuk analisis kode.">
+                <option value="llama">Cloudflare Workers AI · Free model</option>
+                <option value="qwen3-coder">Cloudflare Workers AI · Free model (coding)</option>
               </select>
             </div>
             <p id="ai-session-hint" style="display:none;margin:0 0 8px;font-size:11px;color:var(--accent);"></p>
@@ -4597,13 +4597,13 @@
         <div class="cai-head">
           <div>
             <strong id="cai-title">Login AI</strong>
-            <span class="cai-sub" id="cai-sub">OpenRouter · Xentinel</span>
+            <span class="cai-sub" id="cai-sub">Cloudflare Workers AI · Xentinel</span>
           </div>
           <button type="button" class="cai-close" onclick="closeCustomAIManager()" aria-label="Tutup">✕</button>
         </div>
 
         <div id="cai-session-status" class="cai-hint" style="margin:0 0 10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.2);font-size:12px;">
-          Xentinel menggunakan OpenRouter melalui Worker. API key tersimpan aman di Cloudflare.
+          Xentinel menggunakan Cloudflare Workers AI melalui Worker. API key tersimpan aman di Cloudflare.
         </div>
 
         <!-- Menu utama -->
@@ -4611,7 +4611,7 @@
           <button type="button" class="cai-opt" id="cai-opt-groq" onclick="caiShowPanel('groq')">
             <span class="cai-opt-num">1</span>
             <span class="cai-opt-body">
-              <strong>OpenRouter</strong>
+              <strong>Cloudflare Workers AI</strong>
               <small>Email 1–5 · login · terapkan ke semua tombol AI</small>
             </span>
             <span class="cai-opt-toggle" onclick="event.stopPropagation()">
@@ -4622,7 +4622,7 @@
           <button type="button" class="cai-opt" id="cai-opt-gemini" onclick="caiShowPanel('gemini')">
             <span class="cai-opt-num">2</span>
             <span class="cai-opt-body">
-              <strong>OpenRouter Free</strong>
+              <strong>Cloudflare Workers AI Free</strong>
               <small>Email 1–5 · login · terapkan ke semua tombol AI</small>
             </span>
             <span class="cai-opt-toggle" onclick="event.stopPropagation()">
@@ -4633,7 +4633,7 @@
           <button type="button" class="cai-opt" id="cai-opt-meta" onclick="caiShowPanel('meta')">
             <span class="cai-opt-num">3</span>
             <span class="cai-opt-body">
-              <strong>OpenRouter Coding</strong>
+              <strong>Cloudflare Workers AI Coding</strong>
               <small>Llama · OpenAI-compatible · Email 1–5</small>
             </span>
             <span class="cai-opt-toggle" onclick="event.stopPropagation()">
@@ -4681,7 +4681,7 @@
 
         <!-- Panel Chat -->
         <div id="cai-panel-chat" class="cai-panel" style="display:none;">
-          <p class="cai-hint" style="margin-bottom:8px;flex-shrink:0;">Chat Xentinel diproses melalui OpenRouter.</p>
+          <p class="cai-hint" style="margin-bottom:8px;flex-shrink:0;">Chat Xentinel diproses melalui Cloudflare Workers AI.</p>
           <div id="cai-chat-log" class="cai-chat-log"></div>
           <textarea id="cai-chat-input" class="cai-chat-input" rows="4" placeholder="Tulis permintaan…"></textarea>
           <div class="cai-actions">
@@ -5316,7 +5316,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       function setAIProcess(active, detail, stages) {
         var list = document.getElementById('gc-ai-stage-list');
         if (!active) { if (list) { list.hidden = true; list.innerHTML = ''; } return; }
-        var items = Array.isArray(stages) && stages.length ? stages : ['Membaca kode aktif', 'Memproses melalui OpenRouter', 'Menyiapkan hasil offline'];
+        var items = Array.isArray(stages) && stages.length ? stages : ['Membaca kode aktif', 'Memproses melalui Cloudflare Workers AI', 'Menyiapkan hasil offline'];
         var current = Math.max(0, Math.min(items.length - 1, Number(active) - 1));
         setLoading(true, 'Xentinel AI · tahap ' + (current + 1) + '/' + items.length, detail || items[current]);
         if (!list) return;
@@ -6602,7 +6602,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       return lines.join('\n') || 'AI tidak menemukan penjelasan tambahan.';
     }
 
-    /** Backend AI tunggal: secret OpenRouter tetap berada di Worker. */
+    /** Backend AI tunggal: secret Cloudflare Workers AI tetap berada di Worker. */
     function hasCustomAIKeys() { return true; }
 
     /** Hapus highlight AI di Monaco */
@@ -6700,12 +6700,12 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         if (!Array.isArray(window.__gcAIEditHistory)) window.__gcAIEditHistory = [];
         window.__gcAIEditHistory.push(record);
         window.__gcAIEditHistory = window.__gcAIEditHistory.slice(-30);
-        currentZip.file('pipeline/ai-edit-history.json', JSON.stringify({ version: 1, provider: 'openrouter', generatedAt: new Date().toISOString(), entries: window.__gcAIEditHistory }, null, 2));
+        currentZip.file('pipeline/ai-edit-history.json', JSON.stringify({ version: 1, provider: 'cloudflare-workers-ai', generatedAt: new Date().toISOString(), entries: window.__gcAIEditHistory }, null, 2));
       } catch (e) { if (typeof appendLog === 'function') appendLog('Riwayat AI offline gagal ditulis: ' + (e.message || e), 'warn'); }
     }
 
     async function requestAI(action, question) {
-      // Semua tombol Analyze / Suggest Fix / Kirim memakai backend OpenRouter.
+      // Semua tombol Analyze / Suggest Fix / Kirim memakai backend Cloudflare Workers AI.
       window.__useCustomAI = false;
       setAIProcess(1, action === 'repair' ? 'Membaca kode untuk disiapkan perbaikannya…' : 'Membaca kode aktif dan masalah lokal…');
       const context = await resolveAIContext();
@@ -6714,17 +6714,17 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         response.style.display = 'block';
         response.textContent = 'AI sedang menganalisis ' + context.filename + '...';
       }
-      setAIProcess(2, 'Mengirim konteks kode ke Xentinel melalui OpenRouter…');
+      setAIProcess(2, 'Mengirim konteks kode ke Xentinel melalui Cloudflare Workers AI…');
       const res = await fetch('/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...context, action, question: question || '', model: document.getElementById('ai-model')?.value || 'llama' })
       });
       const result = await res.json().catch(() => ({}));
-      if (!res.ok || !result.ok) throw new Error(result.message || result.error || 'AI tidak dapat dihubungi. pastikan API key OpenRouter sudah dikonfigurasi.');
+      if (!res.ok || !result.ok) throw new Error(result.message || result.error || 'AI tidak dapat dihubungi. pastikan API key Cloudflare Workers AI sudah dikonfigurasi.');
       setAIProcess(3, result.repairedCode ? 'Menyiapkan kode perbaikan dan hasil offline…' : 'Menyiapkan laporan analisis offline…');
       aiSuggestedCode = result.repairedCode || null;
-      persistOfflineAIRecord({ at: new Date().toISOString(), action: action, file: context.filename, provider: 'openrouter', model: result.model || 'openrouter/free', result: result, applied: false });
+      persistOfflineAIRecord({ at: new Date().toISOString(), action: action, file: context.filename, provider: 'cloudflare-workers-ai', model: result.model || '@cf/meta/llama-3.1-8b-instruct', result: result, applied: false });
       const applyButton = document.getElementById('ai-apply-fix');
       if (applyButton) applyButton.hidden = !aiSuggestedCode;
       if (response) {
@@ -6785,7 +6785,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         .filter(i => i && i.line)
         .map(i => ({ line: i.line, message: i.message, severity: i.severity }));
       applyAIDecorations({ issueLines, changedLines });
-      persistOfflineAIRecord({ at: new Date().toISOString(), action: 'apply-fix', file: currentFile, provider: 'openrouter', changedLines: changedLines, applied: true, code: newCode });
+      persistOfflineAIRecord({ at: new Date().toISOString(), action: 'apply-fix', file: currentFile, provider: 'cloudflare-workers-ai', changedLines: changedLines, applied: true, code: newCode });
       const applyButton = document.getElementById('ai-apply-fix');
       if (applyButton) applyButton.hidden = true;
       setAIProcess(3, 'Perubahan diterapkan dan riwayat disimpan offline.');
@@ -6824,7 +6824,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
     const CAI_ACCOUNTS = 'gc_ai_accounts_v2';
     const CAI_GROQ_BASE = 'https://api.groq.com/openai/v1';
     const CAI_GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai';
-    // Meta Llama API (OpenAI-compatible). Bisa diganti ke OpenRouter/Fireworks/Together di base URL slot.
+    // Meta Llama API (OpenAI-compatible). Bisa diganti ke Cloudflare Workers AI/Fireworks/Together di base URL slot.
     const CAI_META_BASE = 'https://api.llama.com/compat/v1';
     const CAI_MANUS_BASE = '/api/ai/manus';
     const CAI_PROVIDERS = {
@@ -6864,8 +6864,8 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       { id: 'Llama-4-Maverick-17B-128E-Instruct', label: 'Llama 4 Maverick 17B' },
       { id: 'Llama-3.3-70B-Instruct', label: 'Llama 3.3 70B Instruct' },
       { id: 'Llama-3.1-8B-Instruct', label: 'Llama 3.1 8B Instruct' },
-      { id: 'meta-llama/llama-3.3-70b-instruct', label: 'OpenRouter-style Llama 3.3 70B' },
-      { id: 'meta-llama/llama-3.1-8b-instruct', label: 'OpenRouter-style Llama 3.1 8B' }
+      { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Cloudflare Workers AI-style Llama 3.3 70B' },
+      { id: 'meta-llama/llama-3.1-8b-instruct', label: 'Cloudflare Workers AI-style Llama 3.1 8B' }
     ];
     /** Model Gemini usang (1.5 / 2.0) → 3.6 Flash sesuai API Google */
     function caiNormalizeGeminiModel(model) {
@@ -6967,7 +6967,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
             const email = String(s.name || s.email || '').trim();
             if (/groq/i.test(base) || /^gsk_/.test(key)) {
               if (gi < 5) { acc.groq[gi] = { email: email || ('akun' + (gi + 1) + '@groq.local'), apiKey: key, enabled: s.enabled !== false }; gi++; }
-            } else if (/llama\.com|meta|openrouter|fireworks|together/i.test(base) || /meta-llama|Llama-/i.test(String(s.model||''))) {
+            } else if (/llama\.com|meta|cloudflare-workers-ai|fireworks|together/i.test(base) || /meta-llama|Llama-/i.test(String(s.model||''))) {
               if (!acc.meta) acc.meta = Array.from({ length: 5 }, () => ({ email: '', apiKey: '', enabled: false }));
               const mi = acc.meta.findIndex(x => !x.apiKey);
               const ix = mi >= 0 ? mi : 0;
@@ -7143,7 +7143,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           (caiCurrentProvider === 'groq'
             ? '<p style="margin:8px 0 0;font-size:11px;color:var(--text-muted);">Free/dev: pakai <code>openai/gpt-oss-20b</code>. Llama 3.x butuh plan enterprise Groq.</p>'
             : caiCurrentProvider === 'meta'
-            ? '<p style="margin:8px 0 0;font-size:11px;color:var(--text-muted);">Meta AI: key dari <b>Llama API</b> (api.llama.com) atau gateway OpenAI-compatible (OpenRouter/Fireworks). Model harus cocok dengan provider key.</p>'
+            ? '<p style="margin:8px 0 0;font-size:11px;color:var(--text-muted);">Meta AI: key dari <b>Llama API</b> (api.llama.com) atau gateway OpenAI-compatible (Cloudflare Workers AI/Fireworks). Model harus cocok dengan provider key.</p>'
             : caiCurrentProvider === 'manus'
             ? '<p style="margin:8px 0 0;font-size:11px;color:var(--text-muted);">Mode personal memakai key sesi browser. Jika field kosong, Worker mencoba secret MANUS_API_KEY; jika keduanya kosong, request gagal dengan MANUS_NOT_CONFIGURED.</p>'
             : '') +
@@ -7279,7 +7279,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         if (badge) {
           badge.textContent = loggedIn
             ? ('· sesi ' + label + (modelName ? ' · ' + modelName : ''))
-            : '· OpenRouter API';
+            : '· Cloudflare Workers AI API';
           badge.style.color = loggedIn ? 'var(--accent)' : 'var(--text-muted)';
         }
         if (hint) {
@@ -7295,7 +7295,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           modelSel.disabled = !!loggedIn;
           modelSel.title = loggedIn
             ? 'Sesi Login AI aktif — model dari provider aktif dipakai'
-            : 'OpenRouter API untuk analisis generatif';
+            : 'Cloudflare Workers AI API untuk analisis generatif';
         }
       } catch (_) {}
     }
@@ -7315,8 +7315,8 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var sub = document.getElementById('cai-sub');
       var status = document.getElementById('cai-session-status');
       if (title) title.textContent = 'Xentinel AI';
-      if (sub) sub.textContent = 'OpenRouter · backend aktif';
-      if (status) status.textContent = 'Semua fitur AI diproses oleh OpenRouter. API key tidak disimpan di browser.';
+      if (sub) sub.textContent = 'Cloudflare Workers AI · backend aktif';
+      if (status) status.textContent = 'Semua fitur AI diproses oleh Cloudflare Workers AI. API key tidak disimpan di browser.';
       caiShowPanel('chat');
       var log = document.getElementById('cai-chat-log');
       if (log && !log.children.length) caiAppendChat('ai', 'Xentinel siap membantu. Tulis pertanyaan atau minta perbaikan kode.');
@@ -7344,7 +7344,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       if (box) box.classList.toggle('cai-mode-chat', which === 'chat');
       if (which === 'menu') {
           if (title) title.textContent = 'Xentinel AI';
-          if (sub) sub.textContent = 'OpenRouter · backend aktif';
+          if (sub) sub.textContent = 'Cloudflare Workers AI · backend aktif';
         if (typeof updateAILoginUI === 'function') updateAILoginUI();
       } else if (which === 'apply') {
         const meta = CAI_PROVIDERS[caiCurrentProvider] || CAI_PROVIDERS.groq;
@@ -7411,11 +7411,11 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         return;
       }
       if (typeof callCustomAIWithFailover !== 'function') {
-        caiAppendChat('ai', 'OpenRouter belum tersedia. Pastikan secret Worker sudah dikonfigurasi.');
+        caiAppendChat('ai', 'Cloudflare Workers AI belum tersedia. Pastikan secret Worker sudah dikonfigurasi.');
         return;
       }
       if (typeof hasCustomAIKeys === 'function' && !hasCustomAIKeys()) {
-        caiAppendChat('ai', 'OpenRouter belum tersedia. Pastikan secret Worker sudah dikonfigurasi.');
+        caiAppendChat('ai', 'Cloudflare Workers AI belum tersedia. Pastikan secret Worker sudah dikonfigurasi.');
         return;
       }
 
@@ -8043,7 +8043,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       if (sendBtn) sendBtn.disabled = true;
       try {
         if (typeof callCustomAIWithFailover !== 'function') {
-          throw new Error('OpenRouter belum tersedia. Pastikan secret Worker sudah dikonfigurasi.');
+          throw new Error('Cloudflare Workers AI belum tersedia. Pastikan secret Worker sudah dikonfigurasi.');
         }
         var file = (typeof currentFile !== 'undefined' && currentFile) ? currentFile : null;
         var code = '';
@@ -8346,13 +8346,13 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         body: JSON.stringify({
           action: 'chat',
           question: question,
-          context: 'Permintaan berasal dari UI Game Collector. Semua jawaban wajib diproses oleh OpenRouter.'
+          context: 'Permintaan berasal dari UI Game Collector. Semua jawaban wajib diproses oleh Cloudflare Workers AI.'
         })
       });
       const body = await response.json().catch(function () { return {}; });
-      if (!response.ok || !body.ok) throw new Error(body.message || body.error || 'OpenRouter tidak tersedia.');
-      if (typeof appendLog === 'function') appendLog('AI: sukses via OpenRouter', 'ok');
-      return { content: String(body.result || ''), model: 'openrouter/free', slotName: 'OpenRouter' };
+      if (!response.ok || !body.ok) throw new Error(body.message || body.error || 'Cloudflare Workers AI tidak tersedia.');
+      if (typeof appendLog === 'function') appendLog('AI: sukses via Cloudflare Workers AI', 'ok');
+      return { content: String(body.result || ''), model: '@cf/meta/llama-3.1-8b-instruct', slotName: 'Cloudflare Workers AI' };
     }
 
     function parseCustomAIJson(text) {
@@ -8499,7 +8499,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       box.textContent = window.__customSuggestedFiles.map(function (s) {
         return '• ' + s.path + '  (' + s.tags.join(', ') + ' · skor ' + s.score + ')';
       }).join('\n');
-      if (typeof appendLog === 'function') appendLog('OpenRouter targets: ' + window.__customSuggestedFiles.length + ' file', 'ok');
+      if (typeof appendLog === 'function') appendLog('Cloudflare Workers AI targets: ' + window.__customSuggestedFiles.length + ' file', 'ok');
     }
 
     async function applyEduToSuggestedFiles() {
@@ -12613,7 +12613,7 @@ function isApiLike(u){
         } catch (_) {}
         step(2, 'SAFE ' + (s.safe|0) + ' · ERROR/track ' + (s.tracking|0) + ' · API ' + (s.api|0) + ' · REPLACE ' + (s.replaceCandidates|0), true);
 
-        // —— 3. Analisis Xentinel melalui OpenRouter ——
+        // —— 3. Analisis Xentinel melalui Cloudflare Workers AI ——
         setLoading(true, 'Pipeline Offline', '3/7 Analisis Xentinel…');
         var xentinelReport = null;
         try {
@@ -12628,12 +12628,12 @@ function isApiLike(u){
           };
           var aiRes = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'analyze', data: aiPayload, context: 'Pipeline Offline Game Collector; hasil wajib aman dan dapat dipakai untuk audit lokal.' }) });
           var aiBody = await aiRes.json().catch(function () { return {}; });
-          if (!aiRes.ok || !aiBody.ok) throw new Error(aiBody.message || aiBody.error || 'OpenRouter tidak tersedia');
-          xentinelReport = { generatedAt: new Date().toISOString(), provider: 'openrouter', model: 'openrouter/free', result: aiBody.result || null };
+          if (!aiRes.ok || !aiBody.ok) throw new Error(aiBody.message || aiBody.error || 'Cloudflare Workers AI tidak tersedia');
+          xentinelReport = { generatedAt: new Date().toISOString(), provider: 'cloudflare-workers-ai', model: '@cf/meta/llama-3.1-8b-instruct', result: aiBody.result || null };
           currentZip.file('pipeline/xentinel-report.json', JSON.stringify(xentinelReport, null, 2));
           step(3, 'Xentinel menganalisis ' + aiFiles.length + ' entri dan laporan ditulis ke pipeline/xentinel-report.json', true);
         } catch (xe) {
-          xentinelReport = { generatedAt: new Date().toISOString(), provider: 'openrouter', ok: false, error: String(xe && xe.message || xe) };
+          xentinelReport = { generatedAt: new Date().toISOString(), provider: 'cloudflare-workers-ai', ok: false, error: String(xe && xe.message || xe) };
           currentZip.file('pipeline/xentinel-report.json', JSON.stringify(xentinelReport, null, 2));
           step(3, 'Xentinel gagal: ' + String(xe && xe.message || xe).slice(0, 160), false);
         }
@@ -14109,7 +14109,7 @@ function isApiLike(u){
         offlineReadyRender(report, offlineReadyLastAudit.filename, offlineReadyLastAudit.browserTest);
         var canAI = typeof callCustomAIWithFailover === 'function';
         if (!canAI) {
-          gcRenderReadinessAssistant({ error: 'OpenRouter belum tersedia. Audit lokal tetap selesai; periksa secret Worker.' });
+          gcRenderReadinessAssistant({ error: 'Cloudflare Workers AI belum tersedia. Audit lokal tetap selesai; periksa secret Worker.' });
           return { report: report, skipped: true, reason: 'no-provider' };
         }
         var content = await callCustomAIWithFailover([
@@ -14429,13 +14429,13 @@ function isApiLike(u){
         if (!value) { status.textContent = action === 'chat' ? 'Tulis pertanyaan Anda di kolom input terlebih dahulu.' : 'Masukkan data terlebih dahulu.'; if (input) input.focus(); return; }
         status.textContent = 'AI sedang memproses...'; output.textContent = '';
         try {
-          // Semua fitur AI memakai OpenRouter melalui endpoint Worker.
+          // Semua fitur AI memakai Cloudflare Workers AI melalui endpoint Worker.
           let data = value;
           if (action !== 'chat') { try { data = JSON.parse(value); } catch {} }
           const res = await fetch('/api/ai', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action, data, question: action === 'chat' ? value : undefined, context: window.currentManifest || window.currentAnalysis || '' }) });
           const body = await res.json().catch(() => ({}));
-          if (!res.ok || !body.ok) throw new Error(body.error || 'AI tidak tersedia. Pastikan secret OpenRouter sudah dikonfigurasi di Worker.');
-          status.textContent = 'Selesai · OpenRouter';
+          if (!res.ok || !body.ok) throw new Error(body.error || 'AI tidak tersedia. Pastikan secret Cloudflare Workers AI sudah dikonfigurasi di Worker.');
+          status.textContent = 'Selesai · Cloudflare Workers AI';
           output.textContent = typeof body.result === 'string' ? body.result : JSON.stringify(body.result, null, 2);
         } catch (error) { status.textContent = 'Gagal: ' + error.message; }
       }
