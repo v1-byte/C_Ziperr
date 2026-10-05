@@ -34,6 +34,20 @@ async function issueToken(playerId, secret) { const header = b64urlBytes(encoder
 async function readToken(request, secret) { const match = (request.headers.get('Authorization') || '').match(/^Bearer\s+(.+)$/i); if (!match) return null; try { const parts = match[1].split('.'); if (parts.length !== 3) return null; const input = parts[0] + '.' + parts[1]; const valid = await crypto.subtle.verify('HMAC', await hmacKey(secret), decodeB64url(parts[2]), encoder.encode(input)); if (!valid) return null; const payload = JSON.parse(new TextDecoder().decode(decodeB64url(parts[1]))); return payload.exp > Date.now() / 1000 ? payload.sub : null; } catch (_) { return null; } }
 async function body(request) { const text = await request.text(); if (text.length > 65536) throw new Error('Request body too large'); return text ? JSON.parse(text) : {}; }
 function now() { return new Date().toISOString(); }
+async function signValue(value, secret) {
+  if (!secret || secret.length < 32) throw new Error('SIGNING_KEY must be configured with at least 32 characters');
+  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64urlBytes(new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(value))));
+}
+async function verifyLicenseToken(token, secret) {
+  try {
+    const parts = String(token || '').split('.');
+    if (parts.length !== 2) return null;
+    const payload = JSON.parse(new TextDecoder().decode(decodeB64url(parts[0])));
+    const valid = parts[1] === await signValue(parts[0], secret);
+    return valid && payload.exp > Date.now() / 1000 ? payload : null;
+  } catch (_) { return null; }
+}
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -46,7 +60,13 @@ export default {
       let token; try { token = await issueToken(playerId, env.JWT_SECRET); } catch (e) { return error(e.message, 500); }
       return json({ ok: true, session_token: token, balance: players.get(playerId).balance, result: null, round_id: null, timestamp: now() });
     }
-    if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, demo: true, persistent: false, timestamp: now() });
+    if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true, demo: true, persistent: false, license: 'new-server', signing: 'HMAC-SHA256', timestamp: now() });
+    if (url.pathname === '/api/license/verify' && request.method === 'POST') {
+      let input; try { input = await body(request); } catch (e) { return error(e.message); }
+      if (env.DEMO_ONLY === 'true' && input.license_token === 'demo-license') return json({ ok: true, licensed: true, mode: 'demo', expires_at: null, timestamp: now() });
+      const license = await verifyLicenseToken(input.license_token, env.SIGNING_KEY || '');
+      return license ? json({ ok: true, licensed: true, mode: 'server-new', subject: license.sub, expires_at: license.exp, timestamp: now() }) : error('License baru tidak valid atau kedaluwarsa', 403);
+    }
     const playerId = await readToken(request, env.JWT_SECRET);
     if (!playerId || !players.has(playerId)) return error('Session invalid or expired', 401);
     const player = players.get(playerId);
@@ -66,14 +86,14 @@ export default {
       const roundId = crypto.randomUUID();
       const result = { round_id: roundId, game_id: String(input.game_id || 'game-demo'), bet_amount: bet, win_amount: win, symbols: [roll % 7, (roll + 2) % 7, (roll + 4) % 7], balance: player.balance, timestamp: now() };
       rounds.set(roundId, { playerId, result });
-      const response = { ok: true, result, round_id: roundId, balance: player.balance, timestamp: result.timestamp };
+      const response = { ok: true, result, round_id: roundId, balance: player.balance, result_signature: await signValue(JSON.stringify(result), env.SIGNING_KEY || env.JWT_SECRET || ''), timestamp: result.timestamp };
       if (idem) idempotency.set(playerId + ':' + idem, response);
       return json(response);
     }
     if (url.pathname === '/api/game/result' && request.method === 'GET') {
       const record = rounds.get(url.searchParams.get('round_id'));
       if (!record || record.playerId !== playerId) return error('Round not found', 404);
-      return json({ ok: true, result: record.result, round_id: record.result.round_id, balance: player.balance, timestamp: now() });
+      return json({ ok: true, result: record.result, round_id: record.result.round_id, balance: player.balance, result_signature: await signValue(JSON.stringify(record.result), env.SIGNING_KEY || env.JWT_SECRET || ''), timestamp: now() });
     }
     if (url.pathname === '/api/game/history' && request.method === 'GET') {
       const items = [...rounds.values()].filter((record) => record.playerId === playerId).map((record) => record.result).slice(-100).reverse();
@@ -254,7 +274,10 @@ export function buildHostingArtifacts(input = {}, existingApiMap = null) {
     config: 'hosting-config.json',
     demo_backend: 'demo-backend/worker.js',
     source_files_preserved: true,
-    demo_only: true
+    demo_only: true,
+    license_service: 'demo-backend/worker.js#/api/license/verify',
+    signing: 'HMAC-SHA256 via SIGNING_KEY',
+    offline_mode: 'local-demo-only'
   };
   const activity = {
     schema_version: '1.0',
@@ -289,6 +312,9 @@ export function buildHostingArtifacts(input = {}, existingApiMap = null) {
     '- Jalankan hanya sebagai demo non-monetary: login `demo` / `demo`, saldo demo 10.000 kredit, data tersimpan sementara di memori isolate dan dapat hilang saat restart.',
     '- Sebelum menjalankan lokal, set `JWT_SECRET` minimal 32 karakter melalui secret manager; jangan menaruh nilainya ke repository/ZIP.',
     '- Scaffold ini bukan production backend: belum memakai database, CORS dibuka untuk demo, dan tidak cocok untuk saldo atau taruhan uang nyata.',
+    '- License server baru: `POST /api/license/verify`; demo menerima `demo-license`, server milik Anda memakai HMAC `SIGNING_KEY`.',
+    '- Hasil spin dilengkapi `result_signature`; verifikasi signature pada server/client yang Anda kontrol.',
+    '- `offline-config.json` hanya mengaktifkan mode demo lokal; tidak melewati DRM, license, token, atau signature server lama.',
     '',
     '## Variabel lingkungan',
     ...DEFAULT_ENVIRONMENT.map((name) => `- \`${name}\` — isi hanya pada environment/secret manager server; jangan commit nilainya.`),
@@ -310,6 +336,7 @@ export function buildHostingArtifacts(input = {}, existingApiMap = null) {
     '- [ ] Terapkan autentikasi, TLS, validasi input, rate limit, logging tersanitasi, dan idempotency.',
     '- [ ] Saldo, RNG, hasil, dan ledger bersifat server-authoritative; gunakan saldo demo/non-monetary untuk demo.',
     '- [ ] Terapkan seluruh endpoint pada `hosting/api-contract.json` dan validasi schema response.',
+    '- [ ] Tambahkan `/api/license/verify`, set `SIGNING_KEY`, dan verifikasi `result_signature`.',
     '- [ ] Jalankan test GET terlebih dahulu; POST spin hanya pada staging/demo milik Anda.',
     '- [ ] Jalankan `Validate Hosting`, periksa semua blocker, lalu uji ZIP hasil ekspor.',
     '- [ ] Siapkan domain/TLS/CORS dan pantau log sebelum hosting.',
@@ -323,6 +350,7 @@ export function buildHostingArtifacts(input = {}, existingApiMap = null) {
     'hosting/activity.json': toJson(activity),
     'demo-backend/worker.js': DEMO_BACKEND_SOURCE,
     'demo-backend/wrangler.jsonc': '{\n  "$schema": "node_modules/wrangler/config-schema.json",\n  "name": "c-ziperr-demo-api",\n  "main": "worker.js",\n  "compatibility_date": "2026-10-04",\n  "vars": { "DEMO_ONLY": "true" }\n}\n',
+    'offline-config.json': toJson({ version: 1, mode: 'local-demo-only', apiBase: 'local-demo', license: 'demo-license', legacyOriginsBlocked: true, note: 'Offline demo memakai akun, wallet, RNG, license, dan signature server baru; tidak memulihkan server lama.' }),
     'API_HOSTING_README.md': readme,
     'env.example': envExample,
     'server-checklist.md': checklist
