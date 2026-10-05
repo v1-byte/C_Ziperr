@@ -15,7 +15,8 @@ const DOWNLOAD_BRIDGE = `
     var anchor = this;
     var href = anchor.href || '';
     var name = anchor.download || '';
-    if (name && href.indexOf('blob:') === 0 && window.ReactNativeWebView) {
+    var isZipDownload = name && (href.indexOf('blob:') === 0 || /\.zip(?:[?#]|$)/i.test(href) || /\/api\/(?:r2\/download|github\/(?:artifact|package\/download))/i.test(href));
+    if (isZipDownload && window.ReactNativeWebView) {
       fetch(href).then(function (response) { return response.blob(); }).then(function (blob) {
         var reader = new FileReader();
         reader.onloadend = function () {
@@ -29,6 +30,7 @@ const DOWNLOAD_BRIDGE = `
         reader.readAsDataURL(blob);
       }).catch(function (error) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'save_internal_download_error', message: String(error && error.message || error) }));
+        return originalClick.call(anchor);
       });
       return;
     }
