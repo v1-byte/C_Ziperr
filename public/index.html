@@ -8701,13 +8701,106 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       }
     }
 
+    async function gcAiRepairOfflineFiles(options) {
+      options = options || {};
+      if (!currentZip || !zipFileMap) return { scanned: 0, repaired: 0, skipped: 0, entries: [] };
+      var maxFiles = Math.max(1, Math.min(Number(options.maxFiles) || 6, 10));
+      var candidates = Object.keys(zipFileMap).filter(function (p) {
+        return !/^BACKUP\//i.test(p) && /\.(html?|css|js|mjs|cjs|json|ts|tsx|jsx)$/i.test(p);
+      });
+      var ranked = [];
+      for (var i = 0; i < candidates.length; i++) {
+        var path = candidates[i];
+        try {
+          var text = currentFile === path && editor ? editor.getValue() : (openFiles.has(path) ? openFiles.get(path) : await zipFileMap[path].async('string'));
+          if (!text || text.length > 30000) continue;
+          var score = 0;
+          if (/(^|\/)index\.html?$/i.test(path)) score += 5;
+          if (/https?:\/\/|fetch\s*\(|XMLHttpRequest|axios|WebSocket/i.test(text)) score += 4;
+          if (/\/api\/|apiBase|BASE_URL|cdn\.|static\.|assets\//i.test(text)) score += 3;
+          if (/\.src\s*=|\.href\s*=|import\s*\(|new\s+URL\(/i.test(text)) score += 2;
+          if (/Math\.random|tracking|analytics|telemetry/i.test(text)) score += 1;
+          if (score > 0) ranked.push({ path: path, code: text, score: score });
+        } catch (_) {}
+      }
+      ranked.sort(function (a, b) { return b.score - a.score; });
+      var selected = ranked.slice(0, maxFiles);
+      var entries = [];
+      var repaired = 0;
+      function offlineReferenceExists(filePath, ref) {
+        ref = String(ref || '').trim();
+        if (!ref || /^(?:[a-z]+:|\/\/|#|data:|blob:|javascript:)/i.test(ref)) return true;
+        var clean = ref.split(/[?#]/)[0].replace(/^\.\//, '');
+        if (!clean || clean.endsWith('/')) return true;
+        var base = String(filePath || '').split('/');
+        base.pop();
+        var parts = base.concat(clean.split('/'));
+        var out = [];
+        parts.forEach(function (part) { if (!part || part === '.') return; if (part === '..') out.pop(); else out.push(part); });
+        var resolved = out.join('/');
+        return !!zipFileMap[resolved] || !!zipFileMap[clean] || Object.keys(zipFileMap).some(function (p) { return p.endsWith('/' + resolved) || p === resolved; });
+      }
+      function introducesMissingLocalRefs(filePath, before, after) {
+        var refs = [];
+        var re = /(?:src|href|action)\s*=\s*["']([^"']+)["']/gi;
+        var m;
+        while ((m = re.exec(after))) refs.push(m[1]);
+        var importRe = /(?:import\s*(?:[^'"()]+from\s*)?|require\s*\(|fetch\s*\(|new\s+URL\s*\(\s*)["']([^"']+)["']/gi;
+        while ((m = importRe.exec(after))) refs.push(m[1]);
+        return refs.some(function (ref) { return !offlineReferenceExists(filePath, ref) && !String(before).includes(ref); });
+      }
+      if (!options.silent) appendLog('AI Auto Offline: memeriksa ' + selected.length + ' file kandidat…', 'ok');
+      for (var j = 0; j < selected.length; j++) {
+        var item = selected[j];
+        try {
+          var ext = (item.path.split('.').pop() || 'txt').toLowerCase();
+          var language = ext === 'html' || ext === 'htm' ? 'html' : ext === 'css' ? 'css' : ext === 'json' ? 'json' : 'javascript';
+          var response = await fetch('/api/ai/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'repair', filename: item.path, language: language, code: item.code.slice(0, 30000),
+              model: 'qwen3-coder',
+              question: 'Ubah file ini agar dapat berjalan sebagai paket offline lokal. Pertahankan perilaku game. Prioritaskan path relatif ke file paket, jangan mengarang asset, jangan menghapus API game yang belum memiliki snapshot, dan jangan menyentuh login, CAPTCHA, DRM, pembayaran, atau keamanan. Jika tidak aman diperbaiki, kembalikan repairedCode null.'
+            })
+          });
+          var result = await response.json().catch(function () { return {}; });
+          var next = typeof result.repairedCode === 'string' ? result.repairedCode : '';
+          var valid = response.ok && result.ok && next.trim() && next !== item.code && next.length <= Math.max(60000, item.code.length * 2.5) && !/^```/.test(next.trim()) && !introducesMissingLocalRefs(item.path, item.code, next);
+          if (!valid) {
+            entries.push({ path: item.path, status: 'skipped', reason: response.ok ? 'AI tidak memberi patch aman atau membuat referensi asset baru' : (result.message || result.error || 'AI request gagal') });
+            continue;
+          }
+          var backup = 'BACKUP/AI-OFFLINE/' + item.path;
+          currentZip.file(backup, item.code);
+          currentZip.file(item.path, next);
+          openFiles.set(item.path, next);
+          zipFileMap[item.path] = currentZip.file(item.path);
+          if (currentFile === item.path && editor) editor.setValue(next);
+          repaired++;
+          entries.push({ path: item.path, status: 'repaired', backup: backup, score: item.score, summary: result.summary || '' });
+          if (!options.silent) appendLog('AI Auto Offline: diperbaiki ' + item.path + ' (backup dibuat)', 'ok');
+        } catch (error) {
+          entries.push({ path: item.path, status: 'error', reason: String(error && error.message || error).slice(0, 240) });
+        }
+      }
+      var report = { version: 1, generatedAt: new Date().toISOString(), mode: 'ai-auto-offline', scanned: selected.length, repaired: repaired, entries: entries };
+      currentZip.file('pipeline/ai-offline-repair.json', JSON.stringify(report, null, 2));
+      try { if (typeof renderFileTree === 'function') renderFileTree(Object.keys(zipFileMap)); } catch (_) {}
+      if (!options.silent) appendLog('AI Auto Offline selesai: ' + repaired + ' file diperbaiki, ' + (selected.length - repaired) + ' dilewati.', repaired ? 'ok' : 'warn');
+      return report;
+    }
+    window.gcAiRepairOfflineFiles = gcAiRepairOfflineFiles;
+
     async function runAiZipRepair() {
       try {
         if (!currentZip) {
           appendLog('AI Repair: load ZIP dulu.', 'warn');
           return;
         }
-        appendLog('AI Repair: memperbaiki ZIP…', 'ok');
+        appendLog('AI Auto Offline: mendeteksi dan memperbaiki file hasil Collect…', 'ok');
+        await gcAiRepairOfflineFiles({ maxFiles: 6 });
+        appendLog('AI Repair: menjalankan penguncian asset dan path offline…', 'ok');
         // Full-ZIP repair tanpa popup konfirmasi
         window.__gcAutoRepairSilent = true;
         window.__gcAutoRepairAll = true;
@@ -12636,6 +12729,15 @@ function isApiLike(u){
           xentinelReport = { generatedAt: new Date().toISOString(), provider: 'cloudflare-workers-ai', ok: false, error: String(xe && xe.message || xe) };
           currentZip.file('pipeline/xentinel-report.json', JSON.stringify(xentinelReport, null, 2));
           step(3, 'Xentinel gagal: ' + String(xe && xe.message || xe).slice(0, 160), false);
+        }
+
+        // —— 3b. AI Auto Offline: patch aman + backup sebelum Auto Repair ——
+        try {
+          setLoading(true, 'Pipeline Offline', '3b/7 AI Auto Offline…');
+          var aiRepair = await gcAiRepairOfflineFiles({ maxFiles: 6, silent: true });
+          step('3b', 'AI Auto Offline: ' + (aiRepair.repaired || 0) + ' file diperbaiki · backup tersedia di BACKUP/AI-OFFLINE/', true);
+        } catch (aire) {
+          step('3b', 'AI Auto Offline dilewati: ' + String(aire && aire.message || aire).slice(0, 160), false);
         }
 
         // —— 4. Network runtime map (dari preview log jika ada) ——
