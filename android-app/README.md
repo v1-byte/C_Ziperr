@@ -12,6 +12,12 @@ Rilis APK ini menggunakan Worker dan alur Collect yang didefinisikan di reposito
 
 APK membutuhkan koneksi internet untuk memuat aplikasi web utama dan API capture. Jika web tidak dapat dibuka, APK menampilkan pesan error, tombol coba lagi, dan pilihan membuka web melalui browser. APK tidak menyalin atau mengeksekusi kode game secara lokal.
 
+## Pembaruan APK
+
+Mulai versi 1.2.6 (versionCode 13), APK memeriksa manifest rilis GitHub saat aplikasi dibuka, kembali ke foreground, dan berkala ketika tetap aktif. Jika versionCode terbaru lebih tinggi, banner update menawarkan unduhan APK secara resumable; setelah ukuran file cocok dengan manifest, APK membuka Android Package Installer.
+
+Android tetap mewajibkan pengguna menyetujui pemasangan dan mungkin meminta izin **Izinkan pemasangan dari sumber ini** untuk C.Ziperr. Aplikasi tidak memasang APK diam-diam. Workflow rilis menerbitkan `update.json` bersama APK dan memverifikasi fingerprint sertifikat signing historis sebelum rilis, agar pembaruan tidak terbit jika tanda tangan berubah dan ditolak Android.
+
 ## Penyimpanan ZIP hasil Collect
 
 Pada build native versi `1.2.5` atau lebih baru, ZIP hasil System Collect, GitHub Actions, R2, dan Workspace dari WebView disimpan ke direktori internal aplikasi melalui `expo-file-system`. APK menampilkan notifikasi setelah file berhasil disimpan. Build APK lama tetap memakai perilaku download WebView biasa.
