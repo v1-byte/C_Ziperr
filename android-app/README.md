@@ -14,7 +14,7 @@ APK membutuhkan koneksi internet untuk memuat aplikasi web utama dan API capture
 
 ## Penyimpanan ZIP hasil Collect
 
-Pada build native versi `1.2.4` atau lebih baru, ZIP hasil System Collect, GitHub Actions, R2, dan Workspace dari WebView disimpan ke direktori internal aplikasi melalui `expo-file-system`. APK menampilkan notifikasi setelah file berhasil disimpan. Build APK lama tetap memakai perilaku download WebView biasa.
+Pada build native versi `1.2.5` atau lebih baru, ZIP hasil System Collect, GitHub Actions, R2, dan Workspace dari WebView disimpan ke direktori internal aplikasi melalui `expo-file-system`. APK menampilkan notifikasi setelah file berhasil disimpan. Build APK lama tetap memakai perilaku download WebView biasa.
 
 ## Konfigurasi AI Worker
 

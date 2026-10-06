@@ -97,6 +97,103 @@
       min-width: 0;
     }
 
+    .gc-atom-chain {
+      position: relative;
+      flex: 1 1 150px;
+      width: min(28vw, 270px);
+      max-width: 270px;
+      min-width: 120px;
+      height: 42px;
+      margin: 0 12px;
+      overflow: hidden;
+      isolation: isolate;
+      border: 1px solid rgba(94, 225, 192, .12);
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(94,225,192,.018), rgba(96,165,250,.045), rgba(94,225,192,.018));
+      pointer-events: none;
+    }
+    .gc-atom-chain::before {
+      position: absolute;
+      top: 50%;
+      right: 9%;
+      left: 9%;
+      height: 1px;
+      content: "";
+      background: linear-gradient(90deg, transparent, rgba(94,225,192,.45), rgba(96,165,250,.5), transparent);
+      box-shadow: 0 0 7px rgba(94,225,192,.28);
+    }
+    .gc-atom-chain::after {
+      position: absolute;
+      inset: 0 auto 0 -45%;
+      width: 42%;
+      content: "";
+      background: linear-gradient(90deg, transparent, rgba(94,225,192,.12), transparent);
+      animation: gc-atom-sweep 3.8s linear infinite;
+      pointer-events: none;
+    }
+    .gc-atom-node {
+      --atom-color: #5ee1c0;
+      position: absolute;
+      top: 50%;
+      z-index: 1;
+      width: 32px;
+      height: 32px;
+      transform: translate(-50%, -50%);
+    }
+    .gc-atom-node:nth-child(1) { left: 18%; --atom-color: #5ee1c0; }
+    .gc-atom-node:nth-child(2) { left: 50%; --atom-color: #7dd3fc; }
+    .gc-atom-node:nth-child(3) { left: 82%; --atom-color: #fda4af; }
+    .gc-atom-orbit {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 29px;
+      height: 13px;
+      border: 1px solid var(--atom-color);
+      border-radius: 50%;
+      opacity: .62;
+      box-shadow: 0 0 7px rgba(94,225,192,.18);
+    }
+    .gc-atom-orbit::after {
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      width: 4px;
+      height: 4px;
+      content: "";
+      border-radius: 50%;
+      background: var(--atom-color);
+      box-shadow: 0 0 7px var(--atom-color);
+    }
+    .gc-atom-orbit--primary {
+      animation: gc-atom-orbit-spin 2.4s linear infinite;
+    }
+    .gc-atom-orbit--secondary {
+      animation: gc-atom-orbit-spin-reverse 3.1s linear infinite;
+    }
+    .gc-atom-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--atom-color);
+      box-shadow: 0 0 9px var(--atom-color);
+    }
+    @keyframes gc-atom-orbit-spin {
+      from { transform: translate(-50%, -50%) rotate(-28deg); }
+      to { transform: translate(-50%, -50%) rotate(332deg); }
+    }
+    @keyframes gc-atom-orbit-spin-reverse {
+      from { transform: translate(-50%, -50%) rotate(52deg); }
+      to { transform: translate(-50%, -50%) rotate(-308deg); }
+    }
+    @keyframes gc-atom-sweep {
+      to { transform: translateX(390%); }
+    }
+
     .logo {
       display: flex;
       align-items: center;
@@ -2892,6 +2989,61 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .gc-capture-atom-loader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 9px;
+      padding: 7px 9px;
+      border: 1px solid rgba(94,225,192,.16);
+      border-radius: 10px;
+      background: linear-gradient(105deg, rgba(94,225,192,.055), rgba(96,165,250,.04));
+    }
+    .gc-capture-atom-loader[hidden] { display: none !important; }
+    .gc-capture-loader-rings {
+      position: relative;
+      flex: 0 0 68px;
+      width: 68px;
+      height: 28px;
+    }
+    .gc-capture-loader-ring {
+      --loader-ring-color: #5ee1c0;
+      position: absolute;
+      top: 50%;
+      width: 28px;
+      height: 20px;
+      transform: translateY(-50%) rotate(-22deg);
+      border: 1.5px solid var(--loader-ring-color);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(94,225,192,.14), inset 0 0 5px rgba(94,225,192,.08);
+      animation: gc-capture-ring-spin 1.45s linear infinite;
+    }
+    .gc-capture-loader-ring:nth-child(1) { left: 0; --loader-ring-color: #5ee1c0; }
+    .gc-capture-loader-ring:nth-child(2) { left: 20px; --loader-ring-color: #7dd3fc; animation-duration: 1.8s; animation-direction: reverse; }
+    .gc-capture-loader-ring:nth-child(3) { left: 40px; --loader-ring-color: #fda4af; animation-duration: 2.15s; }
+    .gc-capture-loader-ring::after {
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      width: 4px;
+      height: 4px;
+      content: "";
+      border-radius: 50%;
+      background: var(--loader-ring-color);
+      box-shadow: 0 0 7px var(--loader-ring-color);
+    }
+    .gc-capture-loader-copy { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; width: 100%; }
+    .gc-capture-loader-caption { color: var(--text-muted); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .gc-capture-loader-value { flex: 0 0 auto; color: var(--accent); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .gc-capture-loader-value small { color: var(--text-secondary); font-size: 9px; font-weight: 600; }
+    @keyframes gc-capture-ring-spin {
+      to { transform: translateY(-50%) rotate(338deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gc-atom-chain::after, .gc-atom-orbit, .gc-capture-loader-ring { animation: none !important; }
+      .gc-atom-chain::after { display: none; }
+    }
     .gc-capture-actions {
       display: flex;
       align-items: center;
@@ -3772,6 +3924,23 @@
           <span id="breadcrumb-file">—</span>
         </div>
       </div>
+      <div class="gc-atom-chain" aria-hidden="true">
+        <span class="gc-atom-node">
+          <i class="gc-atom-orbit gc-atom-orbit--primary"></i>
+          <i class="gc-atom-orbit gc-atom-orbit--secondary"></i>
+          <i class="gc-atom-core"></i>
+        </span>
+        <span class="gc-atom-node">
+          <i class="gc-atom-orbit gc-atom-orbit--primary"></i>
+          <i class="gc-atom-orbit gc-atom-orbit--secondary"></i>
+          <i class="gc-atom-core"></i>
+        </span>
+        <span class="gc-atom-node">
+          <i class="gc-atom-orbit gc-atom-orbit--primary"></i>
+          <i class="gc-atom-orbit gc-atom-orbit--secondary"></i>
+          <i class="gc-atom-core"></i>
+        </span>
+      </div>
       <nav>
         <button class="nav-btn active" data-panel="collect">COLLECT</button>
         <button class="nav-btn" data-panel="workspace">Workspace</button>
@@ -3826,6 +3995,17 @@
               <div class="gc-capture-status-group">
                 <strong class="gc-capture-status-primary" id="gc-capture-session-state" aria-live="polite">SIAP · Menunggu URL dan sesi dimulai</strong>
                 <span class="gc-cockpit-status" id="gc-cockpit-preview-status">Masukkan URL, lalu tekan Mulai Capture.</span>
+                <div class="gc-capture-atom-loader" id="gc-capture-atom-loader" hidden role="status" aria-live="polite">
+                  <div class="gc-capture-loader-rings" aria-hidden="true">
+                    <span class="gc-capture-loader-ring"></span>
+                    <span class="gc-capture-loader-ring"></span>
+                    <span class="gc-capture-loader-ring"></span>
+                  </div>
+                  <div class="gc-capture-loader-copy">
+                    <span class="gc-capture-loader-caption">Proses capture</span>
+                    <strong class="gc-capture-loader-value"><span id="gc-capture-remaining-percent">100</span>% <small>tersisa</small></strong>
+                  </div>
+                </div>
                 <div class="gc-capture-progress-track" role="progressbar" aria-label="Progress capture" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                   <span class="gc-capture-progress-bar" id="gc-capture-progress-bar"></span>
                 </div>
@@ -5411,6 +5591,10 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var bar = document.getElementById('gc-capture-progress-bar');
       var track = bar && bar.parentElement;
       var text = document.getElementById('gc-capture-progress-label');
+      var loader = document.getElementById('gc-capture-atom-loader');
+      var remaining = document.getElementById('gc-capture-remaining-percent');
+      if (value != null && remaining) remaining.textContent = String(Math.max(0, 100 - Math.round(value)));
+      if (loader) loader.hidden = !(typeof __gcUnifiedCaptureRunning !== 'undefined' && __gcUnifiedCaptureRunning && value != null && value < 100);
       if (value != null) {
         if (bar) bar.style.width = value + '%';
         if (track) track.setAttribute('aria-valuenow', String(value));
@@ -5522,6 +5706,8 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var start = document.getElementById('gc-primary-preview');
       var stop = document.getElementById('gc-primary-stop');
       var progress = document.getElementById('gc-primary-progress');
+      var capturePane = document.querySelector('.gc-capture-pane');
+      if (capturePane) capturePane.classList.toggle('is-capturing', !!running);
       if (start) { start.disabled = !!running; start.textContent = running ? '● CAPTURE BERJALAN' : '▶ MULAI CAPTURE'; }
       if (stop) stop.hidden = !running;
       if (progress && label) progress.textContent = label;
@@ -15532,7 +15718,8 @@ function isApiLike(u){
         column-gap: 8px !important;
         padding: max(30px, env(safe-area-inset-top)) 10px 9px !important;
       }
-      .header-left { flex: 1 1 auto !important; min-width: 0 !important; }
+      .header-left { flex: 0 1 auto !important; min-width: 0 !important; }
+      .gc-atom-chain { flex: 1 1 100px !important; width: auto !important; min-width: 96px !important; max-width: 190px !important; height: 34px; margin: 0 0 0 auto; }
       .logo { gap: 8px !important; }
       .logo-img { width: 34px !important; height: 34px !important; border-radius: 8px !important; }
       .logo-text .brand { font-size: 15px !important; }
