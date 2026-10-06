@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { classifyCaptureResource, detectProtectedResource, filterReleaseResources, sanitizeProtectedText } from "../src/security/protected-resource.js";
+import { readFile } from "node:fs/promises";
+
+const protectedResourceSource = await readFile(new URL("../src/security/protected-resource.js", import.meta.url), "utf8");
+const { classifyCaptureResource, detectProtectedResource, filterReleaseResources, sanitizeProtectedText } = await import(`data:text/javascript;base64,${Buffer.from(protectedResourceSource, "utf8").toString("base64")}`);
 
 test("DRM and license endpoints are detected and blocked", () => {
   const result = detectProtectedResource("requestMediaKeySystemAccess('com.widevine.alpha')", { url: "https://provider.example/license" });

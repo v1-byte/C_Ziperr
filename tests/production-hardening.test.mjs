@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addCapabilityScopes, checkRateLimit, preflightResponse, withSecurityHeaders } from "../src/security/response-hardening.js";
+import { readFile } from "node:fs/promises";
+
+const responseHardeningSource = await readFile(new URL("../src/security/response-hardening.js", import.meta.url), "utf8");
+const { addCapabilityScopes, checkRateLimit, preflightResponse, withSecurityHeaders } = await import(`data:text/javascript;base64,${Buffer.from(responseHardeningSource, "utf8").toString("base64")}`);
 
 const env = { CORS_ORIGIN: "https://c-zipper.corelink-ai.workers.dev" };
 
