@@ -78,11 +78,34 @@ jobs:
         working-directory: android-app/android
         run: ./gradlew assembleRelease --no-daemon
 
+      - name: Verify APK signing certificate continuity
+        shell: bash
+        run: |
+          APK="android-app/android/app/build/outputs/apk/release/app-release.apk"
+          EXPECTED_CERT_SHA256="fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          ACTUAL_CERT_SHA256=$("$APKSIGNER" verify --print-certs "$APK" | awk -F': ' '/Signer #1 certificate SHA-256 digest:/ {print $2}')
+          if [ "$ACTUAL_CERT_SHA256" != "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error title=APK signing key changed::Expected $EXPECTED_CERT_SHA256 but received $ACTUAL_CERT_SHA256; refusing to publish an APK that cannot update existing installs."
+            exit 1
+          fi
+          echo "APK signing certificate continuity verified: $ACTUAL_CERT_SHA256"
+
+      - name: Prepare release APK and update manifest
+        working-directory: android-app
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/app-release.apk release/app-release.apk
+          node scripts/create-update-manifest.mjs release/update.json
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: C-Ziperr-release
-          path: android-app/android/app/build/outputs/apk/release/app-release.apk
+          path: android-app/release/*
           if-no-files-found: error
           retention-days: 14
 
@@ -99,13 +122,22 @@ jobs:
           name: C-Ziperr-release
           path: release
 
+      - name: Read release version
+        id: manifest
+        run: |
+          echo "version=$(jq -r '.versionName' release/update.json)" >> "$GITHUB_OUTPUT"
+          echo "version_code=$(jq -r '.versionCode' release/update.json)" >> "$GITHUB_OUTPUT"
+
       - name: Publish public APK release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-${{ github.run_number }}
-          name: C.Ziperr APK release ${{ github.run_number }}
+          name: C.Ziperr APK v${{ steps.manifest.outputs.version }} (release ${{ github.run_number }})
           body: |
-            APK release C.Ziperr dari commit ${{ github.sha }}.
+            APK C.Ziperr v${{ steps.manifest.outputs.version }} (versionCode ${{ steps.manifest.outputs.version_code }}) dari commit ${{ github.sha }}.
             APK ini memuat web utama C.Ziperr melalui WebView agar tampilan dan alur Collect tetap sama dengan deployment produksi.
-          files: release/app-release.apk
+            Manifest pembaruan otomatis tersedia sebagai `update.json`.
+          files: |
+            release/app-release.apk
+            release/update.json
           generate_release_notes: false
