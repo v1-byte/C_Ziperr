@@ -9,6 +9,7 @@
  *   AUTO_HISTORY    default 1  (0 = skip)
  *   SPIN_DELAY_MS   default 2200
  */
+import { normalizeAutoInteractOptions } from "../src/collect/options.js";
 
 export const PLAY_KW = [
   "play", "start", "mulai", "continue", "lanjut", "main", "go", "enter",
@@ -134,16 +135,7 @@ async function runOnAllFrames(page, keywords, label, preferCenter = false) {
  * Pipeline ketat: Play → Spin×N + settle → History → Close
  */
 export async function runStrictAutoInteract(page, opts = {}) {
-  const autoSpins = Math.max(
-    0,
-    parseInt(String(opts.autoSpins ?? process.env.AUTO_SPINS ?? "3"), 10) || 0
-  );
-  const autoHistory =
-    String(opts.autoHistory ?? process.env.AUTO_HISTORY ?? "1") !== "0";
-  const spinDelayMs = Math.max(
-    800,
-    parseInt(String(opts.spinDelayMs ?? process.env.SPIN_DELAY_MS ?? "2200"), 10) || 2200
-  );
+  const { autoSpins, autoHistory, spinDelayMs } = normalizeAutoInteractOptions(opts);
 
   const log = [];
   const push = (msg, data) => {

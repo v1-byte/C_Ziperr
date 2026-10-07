@@ -32,14 +32,16 @@ import {
   atlasImageCandidates,
   makeRegionPath
 } from "../src/collect/sprite-atlas.js";
+import { normalizeCollectOptions } from "../src/collect/options.js";
 import { buildApiMap } from "../src/package/api-map.js";
 import { detectSecurityEvidence } from "../src/analyze/security-evidence.js";
 
 const TARGET_URL = process.env.TARGET_URL;
-const WAIT_SECONDS = Math.max(5, parseInt(process.env.WAIT_SECONDS || "22", 10));
-const AUTO_SPINS = process.env.AUTO_SPINS || "6";
-const AUTO_HISTORY = process.env.AUTO_HISTORY || "1";
-const SPIN_DELAY_MS = process.env.SPIN_DELAY_MS || "2200";
+const COLLECT_OPTIONS = normalizeCollectOptions(process.env);
+const WAIT_SECONDS = COLLECT_OPTIONS.waitSeconds;
+const AUTO_SPINS = COLLECT_OPTIONS.autoSpins;
+const AUTO_HISTORY = COLLECT_OPTIONS.autoHistory;
+const SPIN_DELAY_MS = COLLECT_OPTIONS.spinDelayMs;
 const MOCK_OFFLINE = process.env.MOCK_OFFLINE !== "0";
 
 if (!TARGET_URL) {
@@ -716,9 +718,9 @@ async function main() {
     smartRewrite: smart,
     via: "github-actions",
     autoInteract: {
-      autoSpins: Number(AUTO_SPINS),
-      autoHistory: AUTO_HISTORY !== "0",
-      spinDelayMs: Number(SPIN_DELAY_MS)
+      autoSpins: AUTO_SPINS,
+      autoHistory: AUTO_HISTORY,
+      spinDelayMs: SPIN_DELAY_MS
     },
     resources: safeResources,
     apiContracts,
