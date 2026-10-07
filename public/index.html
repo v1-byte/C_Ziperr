@@ -2881,6 +2881,52 @@
       border: 0;
       background: #080c12;
     }
+    .gc-rubik-loader {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      z-index: 3;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      opacity: .9;
+    }
+    .gc-rubik-loader[hidden] { display: none; }
+    .gc-rubik-cube {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      transform-style: preserve-3d;
+      animation: gc-rubik-fold 3.2s ease-in-out infinite;
+    }
+    .gc-rubik-face {
+      position: absolute;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      width: 52px;
+      height: 52px;
+      padding: 3px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 6px;
+      background: rgba(15,23,42,.9);
+      backface-visibility: visible;
+    }
+    .gc-rubik-face i { display: block; border-radius: 2px; background: #5ee1c0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+    .gc-rubik-face i:nth-child(2n) { background: #60a5fa; }
+    .gc-rubik-face i:nth-child(3n) { background: #fbbf24; }
+    .gc-rubik-front { transform: translateZ(26px); }
+    .gc-rubik-right { transform: rotateY(90deg) translateZ(26px); }
+    .gc-rubik-top { transform: rotateX(90deg) translateZ(26px); }
+    .gc-rubik-loader small { color: #cbd5e1; font: 700 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; text-shadow: 0 1px 8px #020617; }
+    @keyframes gc-rubik-fold {
+      0%, 100% { transform: rotateX(-18deg) rotateY(-28deg) scale(.88); }
+      35% { transform: rotateX(28deg) rotateY(116deg) scale(1); }
+      68% { transform: rotateX(-44deg) rotateY(218deg) scale(.9); }
+    }
+    @media (prefers-reduced-motion: reduce) { .gc-rubik-cube { animation: none; } }
     @media (max-width: 768px) {
       .gc-cockpit { grid-template-columns: minmax(420px, 1.12fr) minmax(320px, .88fr); overflow-x: auto; padding-bottom: 6px; }
       .gc-cockpit-card, .gc-preview-capture-card { min-height: 0; }
@@ -4000,9 +4046,17 @@
               </div>
               <span class="gc-cockpit-badge" id="gc-cockpit-preview-badge">IDLE</span>
             </div>
-            <div class="gc-cockpit-preview">
-              <iframe id="gc-cockpit-frame" class="gc-cockpit-frame" title="Preview game" allow="autoplay; fullscreen; gamepad; pointer-lock; clipboard-read; clipboard-write; accelerometer; gyroscope; orientation-lock" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
-              <div class="gc-cockpit-placeholder" id="gc-cockpit-placeholder">
+              <div class="gc-cockpit-preview">
+                <iframe id="gc-cockpit-frame" class="gc-cockpit-frame" title="Preview game" allow="autoplay; fullscreen; gamepad; pointer-lock; clipboard-read; clipboard-write; accelerometer; gyroscope; orientation-lock" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <div class="gc-rubik-loader" id="gc-rubik-loader" hidden aria-live="polite">
+                  <div class="gc-rubik-cube" aria-hidden="true">
+                    <div class="gc-rubik-face gc-rubik-front"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="gc-rubik-face gc-rubik-right"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="gc-rubik-face gc-rubik-top"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  </div>
+                  <small>MENYIAPKAN ASSET GAME…</small>
+                </div>
+                <div class="gc-cockpit-placeholder" id="gc-cockpit-placeholder">
                 <div><strong>Preview akan tampil di sini</strong><span>Masukkan URL di bawah, lalu tekan Mulai Capture untuk memulai sesi.</span></div>
               </div>
             </div>
@@ -4041,7 +4095,7 @@
                 <span class="gc-capture-progress-label" id="gc-capture-progress-label">0% · Menunggu sesi capture</span>
               </div>
               <div class="gc-capture-actions" aria-label="Aksi hasil capture">
-                <button type="button" class="btn btn-secondary btn-sm" id="gc-capture-download" onclick="gcDownloadLastCapture()" hidden disabled>Download ZIP</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="gc-capture-download" onclick="gcDownloadLastCapture()" hidden disabled>Simpan ZIP ke HP</button>
                 <button type="button" class="btn btn-primary btn-sm" id="gc-capture-workspace" onclick="gcCockpitOpenWorkspace()" hidden disabled>Buka Workspace</button>
               </div>
             </div>
@@ -4341,6 +4395,8 @@
           <button type="button" class="btn btn-secondary btn-sm" id="btn-custom-ai-top" onclick="openCustomAIManager()" title="Buka Xentinel — Cloudflare Workers AI">Xentinel AI</button>
           <button type="button" class="btn btn-secondary btn-sm" id="btn-github-save-package" onclick="gcSaveCurrentWorkspaceToGitHub()" title="Simpan paket hasil edit ke GitHub">Simpan ke GitHub</button>
           <button type="button" class="btn btn-secondary btn-sm" id="btn-github-load-package" onclick="gcLoadGitHubPackage()" title="Muat paket dari GitHub">Muat GitHub</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-zip" onclick="startPreview('sandbox')" title="Preview index.html dari ZIP tanpa network">Preview ZIP</button>
+          <button type="button" class="btn btn-success btn-sm" id="btn-play-zip" onclick="startPreview('hybrid')" title="Play ZIP dengan asset lokal dan API network">▶ Play ZIP</button>
           <button type="button" class="btn btn-success btn-sm" id="btn-run-file" onclick="startPreview('sandbox')" title="Run / Preview">Run File</button>
         </div>
       </div>
@@ -5688,7 +5744,9 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var liveBadge = document.getElementById('gc-capture-live-badge');
       var liveTitle = document.getElementById('gc-capture-live-title');
       var liveDetail = document.getElementById('gc-capture-live-detail');
+      var rubik = document.getElementById('gc-rubik-loader');
       if (pane) pane.classList.toggle('is-capturing', state === 'live');
+      if (rubik) rubik.hidden = state !== 'live';
       if (liveBadge) { liveBadge.textContent = state === 'error' ? 'ERROR' : state === 'ready' ? 'READY' : 'CAPTURING'; liveBadge.classList.toggle('is-live', state !== 'error'); }
       if (liveTitle) liveTitle.textContent = state === 'error' ? 'Capture mengalami kendala' : state === 'ready' ? 'Capture siap dimulai' : 'Capture aktif bersamaan dengan game';
       if (liveDetail) liveDetail.textContent = state === 'error' ? String(message || 'Periksa log capture.') : state === 'ready' ? 'Mainkan game di Preview kiri; resource akan dicatat saat sesi dimulai.' : String(message || 'Resource dan event sedang dicatat secara real-time.');
@@ -14937,7 +14995,7 @@ function isApiLike(u){
             try {
               var soft = data.status === 'completed' ? 90 : (data.status === 'in_progress' ? 55 : 25);
               gcCollectToastShow('Collect: ' + data.status);
-              gcUpdateCollectProgress({ pct: soft, fileCount: 0, items: GC_PACK_CHECKLIST.map(function(c){ return { label: c.label, ok: false, optional: !!c.optional }; }) }, label || data.status);
+              gcUpdateCollectProgress({ pct: soft, fileCount: data.file_count ?? data.fileCount ?? null, items: GC_PACK_CHECKLIST.map(function(c){ return { label: c.label, ok: false, optional: !!c.optional }; }) }, label || data.status);
             } catch (_) {}
 
           if (data.status === 'completed') {
@@ -15143,7 +15201,8 @@ function isApiLike(u){
       if (!report) return;
       var pct = report.pct || 0;
       try {
-        gcUpdateCapturePreviewProgress(pct, pct + '% · ' + (report.fileCount || 0) + ' file tertangkap · ' + (statusLabel || 'capture'));
+        var fileLabel = report.fileCount == null ? 'menunggu manifest file' : (report.fileCount + ' file tertangkap');
+        gcUpdateCapturePreviewProgress(pct, pct + '% · ' + fileLabel + ' · ' + (statusLabel || 'capture'));
         var previewStatus = document.getElementById('gc-cockpit-preview-status');
         if (previewStatus && statusLabel) previewStatus.textContent = 'Capture ' + pct + '% · ' + statusLabel;
       } catch (_) {}
@@ -15155,7 +15214,7 @@ function isApiLike(u){
       var cl = document.getElementById('gc-cm-checklist');
       if (p1) p1.textContent = pct + '%';
       if (b1) b1.style.width = pct + '%';
-      if (f1) f1.textContent = (report.fileCount || 0) + ' file dalam paket' + (statusLabel ? ' · ' + statusLabel : '');
+      if (f1) f1.textContent = (report.fileCount == null ? 'Manifest file belum diterima' : report.fileCount + ' file dalam paket') + (statusLabel ? ' · ' + statusLabel : '');
       if (cl) {
         cl.innerHTML = (report.items || []).map(function (it) {
           return '<div class="' + (it.ok ? 'ok' : 'no') + '">' + (it.ok ? '✓' : '·') + ' ' + it.label + (it.optional && !it.ok ? ' (opsional)' : '') + '</div>';
@@ -15185,7 +15244,7 @@ function isApiLike(u){
       var st = document.getElementById('status');
       if (st && statusLabel) {
         var tag = pct >= 100 ? 'OFFLINE READY' : 'OFFLINE PARTIAL';
-        st.textContent = 'Status: ' + tag + ' · ' + pct + '% · ' + (report.fileCount || 0) + ' file' + (statusLabel ? ' — ' + statusLabel : '');
+        st.textContent = 'Status: ' + tag + ' · ' + pct + '% · ' + (report.fileCount == null ? 'manifest belum diterima' : report.fileCount + ' file') + (statusLabel ? ' — ' + statusLabel : '');
       }
     }
     function gcGetDownloadName() {
