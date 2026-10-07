@@ -1,4 +1,5 @@
 name: Game Resource Collector
+run-name: C.Ziperr Collect ${{ inputs.request_id }}
 
 on:
   workflow_dispatch:
@@ -6,6 +7,10 @@ on:
       url:
         description: "URL game yang ingin di-capture"
         required: true
+        type: string
+      request_id:
+        description: "ID internal untuk menghubungkan permintaan collect dengan run"
+        required: false
         type: string
       wait_seconds:
         description: "Waktu tunggu setelah load (detik) — offline-first 20–25"

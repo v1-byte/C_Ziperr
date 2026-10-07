@@ -11,6 +11,15 @@ test("GitHub collect dispatch accepts the session token header and forwards it t
   assert.doesNotMatch(source, /console\.log\([^\n]*sessionToken/);
 });
 
+test("GitHub collect correlates the dispatched run and retries eventual-consistency lookup", () => {
+  assert.match(source, /const dispatchRequestId = crypto\.randomUUID\(\)/);
+  assert.match(source, /request_id: dispatchRequestId/);
+  assert.match(source, /for \(let attempt = 0; attempt < 8; attempt \+= 1\)/);
+  assert.match(source, /display_title \|\| ""\)\.endsWith\(dispatchRequestId\)/);
+  assert.match(source, /dispatchStartedAt - 15_000/);
+  assert.match(source, /run_lookup_pending: !run/);
+});
+
 test("GitHub status and artifact endpoints use a token without persisting it", () => {
   assert.match(source, /url\.pathname === "\/api\/github\/status"[\s\S]{0,500}const sessionToken = String\(request\.headers\.get\("X-GC-GitHub-Token"\)/);
   assert.match(source, /actions\/runs\/\$\{runId\}[\s\S]{0,400}\}, sessionToken\)/);

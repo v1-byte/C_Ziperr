@@ -14748,10 +14748,36 @@ function isApiLike(u){
         // ========== Collect via GitHub Actions (semua di web, tanpa buka GitHub) ==========
     let _ghPollTimer = null;
 
+    function gcHideCollectRunLink() {
+      var link = document.getElementById('gc-collect-run-link');
+      if (link) link.hidden = true;
+    }
+
+    function gcSetCollectRunLink(value) {
+      var url;
+      try { url = new URL(String(value || '')); } catch (_) { return; }
+      if (url.protocol !== 'https:' || url.hostname !== 'github.com' || !/^\/v1-byte\/C_Ziperr\/actions(?:\/|$)/i.test(url.pathname)) return;
+      var statusEl = document.getElementById('status');
+      if (!statusEl) return;
+      var link = document.getElementById('gc-collect-run-link');
+      if (!link) {
+        link = document.createElement('a');
+        link.id = 'gc-collect-run-link';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.cssText = 'display:inline-block;margin:4px 0;color:#67b7ff;font-size:13px';
+        statusEl.insertAdjacentElement('afterend', link);
+      }
+      link.href = url.href;
+      link.textContent = 'Buka log GitHub Actions';
+      link.hidden = false;
+    }
+
     async function runGitHubCollect() {
       try { gcSetFlowStep(4); } catch (_gc) {}
       const urlInput = document.getElementById('url');
       const statusEl = document.getElementById('status');
+      gcHideCollectRunLink();
       const gameUrl = (urlInput && urlInput.value || '').trim();
       const opts = gcCollectOptions();
 
@@ -14792,6 +14818,7 @@ function isApiLike(u){
         });
         const res = authResult.res;
         const data = authResult.data;
+        if (data.run_url) gcSetCollectRunLink(data.run_url);
         if (authResult.cancelled) {
           const cancelledMessage = 'Collect besar belum dimulai. GitHub belum terhubung; Capture Cloudflare tetap tersedia untuk paket kecil/sedang.';
           statusEl.textContent = 'Status: ' + cancelledMessage;
@@ -14814,7 +14841,9 @@ function isApiLike(u){
         if (data.run_id) {
           pollGitHubStatus(data.run_id);
         } else {
-          var missingRunId = 'Trigger OK tetapi run_id belum tersedia. Coba lagi beberapa detik.';
+          var missingRunId = data.run_lookup_pending
+            ? 'GitHub menerima Collect, tetapi run belum muncul di daftar. Jangan kirim ulang dulu; tunggu sebentar dan cek log Actions.'
+            : (data.message || 'Trigger diterima, tetapi run_id belum tersedia.');
           statusEl.textContent = 'Status: ' + missingRunId;
           gcSetCaptureResultActions(false, false);
           gcUpdateCapturePreviewProgress(0, '0% · ' + missingRunId);
@@ -14833,7 +14862,9 @@ function isApiLike(u){
     async function pollGitHubStatus(runId) {
       const statusEl = document.getElementById('status');
       let tries = 0;
-      const maxTries = 60; // ~5 menit @ 5s
+      const pollIntervalMs = 10_000;
+      const maxWaitMs = 65 * 60 * 1000; // workflow max 60 menit + runner startup
+      const maxTries = Math.ceil(maxWaitMs / pollIntervalMs);
 
       if (_ghPollTimer) clearInterval(_ghPollTimer);
 
@@ -14852,6 +14883,7 @@ function isApiLike(u){
             gcClearGithubToken();
             return;
           }
+          if (data.html_url) gcSetCollectRunLink(data.html_url);
 
           const phase = data.phase || data.current_step || '';
           const label = phase || data.status || '';
@@ -14962,7 +14994,13 @@ function isApiLike(u){
                 statusEl.textContent = 'Status: Selesai tapi unduh gagal — ' + msg;
               }
             } else {
-                  var noArtifact = 'Collect selesai tetapi artifact tidak tersedia.';
+                  const failedJob = (data.jobs || []).find(function (job) {
+                    return job && (job.conclusion === 'failure' || (job.steps || []).some(function (step) { return step && step.conclusion === 'failure'; }));
+                  });
+                  const failedStep = failedJob && (failedJob.steps || []).find(function (step) { return step && step.conclusion === 'failure'; });
+                  var noArtifact = data.conclusion === 'success'
+                    ? 'Collect selesai, tetapi artifact ZIP tidak tersedia.'
+                    : 'Collect gagal' + (data.conclusion ? ' (' + data.conclusion + ')' : '') + (failedStep ? ' pada tahap: ' + failedStep.name : '') + '.';
                   gcClearGithubToken();
                   statusEl.textContent = 'Status: ' + noArtifact;
                   gcSetCaptureResultActions(false, false);
@@ -14981,14 +15019,13 @@ function isApiLike(u){
         if (tries >= maxTries) {
           clearInterval(_ghPollTimer);
           _ghPollTimer = null;
-          gcClearGithubToken();
-          var pollTimeout = 'Timeout — proses Collect GitHub terlalu lama.';
+          var pollTimeout = 'UI berhenti menunggu setelah 65 menit. Periksa status/log Actions sebelum mengirim Collect ulang.';
           statusEl.textContent = 'Status: ' + pollTimeout;
           gcSetCaptureResultActions(false, false);
           gcUpdateCapturePreviewProgress(0, '0% · ' + pollTimeout);
           gcSetCapturePreviewStatus(pollTimeout, 'error');
         }
-      }, 5000);
+      }, pollIntervalMs);
     }
 
 

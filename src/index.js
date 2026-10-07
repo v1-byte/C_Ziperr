@@ -517,6 +517,8 @@ async function handleRequest(request, env) {
         return Response.json({ error: "URL http/https tidak valid" }, { status: 400 });
       }
       const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
+      const dispatchRequestId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      const dispatchStartedAt = Date.now();
 
       const dispatch = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/dispatches`, {
         method: "POST",
@@ -529,6 +531,7 @@ async function handleRequest(request, env) {
             auto_spins: String(body.auto_spins ?? body.autoSpins ?? "6"),
             auto_history: String(body.auto_history ?? body.autoHistory ?? "1"),
             spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2200"),
+            request_id: dispatchRequestId,
             seed_zip: String(body.seed_zip ?? body.seedZip ?? ""),
             mock_offline: String(body.mock_offline === false ? "0" : "1")
           }
@@ -536,19 +539,30 @@ async function handleRequest(request, env) {
       }, sessionToken);
 
       if (dispatch.status === 204 || dispatch.ok) {
-        // Ambil run terbaru (sedikit delay di client; di sini coba list)
-        await new Promise(r => setTimeout(r, 1500));
-        const runs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/runs?per_page=5&event=workflow_dispatch`, {}, sessionToken);
-        const run = (runs.data?.workflow_runs || [])
-          .filter((item) => item.event === "workflow_dispatch" && item.head_branch === "main")
-          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))[0] || null;
+        // GitHub may accept the dispatch before the new run appears in the list API.
+        // Correlate by run-name first; never attach the UI to an older collect run.
+        let run = null;
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          const runs = await ghFetch(env, `/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/workflows/${ghConfig(env).workflow}/runs?per_page=20&event=workflow_dispatch`, {}, sessionToken);
+          if (!runs.ok) break;
+          const candidates = (runs.data?.workflow_runs || [])
+            .filter((item) => item.event === "workflow_dispatch" && item.head_branch === "main" &&
+              new Date(item.created_at || 0).getTime() >= dispatchStartedAt - 15_000)
+            .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+          run = candidates.find((item) => String(item.display_title || "").endsWith(dispatchRequestId)) || candidates[0] || null;
+          if (run || attempt === 7) break;
+          await new Promise((resolve) => setTimeout(resolve, 750 + attempt * 250));
+        }
         return Response.json({
           ok: true,
-          message: "GitHub Actions dimulai. Tunggu 1–3 menit, lalu cek status.",
+          message: run
+            ? "GitHub Actions dimulai. Tunggu runner menyelesaikan capture."
+            : "GitHub menerima permintaan, tetapi run belum muncul di daftar. Jangan kirim ulang dulu; cek GitHub Actions sebentar lagi.",
           run_id: run?.id || null,
           run_url: run?.html_url || `https://github.com/${ghConfig(env).owner}/${ghConfig(env).repo}/actions`,
           status: run?.status || "queued",
-          conclusion: run?.conclusion || null
+          conclusion: run?.conclusion || null,
+          run_lookup_pending: !run
         });
       }
       return Response.json({
