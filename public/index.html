@@ -2886,7 +2886,7 @@
       display: grid;
       justify-items: center;
       gap: 8px;
-      min-height: 96px;
+      min-height: 78px;
       margin: 0 auto 12px;
       pointer-events: none;
       opacity: .9;
@@ -2905,8 +2905,8 @@
     }
     .gc-rubik-cube {
       position: relative;
-      width: 68px;
-      height: 68px;
+      width: 50px;
+      height: 50px;
       margin: 4px;
       transform-style: preserve-3d;
       animation: gc-rubik-fold 3.2s ease-in-out infinite;
@@ -2916,9 +2916,9 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 2px;
-      width: 68px;
-      height: 68px;
-      padding: 4px;
+      width: 50px;
+      height: 50px;
+      padding: 3px;
       border: 1px solid rgba(94,225,192,.5);
       border-radius: 6px;
       background: linear-gradient(145deg, rgba(24,55,58,.96), rgba(15,23,42,.96));
@@ -2929,12 +2929,12 @@
     .gc-rubik-face i:nth-child(2n) { background: #4cc9f0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 0 5px rgba(76,201,240,.3); }
     .gc-rubik-face i:nth-child(3n) { background: #8b7cff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 0 5px rgba(139,124,255,.3); }
     .gc-rubik-face i:nth-child(5n) { background: #a7f3d0; }
-    .gc-rubik-front { transform: translateZ(34px); }
-    .gc-rubik-back { transform: rotateY(180deg) translateZ(34px); }
-    .gc-rubik-right { transform: rotateY(90deg) translateZ(34px); }
-    .gc-rubik-left { transform: rotateY(-90deg) translateZ(34px); }
-    .gc-rubik-top { transform: rotateX(90deg) translateZ(34px); }
-    .gc-rubik-bottom { transform: rotateX(-90deg) translateZ(34px); }
+    .gc-rubik-front { transform: translateZ(25px); }
+    .gc-rubik-back { transform: rotateY(180deg) translateZ(25px); }
+    .gc-rubik-right { transform: rotateY(90deg) translateZ(25px); }
+    .gc-rubik-left { transform: rotateY(-90deg) translateZ(25px); }
+    .gc-rubik-top { transform: rotateX(90deg) translateZ(25px); }
+    .gc-rubik-bottom { transform: rotateX(-90deg) translateZ(25px); }
     .gc-rubik-loader small { position: relative; color: var(--accent); font: 700 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing: .08em; text-shadow: 0 1px 8px #020617, 0 0 10px rgba(94,225,192,.3); }
     @keyframes gc-rubik-fold {
       0%, 100% { transform: rotateX(-18deg) rotateY(-28deg) scale(.78); }
