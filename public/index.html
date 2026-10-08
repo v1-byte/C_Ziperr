@@ -2882,18 +2882,14 @@
       background: #080c12;
     }
     .gc-rubik-loader {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      z-index: 3;
+      position: relative;
       display: grid;
       justify-items: center;
       gap: 8px;
-      transform: translateX(-50%);
+      margin: 0 auto 12px;
       pointer-events: none;
       opacity: .9;
     }
-    .gc-rubik-loader[hidden] { display: none; }
     .gc-rubik-cube {
       position: relative;
       width: 52px;
@@ -4048,14 +4044,6 @@
             </div>
               <div class="gc-cockpit-preview">
                 <iframe id="gc-cockpit-frame" class="gc-cockpit-frame" title="Preview game" allow="autoplay; fullscreen; gamepad; pointer-lock; clipboard-read; clipboard-write; accelerometer; gyroscope; orientation-lock" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
-                <div class="gc-rubik-loader" id="gc-rubik-loader" hidden aria-live="polite">
-                  <div class="gc-rubik-cube" aria-hidden="true">
-                    <div class="gc-rubik-face gc-rubik-front"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                    <div class="gc-rubik-face gc-rubik-right"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                    <div class="gc-rubik-face gc-rubik-top"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                  </div>
-                  <small>MENYIAPKAN ASSET GAME…</small>
-                </div>
                 <div class="gc-cockpit-placeholder" id="gc-cockpit-placeholder">
                 <div><strong>Preview akan tampil di sini</strong><span>Masukkan URL di bawah, lalu tekan Mulai Capture untuk memulai sesi.</span></div>
               </div>
@@ -4070,7 +4058,14 @@
               <span class="gc-cockpit-badge" id="gc-capture-live-badge">READY</span>
             </div>
             <div class="gc-capture-live-panel">
-              <div class="gc-capture-live-icon" aria-hidden="true">●</div>
+              <div class="gc-rubik-loader" id="gc-rubik-loader" aria-live="polite">
+                <div class="gc-rubik-cube" aria-hidden="true">
+                  <div class="gc-rubik-face gc-rubik-front"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="gc-rubik-face gc-rubik-right"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="gc-rubik-face gc-rubik-top"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <small>CAPTURE ENGINE · READY</small>
+              </div>
               <strong id="gc-capture-live-title">Capture siap dimulai</strong>
               <span id="gc-capture-live-detail">Setelah Preview dimulai, resource dan event akan dicatat otomatis.</span>
             </div>
@@ -5746,7 +5741,11 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var liveDetail = document.getElementById('gc-capture-live-detail');
       var rubik = document.getElementById('gc-rubik-loader');
       if (pane) pane.classList.toggle('is-capturing', state === 'live');
-      if (rubik) rubik.hidden = state !== 'live';
+      if (rubik) {
+        rubik.hidden = false;
+        var rubikLabel = rubik.querySelector('small');
+        if (rubikLabel) rubikLabel.textContent = state === 'live' ? 'CAPTURE ENGINE · SCANNING' : state === 'error' ? 'CAPTURE ENGINE · CHECK LOG' : 'CAPTURE ENGINE · READY';
+      }
       if (liveBadge) { liveBadge.textContent = state === 'error' ? 'ERROR' : state === 'ready' ? 'READY' : 'CAPTURING'; liveBadge.classList.toggle('is-live', state !== 'error'); }
       if (liveTitle) liveTitle.textContent = state === 'error' ? 'Capture mengalami kendala' : state === 'ready' ? 'Capture siap dimulai' : 'Capture aktif bersamaan dengan game';
       if (liveDetail) liveDetail.textContent = state === 'error' ? String(message || 'Periksa log capture.') : state === 'ready' ? 'Mainkan game di Preview kiri; resource akan dicatat saat sesi dimulai.' : String(message || 'Resource dan event sedang dicatat secara real-time.');
