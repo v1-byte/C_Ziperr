@@ -290,7 +290,12 @@ async function testEndpoint() {
     }
     output.textContent = `Mengirim ${method} ${url.href}…`;
     const started = performance.now();
-    const response = await fetch(url.href, { method, headers, body: requestBody, mode: 'cors', credentials: 'omit', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(12000) });
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeout = controller ? setTimeout(() => controller.abort(), 12000) : null;
+    let response;
+    try {
+      response = await fetch(url.href, { method, headers, body: requestBody, mode: 'cors', credentials: 'omit', redirect: 'error', cache: 'no-store', ...(controller ? { signal: controller.signal } : {}) });
+    } finally { if (timeout) clearTimeout(timeout); }
     const elapsed = Math.round(performance.now() - started);
     const contentType = response.headers.get('content-type') || '';
     let responsePreview = '';
@@ -313,7 +318,17 @@ async function copyConfig() {
   const config = readForm();
   const contract = buildApiContract(config);
   const text = JSON.stringify({ base_url: contract.base_url, game_id: contract.game_id, endpoints: contract.endpoints, headers: contract.headers, parameters: contract.parameters, request_fields: contract.request_fields, response_fields: contract.response_fields, environment_variables: contract.environment_variables.map((item) => item.name) }, null, 2);
-  await navigator.clipboard.writeText(text);
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+    else throw new Error('Clipboard API tidak tersedia');
+  } catch (_) {
+    const area = document.createElement('textarea');
+    area.value = text; area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+    document.body.appendChild(area); area.select();
+    const copied = document.execCommand('copy'); area.remove();
+    if (!copied) throw new Error('Clipboard tidak tersedia di WebView ini.');
+  }
   setStatus('Konfigurasi tersalin. Pastikan tidak menambahkan token/secret sebelum membagikan.', 'ok');
 }
 

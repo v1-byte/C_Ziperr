@@ -4755,9 +4755,9 @@
               <button type="button" class="btn btn-primary btn-sm" onclick="saveFile()" title="Save">Save</button>
             </div>
             <div class="file-panel-footer-row footer-ai">
-              <button type="button" class="btn btn-success btn-sm footer-ai-main" id="btn-ai-zip-repair" onclick="runAiZipRepair()" title="AI perbaiki ZIP lalu auto Sandbox">AI</button>
+              <button type="button" class="btn btn-success btn-sm footer-ai-main" id="btn-ai-zip-repair" onclick="runAiZipRepair()" title="Perbaiki offline dan siapkan mode API server sendiri">AI Offline/API</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-strict-offline" onclick="runStrictOfflineMode()" title="Offline Seal: reuse ZIP + unduh + rewrite sekali jalan">Seal</button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-deteksi-ai" onclick="runDeteksiAI()" title="Lacak file error dari Scan">Deteksi</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-deteksi-ai" onclick="runDeteksiAI()" title="Scan lokal tanpa request AI otomatis">Scan Offline</button>
               <button type="button" class="btn btn-secondary btn-sm footer-more" onclick="openCustomApiManager()" title="Custom API dan paket hosting">API</button>
             </div>
           </div>
@@ -5288,6 +5288,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         if (panel) panel.classList.add('active');
         // Saat masuk Workspace, ukur ulang Monaco agar kode terlihat
         if (e.target.dataset.panel === 'workspace') {
+          if (typeof initMonacoEditor === 'function') initMonacoEditor();
           setTimeout(function() {
             if (typeof sizeMonacoHost === 'function') sizeMonacoHost();
             else if (typeof layoutEditor === 'function') layoutEditor();
@@ -5341,15 +5342,19 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         const status = document.getElementById('status-info');
         if (status && status.textContent === 'Ready') status.textContent = 'Editor siap (mode kompatibel HP)';
       }
-      // Beri waktu CDN Monaco di jaringan lambat (HP) — jangan buru-buru textarea polos
-      const mobileEditorFallbackTimer = setTimeout(function() {
-        if (!editor) installMobileEditorFallback();
-      }, 15000);
-
+      // Monaco dimuat hanya ketika Workspace dibuka agar startup APK tetap ringan.
+      let mobileEditorFallbackTimer = null;
+      function initMonacoEditor() {
+        if (editor || window.__gcMonacoLoading) return;
+        window.__gcMonacoLoading = true;
+        mobileEditorFallbackTimer = setTimeout(function() {
+          if (!editor) installMobileEditorFallback();
+        }, 10000);
         if (typeof require !== 'undefined') {
       require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.50.0/min/vs' }});
 
       require(['vs/editor/editor.main'], function() {
+        if (editor) return;
         const host = document.getElementById('monaco-editor');
         if (host) {
           host.style.minHeight = '240px';
@@ -5472,23 +5477,23 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           foldingHighlight: true,
           showFoldingControls: isMobile ? 'always' : 'mouseover',
           matchBrackets: 'always',
-          bracketPairColorization: { enabled: true, independentColorPoolPerBracketType: true },
+          bracketPairColorization: { enabled: !isMobile, independentColorPoolPerBracketType: true },
           guides: {
-            bracketPairs: true,
-            bracketPairsHorizontal: true,
+            bracketPairs: !isMobile,
+            bracketPairsHorizontal: !isMobile,
             indentation: true,
             highlightActiveIndentation: true
           },
           padding: { top: 10, bottom: 10 },
-          smoothScrolling: true,
-          cursorBlinking: 'smooth',
-          cursorSmoothCaretAnimation: 'on',
+          smoothScrolling: !isMobile,
+          cursorBlinking: isMobile ? 'solid' : 'smooth',
+          cursorSmoothCaretAnimation: isMobile ? 'off' : 'on',
           mouseWheelZoom: true,
-          linkedEditing: true,
+          linkedEditing: !isMobile,
           colorDecorators: true,
-          semanticHighlighting: { enabled: true },
-          occurrencesHighlight: 'singleFile',
-          selectionHighlight: true,
+          semanticHighlighting: { enabled: !isMobile },
+          occurrencesHighlight: isMobile ? 'off' : 'singleFile',
+          selectionHighlight: !isMobile,
           renderControlCharacters: false,
           stickyScroll: { enabled: !isMobile },
           scrollbar: {
@@ -5527,6 +5532,8 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       console.warn('Monaco loader tidak termuat — pakai editor kompatibel HP');
       installMobileEditorFallback();
     }
+      }
+      window.initMonacoEditor = initMonacoEditor;
 
     // Pastikan sizeMonacoHost tersedia meski Monaco async
     if (typeof sizeMonacoHost !== 'function') {
@@ -9207,9 +9214,10 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           appendLog('AI Repair: load ZIP dulu.', 'warn');
           return;
         }
-        appendLog('AI Auto Offline: mendeteksi dan memperbaiki file hasil Collect…', 'ok');
-        await gcAiRepairOfflineFiles({ maxFiles: 6 });
-        appendLog('AI Repair: menjalankan penguncian asset dan path offline…', 'ok');
+        appendLog('Auto Offline/API: menjalankan perbaikan path relatif, asset lokal, dan konfigurasi server baru…', 'ok');
+        // Jalur default bersifat lokal: tidak mengirim isi ZIP ke AI cloud.
+        // AI cloud tetap tersedia melalui AI Studio jika pengguna memilihnya secara eksplisit.
+        appendLog('Mode aman aktif: tidak ada request AI cloud otomatis.', 'ok');
         // Full-ZIP repair tanpa popup konfirmasi
         window.__gcAutoRepairSilent = true;
         window.__gcAutoRepairAll = true;
@@ -9219,7 +9227,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           window.__gcAutoRepairSilent = false;
           window.__gcAutoRepairAll = false;
         }
-        appendLog('AI Repair selesai — membuka Sandbox…', 'ok');
+        appendLog('Auto Offline/API selesai — membuka Sandbox…', 'ok');
         try {
           const ws = document.querySelector('.nav-btn[data-panel="workspace"]');
           if (ws) ws.click();
