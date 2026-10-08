@@ -2886,14 +2886,18 @@
       display: grid;
       justify-items: center;
       gap: 8px;
+      min-height: 96px;
       margin: 0 auto 12px;
       pointer-events: none;
       opacity: .9;
+      perspective: 280px;
+      overflow: visible;
     }
     .gc-rubik-cube {
       position: relative;
-      width: 52px;
-      height: 52px;
+      width: 68px;
+      height: 68px;
+      margin: 4px;
       transform-style: preserve-3d;
       animation: gc-rubik-fold 3.2s ease-in-out infinite;
     }
@@ -2902,9 +2906,9 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 2px;
-      width: 52px;
-      height: 52px;
-      padding: 3px;
+      width: 68px;
+      height: 68px;
+      padding: 4px;
       border: 1px solid rgba(255,255,255,.2);
       border-radius: 6px;
       background: rgba(15,23,42,.9);
@@ -2913,14 +2917,17 @@
     .gc-rubik-face i { display: block; border-radius: 2px; background: #5ee1c0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
     .gc-rubik-face i:nth-child(2n) { background: #60a5fa; }
     .gc-rubik-face i:nth-child(3n) { background: #fbbf24; }
-    .gc-rubik-front { transform: translateZ(26px); }
-    .gc-rubik-right { transform: rotateY(90deg) translateZ(26px); }
-    .gc-rubik-top { transform: rotateX(90deg) translateZ(26px); }
+    .gc-rubik-front { transform: translateZ(34px); }
+    .gc-rubik-back { transform: rotateY(180deg) translateZ(34px); }
+    .gc-rubik-right { transform: rotateY(90deg) translateZ(34px); }
+    .gc-rubik-left { transform: rotateY(-90deg) translateZ(34px); }
+    .gc-rubik-top { transform: rotateX(90deg) translateZ(34px); }
+    .gc-rubik-bottom { transform: rotateX(-90deg) translateZ(34px); }
     .gc-rubik-loader small { color: #cbd5e1; font: 700 10px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; text-shadow: 0 1px 8px #020617; }
     @keyframes gc-rubik-fold {
-      0%, 100% { transform: rotateX(-18deg) rotateY(-28deg) scale(.88); }
-      35% { transform: rotateX(28deg) rotateY(116deg) scale(1); }
-      68% { transform: rotateX(-44deg) rotateY(218deg) scale(.9); }
+      0%, 100% { transform: rotateX(-18deg) rotateY(-28deg) scale(.78); }
+      35% { transform: rotateX(28deg) rotateY(116deg) scale(.86); }
+      68% { transform: rotateX(-44deg) rotateY(218deg) scale(.8); }
     }
     @media (prefers-reduced-motion: reduce) { .gc-rubik-cube { animation: none; } }
     @media (max-width: 768px) {
@@ -2998,6 +3005,19 @@
       user-select: none;
     }
     .gc-capture-log-panel summary .meta { color: var(--text-muted); font-weight: 500; }
+    .gc-log-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 7px;
+      border: 1px solid rgba(96,165,250,.35);
+      border-radius: 6px;
+      color: #bfdbfe;
+      background: rgba(37,99,235,.12);
+      font: 700 10px/1 inherit;
+      cursor: pointer;
+    }
+    .gc-log-copy-btn:hover { border-color: rgba(94,225,192,.7); color: #5ee1c0; background: rgba(94,225,192,.1); }
     #gc-capture-log {
       max-height: 168px;
       margin: 0;
@@ -4061,8 +4081,11 @@
               <div class="gc-rubik-loader" id="gc-rubik-loader" aria-live="polite">
                 <div class="gc-rubik-cube" aria-hidden="true">
                   <div class="gc-rubik-face gc-rubik-front"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="gc-rubik-face gc-rubik-back"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
                   <div class="gc-rubik-face gc-rubik-right"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="gc-rubik-face gc-rubik-left"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
                   <div class="gc-rubik-face gc-rubik-top"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div class="gc-rubik-face gc-rubik-bottom"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
                 </div>
                 <small>CAPTURE ENGINE · READY</small>
               </div>
@@ -4095,7 +4118,7 @@
               </div>
             </div>
             <details class="gc-capture-log-panel" open>
-              <summary><span>Log Preview &amp; Capture</span><span id="gc-capture-log-count" class="meta">0 event</span></summary>
+              <summary><span>Log Preview &amp; Capture</span><span style="display:flex;align-items:center;gap:8px;"><button type="button" class="gc-log-copy-btn" id="gc-capture-log-copy" onclick="event.preventDefault(); event.stopPropagation(); gcCopyCaptureLog();" title="Salin log error dan proses capture" aria-label="Salin log"><span aria-hidden="true">⧉</span> Copy</button><span id="gc-capture-log-count" class="meta">0 event</span></span></summary>
               <pre id="gc-capture-log" aria-live="polite" aria-label="Log Preview dan Capture">Belum ada log. Log proses akan tampil di sini.</pre>
             </details>
           </section>
@@ -5792,6 +5815,39 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       return null;
     }
     window.gcDownloadLastCapture = gcDownloadLastCapture;
+
+    async function gcCopyCaptureLog() {
+      var captureEl = document.getElementById('gc-capture-log');
+      var text = captureEl ? String(captureEl.innerText || captureEl.textContent || '').trim() : '';
+      if (!text || text === 'Belum ada log. Log proses akan tampil di sini.') {
+        text = 'Belum ada log capture.';
+      }
+      var copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        }
+      } catch (_) {}
+      if (!copied) {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select();
+          copied = document.execCommand('copy'); ta.remove();
+        } catch (_) {}
+      }
+      var btn = document.getElementById('gc-capture-log-copy');
+      if (btn) {
+        var old = btn.innerHTML;
+        btn.innerHTML = copied ? '<span aria-hidden="true">✓</span> Tersalin' : '<span aria-hidden="true">!</span> Gagal';
+        setTimeout(function () { btn.innerHTML = old; }, 1400);
+      }
+      if (copied) appendLog('Log capture disalin ke clipboard (' + text.split(/\n/).filter(Boolean).length + ' baris).', 'ok');
+      return copied;
+    }
+    window.gcCopyCaptureLog = gcCopyCaptureLog;
 
     function gcSetUnifiedCaptureUi(running, label) {
       var start = document.getElementById('gc-primary-preview');
@@ -9715,8 +9771,9 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       const captureEl = document.getElementById('gc-capture-log');
       const captureCount = document.getElementById('gc-capture-log-count');
       const color = level === 'err' ? '#f87171' : level === 'warn' ? '#fbbf24' : level === 'ok' ? '#4ade80' : 'inherit';
-      const kind = (level === 'err' || level === 'warn') ? classifyLogKind(msg) : '';
-      const line = '[' + new Date().toLocaleTimeString() + '] ' + (kind ? kind + ' · ' : '') + msg;
+      const rawMsg = msg instanceof Error ? (msg.stack || msg.message || String(msg)) : typeof msg === 'object' ? JSON.stringify(msg) : String(msg == null ? '' : msg);
+      const kind = (level === 'err' || level === 'warn') ? classifyLogKind(rawMsg) : '';
+      const line = '[' + new Date().toLocaleTimeString() + '] ' + (kind ? kind + ' · ' : '') + rawMsg;
       if (el) {
         const div = document.createElement('div');
         div.style.color = color;
@@ -9724,7 +9781,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         div.style.cursor = (level === 'err' || level === 'warn') ? 'pointer' : 'default';
         div.textContent = line;
         div.dataset.level = level || '';
-        div.dataset.raw = String(msg || '');
+        div.dataset.raw = rawMsg;
         if (level === 'err' || level === 'warn') {
           div.title = 'Klik → buka file di editor + label error';
           div.onclick = function () {
@@ -9749,7 +9806,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         captureEl.scrollTop = captureEl.scrollHeight;
         if (captureCount) captureCount.textContent = captureEl.children.length + ' event';
       }
-      updatePreviewErrorDetail(msg, level);
+      updatePreviewErrorDetail(rawMsg, level);
       console.log(line);
     }
 
