@@ -42,6 +42,11 @@ on:
         required: false
         default: "1"
         type: string
+      large_capture:
+        description: "Budget capture adaptif besar sesuai RAM/disk runner"
+        required: false
+        default: "0"
+        type: string
 
 jobs:
   collect:
@@ -65,6 +70,7 @@ jobs:
           SPIN_DELAY_MS: ${{ github.event.inputs.spin_delay_ms }}
           SEED_ZIP: ${{ github.event.inputs.seed_zip }}
           MOCK_OFFLINE: ${{ github.event.inputs.mock_offline }}
+          LARGE_CAPTURE: ${{ github.event.inputs.large_capture }}
         run: node scripts/collect.js
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4

@@ -19,7 +19,8 @@
  */
 import { chromium } from "playwright";
 import { zipSync, strToU8 } from "fflate";
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync, statfsSync } from "fs";
+import { freemem } from "os";
 import { join } from "path";
 import { runStrictAutoInteract } from "./auto-interact.js";
 import {
@@ -33,8 +34,11 @@ import {
   makeRegionPath
 } from "../src/collect/sprite-atlas.js";
 import { normalizeCollectOptions } from "../src/collect/options.js";
+import { extractProactiveCandidates } from "../src/collect/proactive-candidates.js";
+import { guessTypeFromUrl } from "../src/collect/urls.js";
 import { buildApiMap } from "../src/package/api-map.js";
 import { detectSecurityEvidence } from "../src/analyze/security-evidence.js";
+import { calculateCaptureBudget } from "../src/collect/capture-budget.js";
 
 const TARGET_URL = process.env.TARGET_URL;
 const COLLECT_OPTIONS = normalizeCollectOptions(process.env);
@@ -43,6 +47,18 @@ const AUTO_SPINS = COLLECT_OPTIONS.autoSpins;
 const AUTO_HISTORY = COLLECT_OPTIONS.autoHistory;
 const SPIN_DELAY_MS = COLLECT_OPTIONS.spinDelayMs;
 const MOCK_OFFLINE = process.env.MOCK_OFFLINE !== "0";
+const LARGE_CAPTURE = /^(1|true|yes|on)$/i.test(String(process.env.LARGE_CAPTURE || "0"));
+function availableDiskBytes() {
+  try {
+    const stats = statfsSync(process.cwd());
+    return Number(stats.bavail) * Number(stats.bsize);
+  } catch { return undefined; }
+}
+const CAPTURE_BUDGET_BYTES = calculateCaptureBudget({
+  availableMemoryBytes: freemem(),
+  availableDiskBytes: availableDiskBytes(),
+  largeCapture: LARGE_CAPTURE
+});
 
 if (!TARGET_URL) {
   console.error("ERROR: TARGET_URL tidak diisi");
@@ -100,87 +116,163 @@ function neutralizeFrameBusters(text) {
   return { text: out, count: n };
 }
 
-async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl) {
-  const candidates = [];
-  const seenCandidate = new Set();
-  const add = (raw) => {
-    const url = String(raw || '').replace(/&amp;/gi, '&').trim();
-    if (!/^https?:\/\//i.test(url) || seenCandidate.has(url)) return;
-    if (!/\.(png|jpe?g|gif|webp|avif|svg|ico|bmp|woff2?|ttf|otf|mp3|ogg|wav|m4a|aac|mp4|webm|wasm|atlas)(?:[?#]|$)/i.test(url)) return;
-    if (EXCLUDE.some((re) => re.test(url))) return;
-    seenCandidate.add(url);
-    candidates.push(url);
-  };
-  for (const resource of resources) {
-    if (resource && resource.type === 'document' && resource.url) {
-      try { add(new URL(resource.url).toString()); } catch {}
-    }
-  }
+async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl, captureBudgetBytes, largeCapture) {
+  const sources = [];
+  const runtimeUrls = [];
   try {
     const html = await page.content();
-    const re = /https?:\/\/[^\s"'`<>]+/gi;
-    let match;
-    while ((match = re.exec(html))) add(match[0].replace(/[),;]+$/, ''));
+    sources.push({ text: html, baseUrl: mainDocUrl });
   } catch {}
   try {
-    const runtimeUrls = await page.evaluate(() => {
+    const observed = await page.evaluate(() => {
       const out = new Set();
       try { performance.getEntriesByType('resource').forEach((entry) => out.add(entry.name)); } catch {}
-      try { document.querySelectorAll('[src],[href],[data-src],[poster]').forEach((el) => ['src', 'href', 'data-src', 'poster'].forEach((key) => { const value = el.getAttribute(key); if (value) out.add(new URL(value, location.href).href); })); } catch {}
+      try {
+        document.querySelectorAll('[src],[href],[data-src],[data-href],[poster],[srcset]').forEach((el) => {
+          for (const key of ['src', 'href', 'data-src', 'data-href', 'poster', 'srcset']) {
+            const value = el.getAttribute(key);
+            if (!value) continue;
+            if (key === 'srcset') value.split(',').forEach((part) => out.add(part.trim().split(/\s+/)[0]));
+            else out.add(new URL(value, location.href).href);
+          }
+        });
+      } catch {}
       return [...out];
     });
-    for (const url of runtimeUrls || []) add(url);
+    runtimeUrls.push(...(observed || []));
   } catch {}
+
+  // Scan already-captured text recursively. Resolve nested CSS/JS paths against
+  // the source resource URL rather than incorrectly against the game root.
+  const resourceByPath = new Map(resources.filter((r) => r?.localPath && r?.url).map((r) => [r.localPath, r.url]));
+  for (const [filePath, data] of Object.entries(zipFiles || {})) {
+    if (!/\.(html?|css|m?js|json|webmanifest)$/i.test(filePath) || !data) continue;
+    try {
+      const text = typeof data === 'string' ? data : new TextDecoder().decode(data);
+      if (text.length > 2_000_000) continue;
+      let baseUrl = mainDocUrl;
+      const originalUrl = resourceByPath.get(filePath);
+      if (originalUrl) baseUrl = originalUrl;
+      else if (/^https?:/i.test(filePath)) baseUrl = filePath;
+      sources.push({ text, baseUrl });
+    } catch {}
+  }
+
+  const candidates = extractProactiveCandidates(sources, runtimeUrls, largeCapture ? 1000 : 500);
+  // No fixed per-file cap: stop only when the runner's adaptive whole-run
+  // resource budget or the workflow time window is reached.
+  const maxTotalBytes = captureBudgetBytes;
+  const maxDurationMs = largeCapture ? 45 * 60 * 1000 : 6 * 60 * 1000;
+  const deadline = Date.now() + maxDurationMs;
+  let totalBytes = Object.values(zipFiles || {}).reduce((sum, data) => sum + (data?.byteLength || data?.length || 0), 0);
   let fetched = 0;
   let reused = 0;
   let failed = 0;
+  let skippedLarge = 0;
+  let stoppedForTotalLimit = false;
+  let stoppedForTimeBudget = false;
   const details = [];
+  const typeFolders = { image: 'assets/images', script: 'assets/js', stylesheet: 'assets/css', font: 'assets/fonts', media: 'assets/audio', fetch: 'assets/data' };
   for (const url of candidates) {
+    if (Date.now() >= deadline) { stoppedForTimeBudget = true; break; }
+    let parsed;
+    try { parsed = new URL(url); } catch { continue; }
     const noQuery = url.split(/[?#]/, 1)[0];
     const already = resources.find((r) => String(r.url || '').split(/[?#]/, 1)[0] === noQuery);
     if (already && zipFiles[already.localPath]) { reused++; continue; }
-    let name = safe(new URL(url).pathname.split('/').pop() || 'asset');
-    if (!/\.[a-z0-9]{1,8}$/i.test(name)) name += '.bin';
-    const localPath = `assets/images/${String(Object.keys(zipFiles).length + 1).padStart(4, '0')}-${name}`;
+    if (totalBytes >= maxTotalBytes) { stoppedForTotalLimit = true; break; }
+
+    const type = guessTypeFromUrl(url, '');
+    let response;
+    let lastError;
     try {
-      let response;
-      let lastError;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
+          const requestTimeout = Math.max(1000, Math.min(15000, deadline - Date.now()));
           response = await page.request.get(url, {
-            timeout: 30000,
+            timeout: requestTimeout,
             failOnStatusCode: false,
-            headers: { Referer: mainDocUrl, Accept: 'image/*,audio/*,font/*,*/*;q=0.8' }
+            maxRedirects: 5,
+            headers: { Referer: mainDocUrl, Accept: '*/*' }
           });
-          if (response.status() >= 200 && response.status() < 300) break;
-          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+          const status = response.status();
+          if (status >= 200 && status < 300) break;
+          if (![408, 425, 429, 500, 502, 503, 504].includes(status) || attempt === 3) break;
+          try { await response.dispose(); } catch {}
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
         } catch (error) {
           lastError = error;
-          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+          if (attempt === 3) throw error;
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
         }
       }
       if (!response) throw lastError || new Error('request returned no response');
       const status = response.status();
-      const body = await response.body();
-      if (status >= 200 && status < 300 && body && body.length > 0) {
-        zipFiles[localPath] = new Uint8Array(body);
-        resources.push({ url, type: 'image', status, localPath, size: body.length, contentType: response.headers()['content-type'] || 'application/octet-stream', capturedBy: 'proactive-static-asset' });
-        seen.add(url);
-        fetched++;
-        details.push(`GET ${url.split('/').pop().slice(0, 80)} → ${localPath}`);
-      } else {
+      const headers = response.headers();
+      const contentType = String(headers['content-type'] || '').slice(0, 160);
+      const declaredBytes = Number(headers['content-length'] || 0);
+      if (/text\/html/i.test(contentType)) {
         failed++;
-        details.push(`FAIL ${url.split('/').pop().slice(0, 80)} HTTP ${status}`);
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: 'html-response-not-static-asset', contentType, capturedBy: 'proactive-static-asset' });
+        try { await response.dispose(); } catch {}
+        continue;
       }
+      if (status < 200 || status >= 300) {
+        failed++;
+        details.push(`FAIL ${redactUrl(url).slice(0, 120)} HTTP ${status}`);
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: `http ${status}`, capturedBy: 'proactive-static-asset' });
+        continue;
+      }
+      if (declaredBytes > 0 && totalBytes + declaredBytes > maxTotalBytes) {
+        skippedLarge++;
+        failed++;
+        const why = `runner-resource-budget:${declaredBytes}`;
+        details.push(`SKIP ${redactUrl(url).slice(0, 100)} ${why}`);
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: why, contentType, capturedBy: 'proactive-static-asset' });
+        try { await response.dispose(); } catch {}
+        continue;
+      }
+      const body = await response.body();
+      try { await response.dispose(); } catch {}
+      if (!body || body.length === 0) {
+        failed++;
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: 'empty-response', capturedBy: 'proactive-static-asset' });
+        continue;
+      }
+      if (totalBytes + body.length > maxTotalBytes) {
+        stoppedForTotalLimit = true;
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: `runner-resource-budget:${body.length}`, contentType, capturedBy: 'proactive-static-asset' });
+        break;
+      }
+      let name = safe(parsed.pathname.split('/').pop() || 'asset');
+      if (!/\.[a-z0-9]{1,10}$/i.test(name)) {
+        const ext = contentType.match(/(?:javascript|ecmascript)/i) ? '.js'
+          : /css/i.test(contentType) ? '.css'
+            : /json/i.test(contentType) ? '.json'
+              : /font|woff|ttf/i.test(contentType) ? '.woff2'
+                : /image\//i.test(contentType) ? '.img'
+                  : /audio\//i.test(contentType) ? '.audio'
+                    : /video\//i.test(contentType) ? '.video' : '.bin';
+        name += ext;
+      }
+      const folder = typeFolders[type] || 'assets/data';
+      const localPath = `${folder}/${String(Object.keys(zipFiles).length + 1).padStart(4, '0')}-proactive-${name}`;
+      zipFiles[localPath] = body;
+      totalBytes += body.length;
+      resources.push({ url, type, status, localPath, size: body.length, contentType: contentType || 'application/octet-stream', capturedBy: 'proactive-static-asset' });
+      seen.add(url);
+      fetched++;
+      details.push(`GET ${redactUrl(url).split('/').pop().slice(0, 80)} → ${localPath}`);
     } catch (error) {
       failed++;
-      details.push(`FAIL ${url.split('/').pop().slice(0, 80)} ${(error?.message || error).slice(0, 100)}`);
-      failedRequests.push({ url: redactUrl(url), type: 'image', method: 'GET', error: String(error?.message || error).slice(0, 240), capturedBy: 'proactive-static-asset' });
+      const message = String(error?.message || error).slice(0, 200);
+      details.push(`FAIL ${redactUrl(url).slice(0, 100)} ${message.slice(0, 100)}`);
+      failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: message, capturedBy: 'proactive-static-asset' });
+      try { await response?.dispose(); } catch {}
     }
   }
-  return { candidates: candidates.length, fetched, reused, failed, details };
+  return { candidates: candidates.length, fetched, reused, failed, skippedLarge, stoppedForTotalLimit, stoppedForTimeBudget, totalBytes, captureBudgetBytes: maxTotalBytes, largeCapture, details };
 }
-
 async function extractAtlasRegions(page, zipFiles, resources) {
   const extracted = [];
   const used = new Set(Object.keys(zipFiles));
@@ -300,9 +392,9 @@ const SECRET_KEY_RE = /authorization|cookie|set-cookie|token|secret|password|pas
 function redactUrl(raw) {
   try {
     const u = new URL(String(raw));
-    for (const key of [...u.searchParams.keys()]) {
-      if (SECRET_KEY_RE.test(key)) u.searchParams.set(key, '<redacted>');
-    }
+    // Signed CDN query keys are not consistently named (ot/or/__hv/etc.); do not
+    // leak any query values into CI logs, reports, or downloadable manifests.
+    if (u.search) u.search = '?<redacted>';
     return u.toString();
   } catch {
     return String(raw || '').replace(/((?:token|secret|password|signature|apikey|api_key)[=:])[^&\s]+/gi, '$1<redacted>');
@@ -393,7 +485,7 @@ async function scrollPage(page) {
 
 async function main() {
   console.log("PROGRESS: init");
-  console.log("Target:", TARGET_URL);
+  console.log("Target:", redactUrl(TARGET_URL));
   console.log("Wait seconds:", WAIT_SECONDS);
   console.log("AUTO_SPINS:", AUTO_SPINS, "AUTO_HISTORY:", AUTO_HISTORY, "SPIN_DELAY_MS:", SPIN_DELAY_MS);
   if (process.env.SEED_ZIP) console.log("SEED_ZIP:", process.env.SEED_ZIP);
@@ -423,6 +515,10 @@ async function main() {
   let detectProfile = null;
   let mainDocStatus = 0;
   let mainDocUrl = TARGET_URL;
+  let capturedBytes = 0;
+  let pendingResponseBytes = 0;
+
+  console.log("PROGRESS: capture_budget", JSON.stringify({ largeCapture: LARGE_CAPTURE, maxBytes: CAPTURE_BUDGET_BYTES, maxMB: Math.round(CAPTURE_BUDGET_BYTES / 1024 / 1024) }));
 
   page.on("requestfailed", (request) => {
     try {
@@ -476,9 +572,23 @@ async function main() {
       const requestHeaders = redactHeaders(req.headers());
       const requestBody = bodyPeek(req.postData());
       const parsedUrl = (() => { try { return new URL(url); } catch { return null; } })();
-      const buffer = await response.body();
+      const responseHeaders = response.headers();
+      const declaredResponseBytes = Number(responseHeaders["content-length"] || 0);
+      if (declaredResponseBytes > 0 && capturedBytes + pendingResponseBytes + declaredResponseBytes > CAPTURE_BUDGET_BYTES) {
+        failedRequests.push({ url: redactUrl(url), type, method: req.method(), status, size: declaredResponseBytes, error: "runner-resource-budget" });
+        blockerSignals.push({ kind: "capture_resource_budget", url: redactUrl(url), type, size: declaredResponseBytes });
+        return;
+      }
+      if (declaredResponseBytes > 0) pendingResponseBytes += declaredResponseBytes;
+      let buffer;
+      try { buffer = await response.body(); }
+      finally { if (declaredResponseBytes > 0) pendingResponseBytes = Math.max(0, pendingResponseBytes - declaredResponseBytes); }
       if (!buffer || buffer.length === 0) return;
-      if (buffer.length > 18 * 1024 * 1024) return;
+      if (capturedBytes + pendingResponseBytes + buffer.length > CAPTURE_BUDGET_BYTES) {
+        failedRequests.push({ url: redactUrl(url), type, method: req.method(), status, size: buffer.length, error: "runner-resource-budget" });
+        blockerSignals.push({ kind: "capture_resource_budget", url: redactUrl(url), type, size: buffer.length });
+        return;
+      }
 
       const ct = response.headers()["content-type"] || "";
       const apiKind = isApi ? classifyApiResource(url, ct) : null;
@@ -536,11 +646,14 @@ async function main() {
         name = `${tag}-${name}`;
         folder = "assets/data";
         criticalApis.push({ url, kind: apiKind || "critical", size: buffer.length });
-        console.log("PROGRESS: critical_api", apiKind || "critical", url.slice(0, 140));
+        console.log("PROGRESS: critical_api", apiKind || "critical", redactUrl(url).slice(0, 140));
       }
 
       const localPath = `${folder}/${String(resources.length + 1).padStart(4, "0")}-${name}`;
-      zipFiles[localPath] = new Uint8Array(buffer);
+      // Playwright already returned a Buffer/Uint8Array; retain that backing
+      // store instead of making a second full-size copy of large assets.
+      zipFiles[localPath] = buffer;
+      capturedBytes += buffer.length;
       for (const contract of apiContracts) {
         if (!contract.response.localPath && contract.url === url) contract.response.localPath = localPath;
       }
@@ -558,7 +671,7 @@ async function main() {
     } catch {}
   });
 
-  console.log("PROGRESS: open_url", TARGET_URL);
+  console.log("PROGRESS: open_url", redactUrl(TARGET_URL));
   try {
     const nav = await page.goto(TARGET_URL, {
       waitUntil: "domcontentloaded",
@@ -571,7 +684,7 @@ async function main() {
   } catch (navErr) {
     const bare = TARGET_URL.split("#")[0];
     if (bare && bare !== TARGET_URL) {
-      console.log("PROGRESS: retry_without_hash", bare);
+      console.log("PROGRESS: retry_without_hash", redactUrl(bare));
       const nav2 = await page.goto(bare, {
         waitUntil: "domcontentloaded",
         timeout: 60000
@@ -585,7 +698,7 @@ async function main() {
     }
   }
 
-  console.log("PROGRESS: page_loaded", "status=" + mainDocStatus, mainDocUrl);
+  console.log("PROGRESS: page_loaded", "status=" + mainDocStatus, redactUrl(mainDocUrl));
   if (mainDocStatus >= 400) {
     console.warn("PROGRESS: blocked_doc HTTP", mainDocStatus);
   }
@@ -611,10 +724,11 @@ async function main() {
   // Proactive fallback: asset static signed yang tetap tertulis di HTML diambil
   // ulang dengan referer target, meskipun request tidak muncul sebagai response event.
   console.log("PROGRESS: proactive_static_assets");
-  const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl);
+  const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl, CAPTURE_BUDGET_BYTES, LARGE_CAPTURE);
   console.log("PROGRESS: proactive_static_assets_done", JSON.stringify(proactiveAssets));
   const atlasRegions = await extractAtlasRegions(page, zipFiles, resources);
   console.log("PROGRESS: atlas_regions_done", JSON.stringify({ atlases: atlasRegions.atlases, regions: atlasRegions.regions }));
+  capturedBytes = resources.reduce((sum, resource) => sum + Math.max(0, Number(resource.size) || 0), 0);
 
   // HTML akhir
   console.log("PROGRESS: capture_html");
@@ -626,7 +740,7 @@ async function main() {
   const blockerReport = [];
   const securityEvidence = detectSecurityEvidence({
     texts: [html],
-    urls: resources.map((resource) => resource.url),
+    urls: resources.map((resource) => redactUrl(resource.url)),
     requests: failedRequests
   });
   for (const finding of securityEvidence.findings) {
@@ -639,10 +753,10 @@ async function main() {
     blockerReport.push({ kind, severity, message, evidence: evidence.slice(0, 20) });
   };
   if (mainDocStatus === 401 || mainDocStatus === 403) {
-    addBlocker('auth_or_access', 'critical', 'Halaman utama membutuhkan akses resmi atau autentikasi.', [mainDocUrl]);
+    addBlocker('auth_or_access', 'critical', 'Halaman utama membutuhkan akses resmi atau autentikasi.', [redactUrl(mainDocUrl)]);
   }
   if (/captcha|turnstile|verify you are human|challenge-platform|hcaptcha/i.test(htmlLower)) {
-    addBlocker('captcha_or_challenge', 'critical', 'Challenge/CAPTCHA terdeteksi; selesaikan secara resmi lalu capture ulang.', [mainDocUrl]);
+    addBlocker('captcha_or_challenge', 'critical', 'Challenge/CAPTCHA terdeteksi; selesaikan secara resmi lalu capture ulang.', [redactUrl(mainDocUrl)]);
   }
   if (/encryptedmedia|widevine|playready|fairplay|\.license|drm/i.test(htmlLower) || resources.some((r) => /drm|license|widevine|playready|fairplay/i.test(r.url))) {
     addBlocker('drm_or_license', 'critical', 'DRM atau license server terdeteksi; replikasi penuh memerlukan hak dan integrasi resmi.', resources.filter((r) => /drm|license|widevine|playready|fairplay/i.test(r.url)).map((r) => redactUrl(r.url)));
@@ -704,6 +818,7 @@ async function main() {
   zipFiles["realtime.json"] = strToU8(JSON.stringify({ version: 1, generatedAt: new Date().toISOString(), sessions: realtimeSummary }, null, 2));
   zipFiles["replication-report.json"] = strToU8(JSON.stringify({
     version: 1, generatedAt: new Date().toISOString(), target: safeTargetUrl,
+    captureBudgetBytes: CAPTURE_BUDGET_BYTES, capturedBytes, largeCapture: LARGE_CAPTURE,
     status: blockerReport.some((item) => item.severity === 'critical') ? 'MANUAL_ACTION_REQUIRED' : blockerReport.length ? 'PARTIAL' : 'CAPTURED',
     blockers: blockerReport, failedRequests, proactiveStaticAssets: proactiveAssets, securityEvidence, realtime: { sessions: realtimeSummary.length, framesReceived: realtimeSummary.reduce((n, s) => n + s.received, 0), framesSent: realtimeSummary.reduce((n, s) => n + s.sent, 0) }
   }, null, 2));
@@ -714,6 +829,9 @@ async function main() {
     mainDocUrl: redactUrl(mainDocUrl),
     collectedAt: new Date().toISOString(),
     totalFiles: resources.length,
+    captureBudgetBytes: CAPTURE_BUDGET_BYTES,
+    capturedBytes,
+    largeCapture: LARGE_CAPTURE,
     criticalApis: criticalApis.length,
     smartRewrite: smart,
     via: "github-actions",
@@ -739,6 +857,7 @@ Target: ${safeTargetUrl}
 Main document status: ${mainDocStatus}
 Tanggal: ${new Date().toISOString()}
 Total: ${resources.length} file
+Capture payload: ${(capturedBytes / 1024 / 1024).toFixed(1)} MiB · budget adaptif ${(CAPTURE_BUDGET_BYTES / 1024 / 1024).toFixed(1)} MiB · large mode ${LARGE_CAPTURE ? 'aktif' : 'nonaktif'}
 Critical API: ${criticalApis.length}
 API contracts: ${apiContracts.length} · replay exchanges: ${replaySequence.length}
 Smart rewrite: ${smart.rewritten} · frame-buster: ${smart.neutralized}
@@ -795,6 +914,7 @@ Atau load di Workspace Game Collector Pro.
   console.log("PROGRESS: zip_done");
   console.log("Selesai!");
   console.log("Total resource:", resources.length);
+  console.log("Capture payload MiB:", (capturedBytes / 1024 / 1024).toFixed(1), "· budget MiB:", (CAPTURE_BUDGET_BYTES / 1024 / 1024).toFixed(1), "· large mode:", LARGE_CAPTURE);
   console.log("Critical API:", criticalApis.length);
   console.log("Main doc status:", mainDocStatus);
   console.log("Smart rewrite:", smart.rewritten, "· frame-buster:", smart.neutralized);

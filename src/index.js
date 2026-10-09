@@ -84,9 +84,8 @@ const CAPTURE_SECRET_KEY = /authorization|cookie|set-cookie|token|secret|passwor
 function redactCaptureUrl(raw) {
   try {
     const u = new URL(String(raw));
-    for (const key of [...u.searchParams.keys()]) {
-      if (CAPTURE_SECRET_KEY.test(key)) u.searchParams.set(key, '<redacted>');
-    }
+    // Signed CDN parameters vary by provider and are not always named token/signature.
+    if (u.search) u.search = '?<redacted>';
     return u.toString();
   } catch {
     return String(raw || '').replace(/((?:token|secret|password|signature|apikey|api_key)[=:])[^&\s]+/gi, '$1<redacted>');
@@ -533,6 +532,7 @@ async function handleRequest(request, env) {
             spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2200"),
             request_id: dispatchRequestId,
             seed_zip: String(body.seed_zip ?? body.seedZip ?? ""),
+            large_capture: String([body.large_capture, body.unlimited, body.mode].some((value) => /^(1|true|yes|on|unlimited)$/i.test(String(value))) ? "1" : "0"),
             mock_offline: String(body.mock_offline === false ? "0" : "1")
           }
         })
@@ -1346,6 +1346,18 @@ async function handleRequest(request, env) {
     const realtimeSessions = [];
     const failedRequests = [];
 
+    const recordSizeLimit = (url, type, method, status, contentType, reason) => {
+      const safeUrl = redactCaptureUrl(url);
+      failedRequests.push({ url: safeUrl, type, method, status, error: reason, contentType });
+      const failure = markDownloadFailed(url, status, reason);
+      manifest.push({
+        url, type, status, httpStatus: status, localPath: null, size: 0, contentType,
+        category: "game", classifyReason: failure.reason, error: reason,
+        collectStatus: STRICT_STATUS.DOWNLOAD_FAILED, strictStatus: STRICT_STATUS.DOWNLOAD_FAILED
+      });
+      seen.add(url);
+    };
+
     let browser;
     try {
       // === Launch browser (ini yang kena limit Cloudflare Free) ===
@@ -1478,22 +1490,31 @@ async function handleRequest(request, env) {
             return;
           }
           seen.add(u);
-
+          const responseHeaders = response.headers();
+          const ct = responseHeaders["content-type"] || "";
+          const declaredBytes = Number(responseHeaders["content-length"] || 0);
+          // Reject known oversized responses before buffering their body in Worker memory.
+          if (declaredBytes > limSingle) {
+            sizeState.skippedLarge++;
+            recordSizeLimit(u, type, req.method(), response.status(), ct, "declared-size-limit:" + declaredBytes);
+            return;
+          }
           const buffer = await response.body();
           if (!buffer || buffer.byteLength === 0) return;
 
-          // Guard: skip file terlalu besar (tanpa R2)
+          // Jangan diam-diam membuang asset: catat sebagai gap collect.
           if (buffer.byteLength > limSingle) {
             sizeState.skippedLarge++;
+            recordSizeLimit(u, type, req.method(), response.status(), ct, "actual-size-limit:" + buffer.byteLength);
             return;
           }
           // Guard: stop menampung jika total raw sudah melewati batas
           if (sizeState.rawBytes + buffer.byteLength > limRaw) {
             sizeState.stoppedForSize = true;
+            recordSizeLimit(u, type, req.method(), response.status(), ct, "raw-total-limit");
             return;
           }
 
-          const ct = response.headers()["content-type"] || "";
           let name = safe((new URL(u).pathname.split("/").pop() || "index").split("?")[0]);
           if (!/\.[a-z0-9]{1,8}$/i.test(name)) {
             if (ct.includes("javascript")) name += ".js";

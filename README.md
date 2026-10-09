@@ -154,11 +154,15 @@ Release hanya boleh dipromosikan jika pemeriksaan ownership, security, integrity
 
 ## Cara pakai singkat
 
-1. **Collect** → URL game → Capture (atau GitHub Actions)
+1. **Collect** → URL game → Capture via GitHub Actions runner (capture tidak berjalan di Cloudflare Worker)
 2. Baca status: game / API / auto-lengkapi
 3. **Workspace** → Load ZIP → lihat panel kelengkapan
 4. **Auto Repair (Deep)** jika perlu
 5. Preview: Sandbox (offline) / Online Hybrid / Isolated Window
+
+Pada opsi **Mode file besar · GitHub runner**, collector tidak memakai hard cap per file; budget total menyesuaikan RAM/disk yang tersedia dan menyisakan ruang untuk browser serta kompresi ZIP. Worker tetap menjadi relay aman untuk memulai workflow dan membaca status/artifact. Ini bukan ukuran tak terbatas: GitHub Actions dibatasi kapasitas runner, durasi workflow (maksimal 60 menit), dan kuota/limit artifact. Kegagalan atau resource yang dilewati dicatat pada manifest; status offline penuh tetap harus dibuktikan lewat audit dan uji gameplay tanpa jaringan. Collector tidak melewati DRM, license server, login, atau kontrol akses.
+
+Jika AI coach aktif, sebelum capture AI menerima **hostname dan pilihan capture saja** (tanpa URL lengkap/query bertanda tangan) untuk memberi checklist singkat. Setelah ZIP selesai, AI readiness tetap menganalisis kelengkapan dan blocker; AI tidak mengubah pilihan capture secara otomatis.
 
 ## Deploy
 

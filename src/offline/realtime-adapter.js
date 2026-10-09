@@ -1,6 +1,14 @@
 function event(type, init = {}) {
-  if (typeof Event === "function" && type !== "message") return new Event(type);
-  if (typeof MessageEvent === "function" && type === "message") return new MessageEvent(type, init);
+  if (type === "message" && typeof MessageEvent === "function") return new MessageEvent(type, init);
+  if (typeof Event === "function") {
+    const result = typeof CustomEvent === "function" && init.detail !== undefined
+      ? new CustomEvent(type, { detail: init.detail })
+      : new Event(type);
+    for (const [key, value] of Object.entries(init)) {
+      try { Object.defineProperty(result, key, { configurable: true, value }); } catch (_) {}
+    }
+    return result;
+  }
   return { type, ...init };
 }
 
@@ -69,15 +77,25 @@ export class OfflineEventSource extends EventTarget {
     this.url = String(url);
     this.readyState = OfflineEventSource.CONNECTING;
     this.withCredentials = Boolean(options.withCredentials);
+    this.onopen = null;
+    this.onmessage = null;
+    this.onerror = null;
+    this.lastEventId = "";
     this._events = Array.isArray(options.events) ? options.events.slice() : [];
     this._timers = [];
     this._options = options;
     schedule(() => {
       if (this.readyState !== OfflineEventSource.CONNECTING) return;
       this.readyState = OfflineEventSource.OPEN;
-      this.dispatchEvent(event("open"));
+      this._dispatch("open", event("open"));
       this._replay();
     }, 0);
+  }
+
+  _dispatch(type, evt) {
+    this.dispatchEvent(evt);
+    const handler = this[`on${type}`];
+    if (typeof handler === "function") handler.call(this, evt);
   }
 
   _replay() {
@@ -87,15 +105,20 @@ export class OfflineEventSource extends EventTarget {
         if (this.readyState !== OfflineEventSource.OPEN) return;
         const data = item && typeof item === "object" && "data" in item ? item.data : item;
         const payload = typeof data === "string" ? data : JSON.stringify(data);
-        const message = event("message", { data: payload, lastEventId: item?.id ? String(item.id) : "" });
-        this.dispatchEvent(message);
-        if (item && typeof item === "object" && item.type && item.type !== "message") this.dispatchEvent(event(item.type, { data: payload }));
+        if (item && item.id != null) this.lastEventId = String(item.id);
+        const message = event("message", { data: payload, lastEventId: this.lastEventId });
+        this._dispatch("message", message);
+        if (item && typeof item === "object" && item.type && item.type !== "message") {
+          const custom = event(item.type, { data: payload, lastEventId: this.lastEventId });
+          this._dispatch(item.type, custom);
+        }
       }, interval * (index + 1));
       this._timers.push(timer);
     });
   }
 
   close() {
+    if (this.readyState === OfflineEventSource.CLOSED) return;
     this._timers.forEach((timer) => clearTimeout(timer));
     this.readyState = OfflineEventSource.CLOSED;
   }
