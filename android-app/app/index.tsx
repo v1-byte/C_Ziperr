@@ -7,7 +7,7 @@ import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
-const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.6';
+const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.7';
 const UPDATE_MANIFEST_URL = 'https://github.com/v1-byte/C_Ziperr/releases/latest/download/update.json';
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? 'com.fblabb.zipscope';
 const CURRENT_VERSION = Constants.expoConfig?.version ?? '0.0.0';
