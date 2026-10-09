@@ -33,6 +33,8 @@ import {
   makeRegionPath
 } from "../src/collect/sprite-atlas.js";
 import { normalizeCollectOptions } from "../src/collect/options.js";
+import { extractProactiveCandidates } from "../src/collect/proactive-candidates.js";
+import { guessTypeFromUrl } from "../src/collect/urls.js";
 import { buildApiMap } from "../src/package/api-map.js";
 import { detectSecurityEvidence } from "../src/analyze/security-evidence.js";
 
@@ -101,86 +103,166 @@ function neutralizeFrameBusters(text) {
 }
 
 async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl) {
-  const candidates = [];
-  const seenCandidate = new Set();
-  const add = (raw) => {
-    const url = String(raw || '').replace(/&amp;/gi, '&').trim();
-    if (!/^https?:\/\//i.test(url) || seenCandidate.has(url)) return;
-    if (!/\.(png|jpe?g|gif|webp|avif|svg|ico|bmp|woff2?|ttf|otf|mp3|ogg|wav|m4a|aac|mp4|webm|wasm|atlas)(?:[?#]|$)/i.test(url)) return;
-    if (EXCLUDE.some((re) => re.test(url))) return;
-    seenCandidate.add(url);
-    candidates.push(url);
-  };
-  for (const resource of resources) {
-    if (resource && resource.type === 'document' && resource.url) {
-      try { add(new URL(resource.url).toString()); } catch {}
-    }
-  }
+  const sources = [];
+  const runtimeUrls = [];
   try {
     const html = await page.content();
-    const re = /https?:\/\/[^\s"'`<>]+/gi;
-    let match;
-    while ((match = re.exec(html))) add(match[0].replace(/[),;]+$/, ''));
+    sources.push({ text: html, baseUrl: mainDocUrl });
   } catch {}
   try {
-    const runtimeUrls = await page.evaluate(() => {
+    const observed = await page.evaluate(() => {
       const out = new Set();
       try { performance.getEntriesByType('resource').forEach((entry) => out.add(entry.name)); } catch {}
-      try { document.querySelectorAll('[src],[href],[data-src],[poster]').forEach((el) => ['src', 'href', 'data-src', 'poster'].forEach((key) => { const value = el.getAttribute(key); if (value) out.add(new URL(value, location.href).href); })); } catch {}
+      try {
+        document.querySelectorAll('[src],[href],[data-src],[data-href],[poster],[srcset]').forEach((el) => {
+          for (const key of ['src', 'href', 'data-src', 'data-href', 'poster', 'srcset']) {
+            const value = el.getAttribute(key);
+            if (!value) continue;
+            if (key === 'srcset') value.split(',').forEach((part) => out.add(part.trim().split(/\s+/)[0]));
+            else out.add(new URL(value, location.href).href);
+          }
+        });
+      } catch {}
       return [...out];
     });
-    for (const url of runtimeUrls || []) add(url);
+    runtimeUrls.push(...(observed || []));
   } catch {}
+
+  // Scan already-captured text recursively. Resolve nested CSS/JS paths against
+  // the source resource URL rather than incorrectly against the game root.
+  const resourceByPath = new Map(resources.filter((r) => r?.localPath && r?.url).map((r) => [r.localPath, r.url]));
+  for (const [filePath, data] of Object.entries(zipFiles || {})) {
+    if (!/\.(html?|css|m?js|json|webmanifest)$/i.test(filePath) || !data) continue;
+    try {
+      const text = typeof data === 'string' ? data : new TextDecoder().decode(data);
+      if (text.length > 2_000_000) continue;
+      let baseUrl = mainDocUrl;
+      const originalUrl = resourceByPath.get(filePath);
+      if (originalUrl) baseUrl = originalUrl;
+      else if (/^https?:/i.test(filePath)) baseUrl = filePath;
+      sources.push({ text, baseUrl });
+    } catch {}
+  }
+
+  const candidates = extractProactiveCandidates(sources, runtimeUrls, 500);
+  const maxFileBytes = 20 * 1024 * 1024;
+  const maxTotalBytes = 200 * 1024 * 1024;
+  const maxDurationMs = 6 * 60 * 1000;
+  const deadline = Date.now() + maxDurationMs;
+  let totalBytes = Object.values(zipFiles || {}).reduce((sum, data) => sum + (data?.byteLength || data?.length || 0), 0);
   let fetched = 0;
   let reused = 0;
   let failed = 0;
+  let skippedLarge = 0;
+  let stoppedForTotalLimit = false;
+  let stoppedForTimeBudget = false;
   const details = [];
+  const typeFolders = { image: 'assets/images', script: 'assets/js', stylesheet: 'assets/css', font: 'assets/fonts', media: 'assets/audio', fetch: 'assets/data' };
   for (const url of candidates) {
+    if (Date.now() >= deadline) { stoppedForTimeBudget = true; break; }
+    let parsed;
+    try { parsed = new URL(url); } catch { continue; }
     const noQuery = url.split(/[?#]/, 1)[0];
     const already = resources.find((r) => String(r.url || '').split(/[?#]/, 1)[0] === noQuery);
     if (already && zipFiles[already.localPath]) { reused++; continue; }
-    let name = safe(new URL(url).pathname.split('/').pop() || 'asset');
-    if (!/\.[a-z0-9]{1,8}$/i.test(name)) name += '.bin';
-    const localPath = `assets/images/${String(Object.keys(zipFiles).length + 1).padStart(4, '0')}-${name}`;
+    if (totalBytes >= maxTotalBytes) { stoppedForTotalLimit = true; break; }
+
+    const type = guessTypeFromUrl(url, '');
+    let response;
+    let lastError;
     try {
-      let response;
-      let lastError;
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
+          const requestTimeout = Math.max(1000, Math.min(15000, deadline - Date.now()));
           response = await page.request.get(url, {
-            timeout: 30000,
+            timeout: requestTimeout,
             failOnStatusCode: false,
-            headers: { Referer: mainDocUrl, Accept: 'image/*,audio/*,font/*,*/*;q=0.8' }
+            maxRedirects: 5,
+            headers: { Referer: mainDocUrl, Accept: '*/*' }
           });
-          if (response.status() >= 200 && response.status() < 300) break;
-          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+          const status = response.status();
+          if (status >= 200 && status < 300) break;
+          if (![408, 425, 429, 500, 502, 503, 504].includes(status) || attempt === 3) break;
+          try { await response.dispose(); } catch {}
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
         } catch (error) {
           lastError = error;
-          if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+          if (attempt === 3) throw error;
+          await new Promise((resolve) => setTimeout(resolve, attempt * 500));
         }
       }
       if (!response) throw lastError || new Error('request returned no response');
       const status = response.status();
-      const body = await response.body();
-      if (status >= 200 && status < 300 && body && body.length > 0) {
-        zipFiles[localPath] = new Uint8Array(body);
-        resources.push({ url, type: 'image', status, localPath, size: body.length, contentType: response.headers()['content-type'] || 'application/octet-stream', capturedBy: 'proactive-static-asset' });
-        seen.add(url);
-        fetched++;
-        details.push(`GET ${url.split('/').pop().slice(0, 80)} → ${localPath}`);
-      } else {
+      const headers = response.headers();
+      const contentType = String(headers['content-type'] || '').slice(0, 160);
+      const declaredBytes = Number(headers['content-length'] || 0);
+      if (/text\/html/i.test(contentType)) {
         failed++;
-        details.push(`FAIL ${url.split('/').pop().slice(0, 80)} HTTP ${status}`);
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: 'html-response-not-static-asset', contentType, capturedBy: 'proactive-static-asset' });
+        try { await response.dispose(); } catch {}
+        continue;
       }
+      if (status < 200 || status >= 300) {
+        failed++;
+        details.push(`FAIL ${redactUrl(url).slice(0, 120)} HTTP ${status}`);
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: `http ${status}`, capturedBy: 'proactive-static-asset' });
+        continue;
+      }
+      if (declaredBytes > maxFileBytes) {
+        skippedLarge++;
+        failed++;
+        const why = `declared-size-limit:${declaredBytes}`;
+        details.push(`SKIP ${redactUrl(url).slice(0, 100)} ${why}`);
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: why, contentType, capturedBy: 'proactive-static-asset' });
+        try { await response.dispose(); } catch {}
+        continue;
+      }
+      const body = await response.body();
+      try { await response.dispose(); } catch {}
+      if (!body || body.length === 0) {
+        failed++;
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: 'empty-response', capturedBy: 'proactive-static-asset' });
+        continue;
+      }
+      if (body.length > maxFileBytes) {
+        skippedLarge++;
+        failed++;
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: `actual-size-limit:${body.length}`, contentType, capturedBy: 'proactive-static-asset' });
+        continue;
+      }
+      if (totalBytes + body.length > maxTotalBytes) {
+        stoppedForTotalLimit = true;
+        break;
+      }
+      let name = safe(parsed.pathname.split('/').pop() || 'asset');
+      if (!/\.[a-z0-9]{1,10}$/i.test(name)) {
+        const ext = contentType.match(/(?:javascript|ecmascript)/i) ? '.js'
+          : /css/i.test(contentType) ? '.css'
+            : /json/i.test(contentType) ? '.json'
+              : /font|woff|ttf/i.test(contentType) ? '.woff2'
+                : /image\//i.test(contentType) ? '.img'
+                  : /audio\//i.test(contentType) ? '.audio'
+                    : /video\//i.test(contentType) ? '.video' : '.bin';
+        name += ext;
+      }
+      const folder = typeFolders[type] || 'assets/data';
+      const localPath = `${folder}/${String(Object.keys(zipFiles).length + 1).padStart(4, '0')}-proactive-${name}`;
+      zipFiles[localPath] = new Uint8Array(body);
+      totalBytes += body.length;
+      resources.push({ url, type, status, localPath, size: body.length, contentType: contentType || 'application/octet-stream', capturedBy: 'proactive-static-asset' });
+      seen.add(url);
+      fetched++;
+      details.push(`GET ${redactUrl(url).split('/').pop().slice(0, 80)} → ${localPath}`);
     } catch (error) {
       failed++;
-      details.push(`FAIL ${url.split('/').pop().slice(0, 80)} ${(error?.message || error).slice(0, 100)}`);
-      failedRequests.push({ url: redactUrl(url), type: 'image', method: 'GET', error: String(error?.message || error).slice(0, 240), capturedBy: 'proactive-static-asset' });
+      const message = String(error?.message || error).slice(0, 200);
+      details.push(`FAIL ${redactUrl(url).slice(0, 100)} ${message.slice(0, 100)}`);
+      failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: message, capturedBy: 'proactive-static-asset' });
+      try { await response?.dispose(); } catch {}
     }
   }
-  return { candidates: candidates.length, fetched, reused, failed, details };
+  return { candidates: candidates.length, fetched, reused, failed, skippedLarge, stoppedForTotalLimit, stoppedForTimeBudget, totalBytes, details };
 }
-
 async function extractAtlasRegions(page, zipFiles, resources) {
   const extracted = [];
   const used = new Set(Object.keys(zipFiles));
@@ -300,9 +382,9 @@ const SECRET_KEY_RE = /authorization|cookie|set-cookie|token|secret|password|pas
 function redactUrl(raw) {
   try {
     const u = new URL(String(raw));
-    for (const key of [...u.searchParams.keys()]) {
-      if (SECRET_KEY_RE.test(key)) u.searchParams.set(key, '<redacted>');
-    }
+    // Signed CDN query keys are not consistently named (ot/or/__hv/etc.); do not
+    // leak any query values into CI logs, reports, or downloadable manifests.
+    if (u.search) u.search = '?<redacted>';
     return u.toString();
   } catch {
     return String(raw || '').replace(/((?:token|secret|password|signature|apikey|api_key)[=:])[^&\s]+/gi, '$1<redacted>');
@@ -393,7 +475,7 @@ async function scrollPage(page) {
 
 async function main() {
   console.log("PROGRESS: init");
-  console.log("Target:", TARGET_URL);
+  console.log("Target:", redactUrl(TARGET_URL));
   console.log("Wait seconds:", WAIT_SECONDS);
   console.log("AUTO_SPINS:", AUTO_SPINS, "AUTO_HISTORY:", AUTO_HISTORY, "SPIN_DELAY_MS:", SPIN_DELAY_MS);
   if (process.env.SEED_ZIP) console.log("SEED_ZIP:", process.env.SEED_ZIP);
@@ -558,7 +640,7 @@ async function main() {
     } catch {}
   });
 
-  console.log("PROGRESS: open_url", TARGET_URL);
+  console.log("PROGRESS: open_url", redactUrl(TARGET_URL));
   try {
     const nav = await page.goto(TARGET_URL, {
       waitUntil: "domcontentloaded",
@@ -571,7 +653,7 @@ async function main() {
   } catch (navErr) {
     const bare = TARGET_URL.split("#")[0];
     if (bare && bare !== TARGET_URL) {
-      console.log("PROGRESS: retry_without_hash", bare);
+      console.log("PROGRESS: retry_without_hash", redactUrl(bare));
       const nav2 = await page.goto(bare, {
         waitUntil: "domcontentloaded",
         timeout: 60000
@@ -585,7 +667,7 @@ async function main() {
     }
   }
 
-  console.log("PROGRESS: page_loaded", "status=" + mainDocStatus, mainDocUrl);
+  console.log("PROGRESS: page_loaded", "status=" + mainDocStatus, redactUrl(mainDocUrl));
   if (mainDocStatus >= 400) {
     console.warn("PROGRESS: blocked_doc HTTP", mainDocStatus);
   }

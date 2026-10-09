@@ -191,3 +191,14 @@ Live: https://game-resource-collector.technologiesfrostbyte.workers.dev
 - offline-analyze.js: score ketat + reportText format §57
 - Docs: docs/STRICT_OFFLINE_COLLECTOR.md
 
+
+
+## Peningkatan collect — 2026-10-09
+
+- Fallback GitHub Actions menelusuri referensi asset di HTML/CSS/JS/JSON/webmanifest, DOM/runtime URL, dan file teks yang sudah tertangkap; menyelesaikan URL relatif memakai URL sumber yang benar.
+- Cakupan kandidat diperluas ke AVIF/BMP, font, audio/video, WASM, UnityWeb, atlas/data/bundle; pengecualian API/tracker yang sudah ada tetap dipakai.
+- Download fallback dibatasi hingga 500 kandidat, 20 MiB per file, 200 MiB total, dan 6 menit; retry hanya untuk kegagalan sementara. HTML response tidak dianggap sebagai asset; response gagal/terlalu besar dicatat.
+- Worker sekarang melaporkan resource yang dilewati karena batas ukuran di manifest/failedRequests, dan memeriksa Content-Length sebelum buffering bila nilainya tersedia.
+- Tidak melewati autentikasi, challenge, DRM, lisensi, atau kontrol akses. Kelengkapan untuk resource dinamis yang belum diminta game, API server-side, dan protokol realtime tetap perlu validasi per target.
+
+- Uji terbatas pada target contoh (tanpa spin/history): HTTP 200, 77 resource tercatat, 12 asset diambil fallback, 13 sudah tertangkap saat runtime, 1 gagal. Validator mendeteksi DRM/license dan bukti gameplay/network isolation belum lengkap; paket uji tidak dipertahankan/didistribusikan dan status tidak disebut capture penuh.
