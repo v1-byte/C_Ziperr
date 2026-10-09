@@ -5262,7 +5262,8 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         if (panel) panel.classList.add('active');
         // Saat masuk Workspace, ukur ulang Monaco agar kode terlihat
         if (e.target.dataset.panel === 'workspace') {
-          if (typeof initMonacoEditor === 'function') initMonacoEditor();
+          // Biarkan panel tampil dulu; CDN Monaco tidak boleh memblokir klik Workspace.
+          setTimeout(function() { if (typeof initMonacoEditor === 'function') initMonacoEditor(); }, 0);
           setTimeout(function() {
             if (typeof sizeMonacoHost === 'function') sizeMonacoHost();
             else if (typeof layoutEditor === 'function') layoutEditor();
@@ -5323,7 +5324,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         window.__gcMonacoLoading = true;
         mobileEditorFallbackTimer = setTimeout(function() {
           if (!editor) installMobileEditorFallback();
-        }, 10000);
+        }, 3000);
         if (typeof require !== 'undefined') {
       require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.50.0/min/vs' }});
 
@@ -16666,10 +16667,15 @@ function isApiLike(u){
   // Bridge kecil untuk modul Custom API. Layar awal/Collect dan wrapper Android tetap tidak berubah.
   window.__GC_CUSTOM_API_BRIDGE = {
     getZip: function () { return typeof currentZip !== 'undefined' ? currentZip : null; },
-    readFiles: async function () {
+    readFiles: async function (options) {
       if (typeof currentZip === 'undefined' || !currentZip || typeof zipFileMap === 'undefined') throw new Error('ZIP belum dimuat ke Workspace.');
       var result = {};
-      for (var path of Object.keys(zipFileMap)) {
+      var requested = options && Array.isArray(options.paths) ? options.paths : null;
+      var paths = requested ? requested.map(function (wanted) {
+        var exact = Object.keys(zipFileMap).find(function (path) { return path.toLowerCase() === String(wanted).toLowerCase() || path.toLowerCase().endsWith('/' + String(wanted).toLowerCase()); });
+        return exact || String(wanted);
+      }) : Object.keys(zipFileMap);
+      for (var path of paths) {
         var entry = zipFileMap[path];
         if (!entry || entry.dir) continue;
         if (/\.(html?|m?js|cjs|css|json|ya?ml|md|txt|xml|svg|env|toml|ini)$/i.test(path)) {

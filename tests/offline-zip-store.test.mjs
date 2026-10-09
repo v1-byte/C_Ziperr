@@ -19,3 +19,12 @@ test('Workspace exposes saved ZIP reload and preview has a blob fallback', () =>
   assert.match(html, /fallback blob URL aktif/);
   assert.match(html, /ZIP OFFLINE · NET BLOCKED/);
 });
+
+test('Custom API opens without extracting the whole ZIP and Monaco is deferred', () => {
+  const manager = readFileSync(new URL('../public/custom-api-manager.js', import.meta.url), 'utf8');
+  assert.match(manager, /readWorkspacePaths\(\['hosting-config\.json', 'api-map\.json'\]\)/);
+  assert.match(manager, /Custom API siap\. Memuat konfigurasi tersimpan/);
+  assert.match(html, /readFiles: async function \(options\)/);
+  assert.match(html, /setTimeout\(function\(\) \{ if \(typeof initMonacoEditor/);
+  assert.match(html, /\}, 3000\);/);
+});

@@ -81,7 +81,8 @@ function ensureModal() {
     const button = event.target.closest('[data-action]');
     if (!button || button.disabled || busy) return;
     event.preventDefault();
-    await handleAction(button.dataset.action);
+    try { await handleAction(button.dataset.action); }
+    catch (error) { setBusy(false); setStatus(error?.message || String(error), 'error'); }
   });
   modal.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeModal(); });
   return modal;
@@ -135,6 +136,12 @@ async function readWorkspace() {
   if (!apiBridge?.getZip()) throw new Error('Load ZIP ke Workspace terlebih dahulu.');
   return apiBridge.readFiles();
 }
+async function readWorkspacePaths(paths) {
+  const apiBridge = bridge();
+  if (!apiBridge?.getZip()) throw new Error('Load ZIP ke Workspace terlebih dahulu.');
+  if (typeof apiBridge.readFiles === 'function') return apiBridge.readFiles({ paths });
+  return readWorkspace();
+}
 
 async function existingApiMap(files) {
   const path = Object.keys(files).find((name) => /(^|\/)api-map\.json$/i.test(name));
@@ -143,7 +150,9 @@ async function existingApiMap(files) {
 }
 
 async function loadExistingConfig() {
-  const files = await readWorkspace();
+  // Jangan ekstrak seluruh ZIP ketika modal baru dibuka. ZIP game dapat berisi
+  // ribuan file/JS besar; cukup ambil dua metadata yang dibutuhkan untuk form.
+  const files = await readWorkspacePaths(['hosting-config.json', 'api-map.json']);
   const configPath = Object.keys(files).find((name) => /(^|\/)hosting-config\.json$/i.test(name));
   if (configPath) {
     try {
@@ -381,8 +390,14 @@ export async function openCustomApiManager() {
   const modal = ensureModal();
   modal.classList.add('open');
   document.body.classList.add('gc-api-modal-open');
-  try { fillForm(await loadExistingConfig()); setStatus('Siap. Periksa base URL dan endpoint sebelum menyimpan.', 'info'); }
-  catch (error) { setStatus(error.message || String(error), 'error'); }
+  fillForm(normalizeEndpointConfig({ baseUrl: window.__GC_LAST_API_BASE || '' }));
+  setStatus('Custom API siap. Memuat konfigurasi tersimpan…', 'info');
+  // Modal harus langsung bisa ditutup/diedit walaupun ZIP besar atau storage lambat.
+  loadExistingConfig().then((config) => {
+    if (!el(modalId)?.classList.contains('open')) return;
+    fillForm(config);
+    setStatus('Siap. Periksa base URL dan endpoint sebelum menyimpan.', 'info');
+  }).catch((error) => setStatus(error.message || String(error), 'warn'));
   refreshTestEndpointList();
   el('gc-api-base').focus();
 }
