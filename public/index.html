@@ -9730,9 +9730,24 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       const warnSet = window.__gcScanWarnPaths;
       document.querySelectorAll('#file-tree .file-tree-item[data-path]').forEach(function (el) {
         const p = el.dataset.path;
+        const isError = !!(set && set.has(p));
         el.classList.remove('scan-error', 'scan-warn');
-        if (set && set.has(p)) el.classList.add('scan-error');
+        if (isError) el.classList.add('scan-error');
         else if (warnSet && warnSet.has(p)) el.classList.add('scan-warn');
+        let mark = el.querySelector('.file-tree-error-mark');
+        if (isError && !mark) {
+          mark = document.createElement('span');
+          mark.className = 'file-tree-error-mark';
+          mark.textContent = '[!]';
+          mark.title = 'Error terdeteksi — klik file untuk membuka detail';
+          const addButton = el.querySelector('.file-tree-add');
+          el.insertBefore(mark, addButton || null);
+        } else if (!isError && mark) {
+          mark.remove();
+        }
+        if (isError && mark && window.__gcScanErrorMeta && window.__gcScanErrorMeta[p]) {
+          mark.title = 'Error: ' + String(window.__gcScanErrorMeta[p]).slice(0, 160) + ' — klik file untuk membuka';
+        }
       });
       // folder yang mengandung path error
       document.querySelectorAll('#file-tree .file-tree-item[data-folder-name]').forEach(function (el) {
