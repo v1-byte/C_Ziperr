@@ -124,8 +124,8 @@ export function normalizeApiBase(value) {
 export function normalizeEndpointConfig(input = {}) {
   const base = DEFAULT_ENDPOINTS.map((defaults) => {
     const found = (input.endpoints || []).find((entry) => entry.id === defaults.id) || {};
-    const method = safeString(found.method || defaults.method, 10).toUpperCase();
-    const path = safeString(found.path || defaults.path, 500);
+    const method = safeString(found.method ?? defaults.method, 10).toUpperCase();
+    const path = safeString(found.path ?? defaults.path, 500);
     return { ...defaults, method: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method) ? method : defaults.method, path };
   });
   const headers = input.headers && typeof input.headers === 'object' && !Array.isArray(input.headers) ? input.headers : { 'Content-Type': 'application/json' };
@@ -145,7 +145,9 @@ export function normalizeEndpointConfig(input = {}) {
     parameters,
     requestFields: Array.isArray(input.requestFields) ? input.requestFields.map((v) => safeString(v, 100)).filter(Boolean) : [...DEFAULT_REQUEST_FIELDS],
     responseFields: Array.isArray(input.responseFields) ? input.responseFields.map((v) => safeString(v, 100)).filter(Boolean) : [...DEFAULT_RESPONSE_FIELDS],
-    responseFormat: safeString(input.responseFormat || 'json', 40).toLowerCase(),
+    responseFormat: ['json', 'json-envelope', 'custom'].includes(safeString(input.responseFormat || 'json', 40).toLowerCase())
+      ? safeString(input.responseFormat || 'json', 40).toLowerCase()
+      : 'json',
     auth: { type: 'bearer', tokenEnv: 'SESSION_TOKEN' }
   };
 }

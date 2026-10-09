@@ -19,6 +19,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.50.0/min/vs/loader.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="/offline-analyze.js?v=20260826b"></script>
+  <script src="/offline-zip-store.js?v=20261009a"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
   
   <style>
@@ -4459,6 +4460,7 @@
           <div class="gc-offline-flow-actions">
             <button type="button" class="btn btn-secondary btn-sm" onclick="gcDownloadLastCapture()">↓ Simpan ZIP ke HP</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('zip-input').click()">＋ Load ZIP</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="gcLoadSavedZip()">↻ Load ZIP tersimpan</button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="startPreview('sandbox')">▶ Preview ZIP</button>
             <button type="button" class="btn btn-primary btn-sm" onclick="openCustomApiManager()">⚙ Custom API</button>
             <button type="button" class="btn btn-success btn-sm" onclick="openCustomApiManager()">✓ Ready Hosting</button>
@@ -5685,6 +5687,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
             setLoading(true, 'Membuka ZIP', 'Memvalidasi daftar file tanpa mengekstrak semuanya...'); const zip = await JSZip.loadAsync(file, { checkCRC32: false, createFolders: false }); currentZip = zip;
             const paths = []; zip.forEach((relativePath, zipEntry) => { if (zipEntry.dir) return; const normalizedPath = String(relativePath).replaceAll('\\', '/').replace(/^\.\//, '').replace(/^\/+/, ''); if (!normalizedPath) return; paths.push(normalizedPath); zipFileMap[normalizedPath] = zipEntry; });
             paths.sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'})); renderFileTree(paths); if (projectNameEl) projectNameEl.textContent = file.name + ' (' + paths.length + ' file · ' + formatBytes(file.size) + ')'; appendLog('ZIP siap dibaca: ' + file.name + ' — ' + paths.length + ' file · ' + formatBytes(file.size) + ' (ekstraksi saat file dibuka)', 'ok');
+            if (window.GCZipStore && window.GCZipStore.supported()) window.GCZipStore.save(file, file.name, { id: 'latest', source: 'workspace-load' }).catch(function (error) { appendLog('Penyimpanan lokal dilewati: ' + (error.message || error), 'warn'); });
             const fp = document.getElementById('file-panel'); if (fp && fp.classList.contains('collapsed')) toggleFilePanel(); if (typeof sizeMonacoHost === 'function') setTimeout(sizeMonacoHost, 100); setLoading(true, 'ZIP siap diedit', paths.length + ' file ditemukan · klik file untuk membukanya'); setTimeout(() => setLoading(false), 550);
             // Process 5: clear cache lama + (opsional) cache paket kecil ke SW untuk preview offline
             try {
@@ -5785,7 +5788,38 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       window.__gcLastCaptureName = filename || 'game-resources.zip';
       window.__gcLastCaptureDownloadUrl = downloadUrl || '';
       gcSetCaptureResultActions(!!(window.__gcLastCaptureBlob || window.__gcLastCaptureDownloadUrl), false);
+      if (window.__gcLastCaptureBlob && window.GCZipStore && window.GCZipStore.supported()) {
+        window.GCZipStore.save(window.__gcLastCaptureBlob, window.__gcLastCaptureName, { id: 'latest', source: 'capture' })
+          .then(function () { appendLog('ZIP tersimpan di penyimpanan lokal HP: ' + window.__gcLastCaptureName, 'ok'); })
+          .catch(function (error) { appendLog('ZIP siap diunduh, tetapi penyimpanan lokal gagal: ' + (error.message || error), 'warn'); });
+      }
     }
+    async function gcLoadSavedZip() {
+      if (!window.GCZipStore || !window.GCZipStore.supported()) {
+        alert('Penyimpanan ZIP lokal tidak tersedia. Gunakan Load ZIP dan pilih file dari Download HP.');
+        return false;
+      }
+      try {
+        const saved = await window.GCZipStore.get('latest');
+        if (!saved || !saved.blob) {
+          appendLog('Belum ada ZIP tersimpan di HP. Jalankan capture atau Load ZIP manual terlebih dahulu.', 'warn');
+          alert('Belum ada ZIP tersimpan di HP.');
+          return false;
+        }
+        const loaded = await gcLoadCaptureBlobToWorkspace(saved.blob, saved.name, true);
+        if (loaded) {
+          appendLog('ZIP lokal dimuat ulang ke Workspace: ' + saved.name, 'ok');
+          const note = document.getElementById('gc-offline-flow-note');
+          if (note) note.textContent = 'ZIP lokal aktif: ' + saved.name + '. Edit file, lalu gunakan Preview ZIP untuk mode offline atau Custom API untuk backend baru.';
+        }
+        return loaded;
+      } catch (error) {
+        appendLog('Gagal memuat ZIP tersimpan: ' + (error.message || error), 'err');
+        alert('Gagal memuat ZIP tersimpan: ' + (error.message || error));
+        return false;
+      }
+    }
+    window.gcLoadSavedZip = gcLoadSavedZip;
 
     async function gcLoadCaptureBlobToWorkspace(blob, filename, focusWorkspace) {
       if (!blob || !blob.size) return false;
@@ -5837,20 +5871,41 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       }
     }
 
+    async function gcSaveBlobToDevice(blob, name) {
+      if (!blob || !blob.size) return false;
+      if (typeof window.showSaveFilePicker === 'function') {
+        try {
+          var handle = await window.showSaveFilePicker({
+            suggestedName: name || 'game-resources.zip',
+            types: [{ description: 'ZIP package', accept: { 'application/zip': ['.zip'] } }]
+          });
+          var writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          appendLog('ZIP disimpan ke lokasi perangkat: ' + (name || 'game-resources.zip'), 'ok');
+          return true;
+        } catch (error) {
+          if (error && error.name === 'AbortError') return false;
+          appendLog('File picker tidak tersedia, memakai folder Download HP.', 'warn');
+        }
+      }
+      var blobUrl = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = name || 'game-resources.zip';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { try { URL.revokeObjectURL(blobUrl); } catch (_) {} }, 4000);
+      appendLog('ZIP dikirim ke folder Download HP: ' + (name || 'game-resources.zip'), 'ok');
+      return true;
+    }
     async function gcDownloadLastCapture() {
       var blob = window.__gcLastCaptureBlob;
       var name = window.__gcLastCaptureName || 'game-resources.zip';
       var downloadUrl = window.__gcLastCaptureDownloadUrl;
       if (blob && blob.size) {
-        var blobUrl = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        setTimeout(function () { try { URL.revokeObjectURL(blobUrl); } catch (_) {} }, 4000);
-        appendLog('Download ZIP capture: ' + name, 'ok');
+        await gcSaveBlobToDevice(blob, name);
         return blob;
       }
       if (downloadUrl) {
@@ -10494,8 +10549,14 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       }
       releasePreviewAssets();
       if (typeof closeHostingPage === 'function') closeHostingPage();
-      if (isHybrid) appendLog('Preview Hybrid: asset lokal (/__gc__) + network API diizinkan', 'ok');
-      else appendLog('Preview Offline-leaning: SW policy offline untuk API-like request', 'ok');
+      if (isHybrid) appendLog('Preview Hybrid: asset lokal + network API diizinkan', 'ok');
+      else appendLog('Preview ZIP Offline: network API diblokir; asset dibaca dari ZIP lokal', 'ok');
+      var previewNetBadge = document.getElementById('preview-net-badge');
+      if (previewNetBadge) {
+        previewNetBadge.textContent = isHybrid ? 'HYBRID · NET ON' : 'ZIP OFFLINE · NET BLOCKED';
+        previewNetBadge.classList.toggle('is-idle', false);
+        previewNetBadge.title = isHybrid ? 'Asset lokal, request API boleh ke jaringan' : 'Asset lokal dari ZIP, request API diblokir';
+      }
 
       // Service Worker hybrid / offline policy (bukan collect)
       try {
@@ -10560,7 +10621,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
                 }
               }
             });
-            if (put && put.ok) {
+            if (put && put.ok && Number(put.count || 0) === Object.keys(zipFileMap).length) {
               appendLog('SW cache preview: ' + (put.count || 0) + ' file', 'ok');
               const origin = window.location.origin;
               for (const p of Object.keys(zipFileMap)) {
@@ -10571,7 +10632,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
                 }).join('/');
               }
             } else {
-              appendLog('SW cache gagal (' + ((put && put.error) || 'unknown') + ') — fallback blob URL', 'warn');
+              appendLog('SW cache tidak lengkap (' + ((put && put.count) || 0) + '/' + Object.keys(zipFileMap).length + ') — fallback blob URL aktif', 'warn');
             }
           } catch (eSw) {
             appendLog('SW cache error — fallback blob: ' + (eSw.message || eSw), 'warn');

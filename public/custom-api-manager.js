@@ -224,7 +224,7 @@ async function saveArtifacts(alsoDownload = false) {
   const files = await readWorkspace();
   const apiMap = await existingApiMap(files);
   const generated = buildHostingArtifacts(config, apiMap);
-  apiBridge.writeFiles(generated);
+  await apiBridge.writeFiles(generated);
   if (alsoDownload) await apiBridge.download(`hosting-${config.gameId || 'game-demo'}.zip`);
   window.__GC_LAST_API_BASE = normalizeApiBase(config.baseUrl);
   return { config, generated, files: appendGeneratedFiles(files, generated) };
