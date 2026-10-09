@@ -5,9 +5,11 @@ const source = await readFile(new URL("../scripts/collect.js", import.meta.url),
 const worker = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
 
 assert.match(source, /captureMissingStaticAssets/);
-assert.match(source, /extractProactiveCandidates\(sources, runtimeUrls, 500\)/);
-assert.match(source, /maxFileBytes = 20 \* 1024 \* 1024/);
-assert.match(source, /maxTotalBytes = 200 \* 1024 \* 1024/);
+assert.match(source, /extractProactiveCandidates\(sources, runtimeUrls, largeCapture \? 1000 : 500\)/);
+assert.doesNotMatch(source, /maxFileBytes\s*=|18\s*\*\s*1024\s*\*\s*1024|20\s*\*\s*1024\s*\*\s*1024/);
+assert.match(source, /CAPTURE_BUDGET_BYTES/);
+assert.match(source, /captureBudgetBytes: maxTotalBytes/);
+assert.match(source, /zipFiles\[localPath\] = buffer/);
 assert.match(source, /html-response-not-static-asset/);
 assert.match(source, /skippedLarge/);
 assert.match(source, /page\.request\.get\(url/);

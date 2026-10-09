@@ -24,7 +24,8 @@ const candidates = atlasImageCandidates("assets/data/0001-symbols.json", texture
 assert.equal(candidates.length, 1);
 
 const collector = await readFile(new URL("../scripts/collect.js", import.meta.url), "utf8");
-assert.match(collector, /captureMissingStaticAssets\(page, resources, zipFiles, seen, failedRequests, mainDocUrl\)/);
+assert.match(collector, /captureMissingStaticAssets\(page, resources, zipFiles, seen, failedRequests, mainDocUrl, CAPTURE_BUDGET_BYTES, LARGE_CAPTURE\)/);
+assert.match(collector, /No fixed per-file cap/);
 assert.match(collector, /atlas-region-extractor/);
 assert.match(collector, /Referer: mainDocUrl/);
 console.log("sprite atlas and CDN fallback regression test passed");

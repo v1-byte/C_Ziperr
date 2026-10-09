@@ -32,6 +32,25 @@ test('capture cockpit has layered motion and keeps reduced-motion fallback', () 
   assert.match(html, /gc-capture-live-panel, \.gc-capture-progress-bar/);
 });
 
+test('capture loader uses the supplied glowing core image instead of the Rubik cube', () => {
+  assert.match(html, /src="\/assets\/capture-core\.jpg"/);
+  assert.match(html, /gc-capture-core-glow/);
+  assert.doesNotMatch(html, /gc-rubik-cube|gc-rubik-face/);
+  assert.match(html, /prefers-reduced-motion:\s*reduce/);
+});
+
+test('large-capture UI documents runner bounds and dispatches through Actions', () => {
+  assert.match(html, /Capture berjalan di runner GitHub Actions, bukan browser Worker/);
+  assert.match(html, /large_capture:\s*opts\.large_capture/);
+  assert.match(html, /async function gcRunCaptureCoach/);
+  assert.match(html, /Jangan menyertakan URL lengkap atau query/);
+});
+
+test('the supplied capture-core image is available as a local static asset', async () => {
+  const image = await readFile(new URL('../public/assets/capture-core.jpg', import.meta.url));
+  assert.ok(image.byteLength > 10_000);
+});
+
 test('AI readiness flow exposes three visible stages and actionable states', () => {
   assert.match(html, /id="collect-ai-assist"/);
   assert.equal(countMatches(html, /class="collect-ai-step(?: |")/g), 3);

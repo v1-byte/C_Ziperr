@@ -532,6 +532,7 @@ async function handleRequest(request, env) {
             spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2200"),
             request_id: dispatchRequestId,
             seed_zip: String(body.seed_zip ?? body.seedZip ?? ""),
+            large_capture: String([body.large_capture, body.unlimited, body.mode].some((value) => /^(1|true|yes|on|unlimited)$/i.test(String(value))) ? "1" : "0"),
             mock_offline: String(body.mock_offline === false ? "0" : "1")
           }
         })

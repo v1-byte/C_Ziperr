@@ -19,7 +19,8 @@
  */
 import { chromium } from "playwright";
 import { zipSync, strToU8 } from "fflate";
-import { writeFileSync, mkdirSync, existsSync } from "fs";
+import { writeFileSync, mkdirSync, existsSync, statfsSync } from "fs";
+import { freemem } from "os";
 import { join } from "path";
 import { runStrictAutoInteract } from "./auto-interact.js";
 import {
@@ -37,6 +38,7 @@ import { extractProactiveCandidates } from "../src/collect/proactive-candidates.
 import { guessTypeFromUrl } from "../src/collect/urls.js";
 import { buildApiMap } from "../src/package/api-map.js";
 import { detectSecurityEvidence } from "../src/analyze/security-evidence.js";
+import { calculateCaptureBudget } from "../src/collect/capture-budget.js";
 
 const TARGET_URL = process.env.TARGET_URL;
 const COLLECT_OPTIONS = normalizeCollectOptions(process.env);
@@ -45,6 +47,18 @@ const AUTO_SPINS = COLLECT_OPTIONS.autoSpins;
 const AUTO_HISTORY = COLLECT_OPTIONS.autoHistory;
 const SPIN_DELAY_MS = COLLECT_OPTIONS.spinDelayMs;
 const MOCK_OFFLINE = process.env.MOCK_OFFLINE !== "0";
+const LARGE_CAPTURE = /^(1|true|yes|on)$/i.test(String(process.env.LARGE_CAPTURE || "0"));
+function availableDiskBytes() {
+  try {
+    const stats = statfsSync(process.cwd());
+    return Number(stats.bavail) * Number(stats.bsize);
+  } catch { return undefined; }
+}
+const CAPTURE_BUDGET_BYTES = calculateCaptureBudget({
+  availableMemoryBytes: freemem(),
+  availableDiskBytes: availableDiskBytes(),
+  largeCapture: LARGE_CAPTURE
+});
 
 if (!TARGET_URL) {
   console.error("ERROR: TARGET_URL tidak diisi");
@@ -102,7 +116,7 @@ function neutralizeFrameBusters(text) {
   return { text: out, count: n };
 }
 
-async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl) {
+async function captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl, captureBudgetBytes, largeCapture) {
   const sources = [];
   const runtimeUrls = [];
   try {
@@ -144,10 +158,11 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
     } catch {}
   }
 
-  const candidates = extractProactiveCandidates(sources, runtimeUrls, 500);
-  const maxFileBytes = 20 * 1024 * 1024;
-  const maxTotalBytes = 200 * 1024 * 1024;
-  const maxDurationMs = 6 * 60 * 1000;
+  const candidates = extractProactiveCandidates(sources, runtimeUrls, largeCapture ? 1000 : 500);
+  // No fixed per-file cap: stop only when the runner's adaptive whole-run
+  // resource budget or the workflow time window is reached.
+  const maxTotalBytes = captureBudgetBytes;
+  const maxDurationMs = largeCapture ? 45 * 60 * 1000 : 6 * 60 * 1000;
   const deadline = Date.now() + maxDurationMs;
   let totalBytes = Object.values(zipFiles || {}).reduce((sum, data) => sum + (data?.byteLength || data?.length || 0), 0);
   let fetched = 0;
@@ -208,10 +223,10 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
         failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: `http ${status}`, capturedBy: 'proactive-static-asset' });
         continue;
       }
-      if (declaredBytes > maxFileBytes) {
+      if (declaredBytes > 0 && totalBytes + declaredBytes > maxTotalBytes) {
         skippedLarge++;
         failed++;
-        const why = `declared-size-limit:${declaredBytes}`;
+        const why = `runner-resource-budget:${declaredBytes}`;
         details.push(`SKIP ${redactUrl(url).slice(0, 100)} ${why}`);
         failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: why, contentType, capturedBy: 'proactive-static-asset' });
         try { await response.dispose(); } catch {}
@@ -224,14 +239,9 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
         failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: 'empty-response', capturedBy: 'proactive-static-asset' });
         continue;
       }
-      if (body.length > maxFileBytes) {
-        skippedLarge++;
-        failed++;
-        failedRequests.push({ url: redactUrl(url), type, method: 'GET', status, error: `actual-size-limit:${body.length}`, contentType, capturedBy: 'proactive-static-asset' });
-        continue;
-      }
       if (totalBytes + body.length > maxTotalBytes) {
         stoppedForTotalLimit = true;
+        failedRequests.push({ url: redactUrl(url), type, method: 'GET', error: `runner-resource-budget:${body.length}`, contentType, capturedBy: 'proactive-static-asset' });
         break;
       }
       let name = safe(parsed.pathname.split('/').pop() || 'asset');
@@ -247,7 +257,7 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
       }
       const folder = typeFolders[type] || 'assets/data';
       const localPath = `${folder}/${String(Object.keys(zipFiles).length + 1).padStart(4, '0')}-proactive-${name}`;
-      zipFiles[localPath] = new Uint8Array(body);
+      zipFiles[localPath] = body;
       totalBytes += body.length;
       resources.push({ url, type, status, localPath, size: body.length, contentType: contentType || 'application/octet-stream', capturedBy: 'proactive-static-asset' });
       seen.add(url);
@@ -261,7 +271,7 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
       try { await response?.dispose(); } catch {}
     }
   }
-  return { candidates: candidates.length, fetched, reused, failed, skippedLarge, stoppedForTotalLimit, stoppedForTimeBudget, totalBytes, details };
+  return { candidates: candidates.length, fetched, reused, failed, skippedLarge, stoppedForTotalLimit, stoppedForTimeBudget, totalBytes, captureBudgetBytes: maxTotalBytes, largeCapture, details };
 }
 async function extractAtlasRegions(page, zipFiles, resources) {
   const extracted = [];
@@ -505,6 +515,10 @@ async function main() {
   let detectProfile = null;
   let mainDocStatus = 0;
   let mainDocUrl = TARGET_URL;
+  let capturedBytes = 0;
+  let pendingResponseBytes = 0;
+
+  console.log("PROGRESS: capture_budget", JSON.stringify({ largeCapture: LARGE_CAPTURE, maxBytes: CAPTURE_BUDGET_BYTES, maxMB: Math.round(CAPTURE_BUDGET_BYTES / 1024 / 1024) }));
 
   page.on("requestfailed", (request) => {
     try {
@@ -558,9 +572,23 @@ async function main() {
       const requestHeaders = redactHeaders(req.headers());
       const requestBody = bodyPeek(req.postData());
       const parsedUrl = (() => { try { return new URL(url); } catch { return null; } })();
-      const buffer = await response.body();
+      const responseHeaders = response.headers();
+      const declaredResponseBytes = Number(responseHeaders["content-length"] || 0);
+      if (declaredResponseBytes > 0 && capturedBytes + pendingResponseBytes + declaredResponseBytes > CAPTURE_BUDGET_BYTES) {
+        failedRequests.push({ url: redactUrl(url), type, method: req.method(), status, size: declaredResponseBytes, error: "runner-resource-budget" });
+        blockerSignals.push({ kind: "capture_resource_budget", url: redactUrl(url), type, size: declaredResponseBytes });
+        return;
+      }
+      if (declaredResponseBytes > 0) pendingResponseBytes += declaredResponseBytes;
+      let buffer;
+      try { buffer = await response.body(); }
+      finally { if (declaredResponseBytes > 0) pendingResponseBytes = Math.max(0, pendingResponseBytes - declaredResponseBytes); }
       if (!buffer || buffer.length === 0) return;
-      if (buffer.length > 18 * 1024 * 1024) return;
+      if (capturedBytes + pendingResponseBytes + buffer.length > CAPTURE_BUDGET_BYTES) {
+        failedRequests.push({ url: redactUrl(url), type, method: req.method(), status, size: buffer.length, error: "runner-resource-budget" });
+        blockerSignals.push({ kind: "capture_resource_budget", url: redactUrl(url), type, size: buffer.length });
+        return;
+      }
 
       const ct = response.headers()["content-type"] || "";
       const apiKind = isApi ? classifyApiResource(url, ct) : null;
@@ -618,11 +646,14 @@ async function main() {
         name = `${tag}-${name}`;
         folder = "assets/data";
         criticalApis.push({ url, kind: apiKind || "critical", size: buffer.length });
-        console.log("PROGRESS: critical_api", apiKind || "critical", url.slice(0, 140));
+        console.log("PROGRESS: critical_api", apiKind || "critical", redactUrl(url).slice(0, 140));
       }
 
       const localPath = `${folder}/${String(resources.length + 1).padStart(4, "0")}-${name}`;
-      zipFiles[localPath] = new Uint8Array(buffer);
+      // Playwright already returned a Buffer/Uint8Array; retain that backing
+      // store instead of making a second full-size copy of large assets.
+      zipFiles[localPath] = buffer;
+      capturedBytes += buffer.length;
       for (const contract of apiContracts) {
         if (!contract.response.localPath && contract.url === url) contract.response.localPath = localPath;
       }
@@ -693,10 +724,11 @@ async function main() {
   // Proactive fallback: asset static signed yang tetap tertulis di HTML diambil
   // ulang dengan referer target, meskipun request tidak muncul sebagai response event.
   console.log("PROGRESS: proactive_static_assets");
-  const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl);
+  const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl, CAPTURE_BUDGET_BYTES, LARGE_CAPTURE);
   console.log("PROGRESS: proactive_static_assets_done", JSON.stringify(proactiveAssets));
   const atlasRegions = await extractAtlasRegions(page, zipFiles, resources);
   console.log("PROGRESS: atlas_regions_done", JSON.stringify({ atlases: atlasRegions.atlases, regions: atlasRegions.regions }));
+  capturedBytes = resources.reduce((sum, resource) => sum + Math.max(0, Number(resource.size) || 0), 0);
 
   // HTML akhir
   console.log("PROGRESS: capture_html");
@@ -708,7 +740,7 @@ async function main() {
   const blockerReport = [];
   const securityEvidence = detectSecurityEvidence({
     texts: [html],
-    urls: resources.map((resource) => resource.url),
+    urls: resources.map((resource) => redactUrl(resource.url)),
     requests: failedRequests
   });
   for (const finding of securityEvidence.findings) {
@@ -721,10 +753,10 @@ async function main() {
     blockerReport.push({ kind, severity, message, evidence: evidence.slice(0, 20) });
   };
   if (mainDocStatus === 401 || mainDocStatus === 403) {
-    addBlocker('auth_or_access', 'critical', 'Halaman utama membutuhkan akses resmi atau autentikasi.', [mainDocUrl]);
+    addBlocker('auth_or_access', 'critical', 'Halaman utama membutuhkan akses resmi atau autentikasi.', [redactUrl(mainDocUrl)]);
   }
   if (/captcha|turnstile|verify you are human|challenge-platform|hcaptcha/i.test(htmlLower)) {
-    addBlocker('captcha_or_challenge', 'critical', 'Challenge/CAPTCHA terdeteksi; selesaikan secara resmi lalu capture ulang.', [mainDocUrl]);
+    addBlocker('captcha_or_challenge', 'critical', 'Challenge/CAPTCHA terdeteksi; selesaikan secara resmi lalu capture ulang.', [redactUrl(mainDocUrl)]);
   }
   if (/encryptedmedia|widevine|playready|fairplay|\.license|drm/i.test(htmlLower) || resources.some((r) => /drm|license|widevine|playready|fairplay/i.test(r.url))) {
     addBlocker('drm_or_license', 'critical', 'DRM atau license server terdeteksi; replikasi penuh memerlukan hak dan integrasi resmi.', resources.filter((r) => /drm|license|widevine|playready|fairplay/i.test(r.url)).map((r) => redactUrl(r.url)));
@@ -786,6 +818,7 @@ async function main() {
   zipFiles["realtime.json"] = strToU8(JSON.stringify({ version: 1, generatedAt: new Date().toISOString(), sessions: realtimeSummary }, null, 2));
   zipFiles["replication-report.json"] = strToU8(JSON.stringify({
     version: 1, generatedAt: new Date().toISOString(), target: safeTargetUrl,
+    captureBudgetBytes: CAPTURE_BUDGET_BYTES, capturedBytes, largeCapture: LARGE_CAPTURE,
     status: blockerReport.some((item) => item.severity === 'critical') ? 'MANUAL_ACTION_REQUIRED' : blockerReport.length ? 'PARTIAL' : 'CAPTURED',
     blockers: blockerReport, failedRequests, proactiveStaticAssets: proactiveAssets, securityEvidence, realtime: { sessions: realtimeSummary.length, framesReceived: realtimeSummary.reduce((n, s) => n + s.received, 0), framesSent: realtimeSummary.reduce((n, s) => n + s.sent, 0) }
   }, null, 2));
@@ -796,6 +829,9 @@ async function main() {
     mainDocUrl: redactUrl(mainDocUrl),
     collectedAt: new Date().toISOString(),
     totalFiles: resources.length,
+    captureBudgetBytes: CAPTURE_BUDGET_BYTES,
+    capturedBytes,
+    largeCapture: LARGE_CAPTURE,
     criticalApis: criticalApis.length,
     smartRewrite: smart,
     via: "github-actions",
@@ -821,6 +857,7 @@ Target: ${safeTargetUrl}
 Main document status: ${mainDocStatus}
 Tanggal: ${new Date().toISOString()}
 Total: ${resources.length} file
+Capture payload: ${(capturedBytes / 1024 / 1024).toFixed(1)} MiB · budget adaptif ${(CAPTURE_BUDGET_BYTES / 1024 / 1024).toFixed(1)} MiB · large mode ${LARGE_CAPTURE ? 'aktif' : 'nonaktif'}
 Critical API: ${criticalApis.length}
 API contracts: ${apiContracts.length} · replay exchanges: ${replaySequence.length}
 Smart rewrite: ${smart.rewritten} · frame-buster: ${smart.neutralized}
@@ -877,6 +914,7 @@ Atau load di Workspace Game Collector Pro.
   console.log("PROGRESS: zip_done");
   console.log("Selesai!");
   console.log("Total resource:", resources.length);
+  console.log("Capture payload MiB:", (capturedBytes / 1024 / 1024).toFixed(1), "· budget MiB:", (CAPTURE_BUDGET_BYTES / 1024 / 1024).toFixed(1), "· large mode:", LARGE_CAPTURE);
   console.log("Critical API:", criticalApis.length);
   console.log("Main doc status:", mainDocStatus);
   console.log("Smart rewrite:", smart.rewritten, "· frame-buster:", smart.neutralized);
