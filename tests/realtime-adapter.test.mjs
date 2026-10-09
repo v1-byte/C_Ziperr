@@ -13,10 +13,22 @@ ws.close();
 assert.equal(ws.readyState, OfflineWebSocket.CLOSED);
 
 const sseMessages = [];
+const namedEvents = [];
 const source = new OfflineEventSource("https://provider.example.test/sse", { events: [{ id: 1, data: { balance: 900 } }] });
 source.addEventListener("message", (event) => sseMessages.push(JSON.parse(event.data)));
+source.addEventListener("balance", (event) => namedEvents.push([event.data, event.lastEventId]));
 await new Promise((resolve) => setTimeout(resolve, 5));
 assert.deepEqual(sseMessages, [{ balance: 900 }]);
+assert.deepEqual(namedEvents, []);
+const namedSource = new OfflineEventSource("https://provider.example.test/sse", { events: [{ id: "42", type: "balance", data: { balance: 800 } }] });
+const propertyMessages = [];
+namedSource.onmessage = (event) => propertyMessages.push(event.lastEventId);
+const customMessages = [];
+namedSource.addEventListener("balance", (event) => customMessages.push([JSON.parse(event.data), event.lastEventId]));
+await new Promise((resolve) => setTimeout(resolve, 5));
+assert.deepEqual(propertyMessages, ["42"]);
+assert.deepEqual(customMessages, [[{ balance: 800 }, "42"]]);
+namedSource.close();
 source.close();
 
 const polled = [];

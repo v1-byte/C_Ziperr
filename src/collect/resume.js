@@ -31,6 +31,8 @@ function guessType(url, ct = "") {
  * @param {number} maxFetch
  */
 export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest, baseHref, maxFetch = 80) {
+  const attemptedLimit = Math.max(1, Math.min(120, Number(maxFetch) || 80));
+  const seenSet = seen instanceof Set ? seen : new Set();
   const report = {
     attempted: 0,
     fetched: 0,
@@ -41,9 +43,9 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
     added: []
   };
 
-  const list = (stillMissing || [])
+  const list = (Array.isArray(stillMissing) ? stillMissing : [])
     .map((x) => (typeof x === "string" ? { url: x } : x))
-    .filter((x) => x && x.url && !String(x.url).startsWith("data:") && !String(x.url).startsWith("blob:"));
+    .filter((x) => x && typeof x.url === "string" && x.url.trim() && !/^(?:data|blob):/i.test(x.url.trim()));
 
   let baseOrigin = "";
   try {
@@ -60,8 +62,9 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
     } catch (_) {}
   }
 
+  const inputSeen = new Set();
   for (const item of list) {
-    if (report.fetched + report.failed >= maxFetch) {
+    if (report.attempted >= attemptedLimit) {
       report.stillMissing.push(item);
       continue;
     }
@@ -73,10 +76,12 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
       report.stillMissing.push({ ...item, reason: "bad-url" });
       continue;
     }
-    if (seen.has(abs)) {
+    // Persisted `seen` also contains failed URLs; allow those to be retried.
+    if (inputSeen.has(abs)) {
       report.skipped++;
       continue;
     }
+    inputSeen.add(abs);
     report.attempted++;
     try {
       const res = await fetchWithRetry(abs, {
@@ -94,7 +99,6 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
           reason: "http-" + res.status,
           collectStatus: "DOWNLOAD_FAILED"
         });
-        seen.add(abs);
         continue;
       }
       const ct = res.headers.get("content-type") || "";
@@ -102,13 +106,11 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
       if (!buf.byteLength) {
         report.failed++;
         report.stillMissing.push({ url: abs, reason: "empty", collectStatus: "INVALID_RESPONSE" });
-        seen.add(abs);
         continue;
       }
       if (buf.byteLength > MAX_SINGLE_FILE) {
         report.failed++;
         report.stillMissing.push({ url: abs, reason: "too-large" });
-        seen.add(abs);
         continue;
       }
       if (sumZipFilesBytes(zipFiles) + buf.byteLength > MAX_RAW_TOTAL) {
@@ -126,7 +128,6 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
           reason: verified.error || verified.status,
           collectStatus: "INVALID_RESPONSE"
         });
-        seen.add(abs);
         continue;
       }
 
@@ -186,13 +187,13 @@ export async function resumeFetchMissing(stillMissing, seen, zipFiles, manifest,
         collectStatus: "VERIFIED"
       };
       manifest.push(entry);
-      seen.add(abs);
+      seenSet.add(abs);
       report.fetched++;
       report.added.push({ url: abs, localPath, size: buf.byteLength });
     } catch (e) {
       report.failed++;
       report.stillMissing.push({ url: abs, reason: String(e.message || e).slice(0, 80) });
-      seen.add(abs);
+      seenSet.add(abs);
     }
   }
 

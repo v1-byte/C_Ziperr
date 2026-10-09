@@ -47,6 +47,18 @@ export function rewriteIframeMarkup(html, options = {}) {
     }
   );
 
+  // Clamp pathological dimensions from captured embeds without changing ordinary layout.
+  out = out.replace(/<iframe\b([^>]*?)>/gi, (match, attrs) => {
+    let safeAttrs = attrs;
+    safeAttrs = safeAttrs.replace(/\b(width|height)\s*=\s*(["']?)(\d{5,})(\2)/gi, (m, key, quote) => `${key}="${key.toLowerCase() === "width" ? "100%" : "100vh"}"`);
+    safeAttrs = safeAttrs.replace(/\bstyle\s*=\s*(["'])(.*?)\1/i, (m, quote, style) => {
+      const cleaned = style.replace(/(?:^|;)\s*(?:width|min-width|max-width|height|min-height|max-height)\s*:\s*[^;]+/gi, "").replace(/^;+|;+$/g, "");
+      return `style=${quote}${cleaned}${cleaned ? ";" : ""}max-width:100%;max-height:100vh;box-sizing:border-box${quote}`;
+    });
+    if (!/\bstyle\s*=/i.test(safeAttrs)) safeAttrs += ` style="max-width:100%;max-height:100vh;box-sizing:border-box"`;
+    return `<iframe${safeAttrs}>`;
+  });
+
   // Preserve sandbox safety for generated previews unless explicitly disabled.
   if (options.sandbox !== false) {
     out = out.replace(/<iframe\b([^>]*?)>/gi, (match, attrs) => {

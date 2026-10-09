@@ -9633,6 +9633,10 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
     }
 
     async function runAnalysis() {
+      // RESCAN harus mengganti hasil sebelumnya, bukan mempertahankan marker yang sudah usang.
+      window.__gcScanErrorPaths = new Set();
+      window.__gcScanWarnPaths = new Set();
+      window.__gcScanErrorMeta = Object.create(null);
       startDetailLoadingDots('Scan Error berjalan');
       let issues = analyzeCurrentCode();
       try {
@@ -9678,12 +9682,6 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         runtime.forEach(function (r) {
           if (r && r.file) fileSet.add(r.file);
         });
-        // default entry HTML
-        if (zipFileMap) {
-          Object.keys(zipFileMap).forEach(function (p) {
-            if (/(^|\/)index\.html?$/i.test(p)) fileSet.add(p);
-          });
-        }
         window.__gcLastScan.files = Array.from(fileSet);
         window.__gcScanErrorPaths = fileSet;
       } catch (_) {}
