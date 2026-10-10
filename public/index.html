@@ -4729,7 +4729,7 @@
               <button type="button" class="btn btn-primary btn-sm" onclick="saveFile()" title="Save">Save</button>
             </div>
             <div class="file-panel-footer-row footer-ai">
-              <button type="button" class="btn btn-success btn-sm footer-ai-main" id="btn-ai-zip-repair" onclick="runAiZipRepair()" title="Perbaiki offline dan siapkan mode API server sendiri">AI Offline/API</button>
+              <button type="button" class="btn btn-success btn-sm footer-ai-main" id="btn-ai-zip-repair" onclick="runAiZipRepair()" title="AI memperbaiki ZIP ke mode offline lalu membuka Preview ZIP">AI Offline → Preview</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-strict-offline" onclick="runStrictOfflineMode()" title="Offline Seal: reuse ZIP + unduh + rewrite sekali jalan">Seal</button>
               <button type="button" class="btn btn-secondary btn-sm" id="btn-deteksi-ai" onclick="runDeteksiAI()" title="Scan lokal tanpa request AI otomatis">Scan Offline</button>
               <button type="button" class="btn btn-secondary btn-sm footer-more" onclick="openCustomApiManager()" title="Custom API dan paket hosting">API</button>
@@ -9237,16 +9237,24 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
     window.gcAiRepairOfflineFiles = gcAiRepairOfflineFiles;
 
     async function runAiZipRepair() {
+      const button = document.getElementById('btn-ai-zip-repair');
       try {
         if (!currentZip) {
           appendLog('AI Repair: load ZIP dulu.', 'warn');
           return;
         }
-        appendLog('Auto Offline/API: menjalankan perbaikan path relatif, asset lokal, dan konfigurasi server baru…', 'ok');
-        // Jalur default bersifat lokal: tidak mengirim isi ZIP ke AI cloud.
-        // AI cloud tetap tersedia melalui AI Studio jika pengguna memilihnya secara eksplisit.
-        appendLog('Mode aman aktif: tidak ada request AI cloud otomatis.', 'ok');
-        // Full-ZIP repair tanpa popup konfirmasi
+        if (button) { button.disabled = true; button.textContent = 'AI memperbaiki…'; }
+        appendLog('AI Offline: memeriksa file ZIP yang memiliki URL/API dan path rusak…', 'ok');
+        // Endpoint AI hanya dipakai untuk kandidat terbatas dan patch aman;
+        // jika tidak tersedia, perbaikan lokal tetap dilanjutkan.
+        try {
+          const aiReport = await gcAiRepairOfflineFiles({ maxFiles: 6, silent: true });
+          appendLog('AI Offline: ' + (aiReport.repaired || 0) + '/' + (aiReport.scanned || 0) + ' file diperbaiki; backup dibuat di BACKUP/AI-OFFLINE.', aiReport.repaired ? 'ok' : 'warn');
+        } catch (aiError) {
+          appendLog('AI kandidat dilewati: ' + (aiError && aiError.message || aiError) + ' — lanjut repair lokal.', 'warn');
+        }
+        // Full-ZIP local repair tanpa popup konfirmasi
+        appendLog('Repair lokal: path relatif, asset lokal, tracking, dan konfigurasi offline…', 'ok');
         window.__gcAutoRepairSilent = true;
         window.__gcAutoRepairAll = true;
         try {
@@ -9255,7 +9263,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           window.__gcAutoRepairSilent = false;
           window.__gcAutoRepairAll = false;
         }
-        appendLog('Auto Offline/API selesai — membuka Sandbox…', 'ok');
+        appendLog('AI Offline selesai — membuka Preview ZIP otomatis…', 'ok');
         try {
           const ws = document.querySelector('.nav-btn[data-panel="workspace"]');
           if (ws) ws.click();
@@ -9265,6 +9273,8 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         }, 300);
       } catch (e) {
         appendLog('AI Repair gagal: ' + (e && e.message || e), 'err');
+      } finally {
+        if (button) { button.disabled = false; button.textContent = 'AI Offline → Preview'; }
       }
     }
     window.runTrackScanErrors = runTrackScanErrors;

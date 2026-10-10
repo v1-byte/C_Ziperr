@@ -37,3 +37,10 @@ test('ZIP preview does not wait indefinitely for Service Worker cache', () => {
   assert.match(html, /Iframe Preview aktif/);
   assert.match(html, /frame\.onerror/);
 });
+
+test('AI Offline button repairs candidates then opens sandbox preview', () => {
+  assert.match(html, /AI Offline → Preview/);
+  assert.match(html, /gcAiRepairOfflineFiles\(\{ maxFiles: 6, silent: true \}\)/);
+  assert.match(html, /AI Offline selesai — membuka Preview ZIP otomatis/);
+  assert.match(html, /startPreview\('sandbox'\)/);
+});
