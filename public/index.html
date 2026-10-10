@@ -10559,17 +10559,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
         previewNetBadge.title = isHybrid ? 'Asset lokal, request API boleh ke jaringan' : 'Asset lokal dari ZIP, request API diblokir';
       }
 
-      // Service Worker hybrid / offline policy (bukan collect)
-      try {
-        var patterns = await gcBuildApiPatternsFromZip();
-        var pol = await gcSetHybridPolicy(isHybrid ? 'hybrid' : 'offline', { apiPatterns: patterns });
-        if (pol && pol.ok) appendLog('SW policy: ' + (isHybrid ? 'hybrid' : 'offline') + ' · API patterns ' + patterns.length, 'ok');
-        else appendLog('SW policy: belum aktif (register SW / hard refresh)', 'warn');
-      } catch (e) {
-        appendLog('SW policy: ' + (e && e.message ? e.message : e), 'warn');
-      }
-
-      // Masuk mode preview split (tetap di Workspace, tidak pindah tab browser)
+      // Tampilkan shell preview lebih dulu; Service Worker tidak boleh menahan iframe.
       const pm = document.getElementById('preview-mode');
       const main = document.getElementById('workspace-main');
       const wh = document.querySelector('#panel-workspace .workspace-header');
@@ -10577,8 +10567,21 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       if (wh) wh.style.display = 'none';
       if (pm) pm.style.display = 'flex';
       switchPreviewMode(activePreviewMode, false);
-      // Viewport fixed — tidak ada Desktop/Tablet/Mobile di UI
       try { setPreviewViewport('desktop'); } catch (_) {}
+      // Service Worker hybrid / offline policy (best effort, bounded)
+      try {
+        var patterns = await gcBuildApiPatternsFromZip();
+        var pol = await Promise.race([
+          gcSetHybridPolicy(isHybrid ? 'hybrid' : 'offline', { apiPatterns: patterns }),
+          new Promise(function (resolve) { setTimeout(function () { resolve({ ok: false, error: 'preview-policy-timeout' }); }, 1800); })
+        ]);
+        if (pol && pol.ok) appendLog('SW policy: ' + (isHybrid ? 'hybrid' : 'offline') + ' · API patterns ' + patterns.length, 'ok');
+        else appendLog('SW policy: belum aktif (register SW / hard refresh)', 'warn');
+      } catch (e) {
+        appendLog('SW policy: ' + (e && e.message ? e.message : e), 'warn');
+      }
+
+      // Viewport fixed — tidak ada Desktop/Tablet/Mobile di UI
 
       const logEl = document.getElementById('error-log');
       if (logEl) logEl.innerHTML = '';
@@ -10608,12 +10611,14 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
 
         // Build asset map: prefer Service Worker /__gc__/ (offline-stable), else blob:
         const blobUrls = {};
-        const useSwAssets = typeof gcSwReady === 'function' && gcSwReady();
+        const assetPaths = Object.keys(zipFileMap);
+        const useSwAssets = typeof gcSwReady === 'function' && gcSwReady() && assetPaths.length <= 120;
         if (useSwAssets) {
           appendLog('Menulis asset ke Service Worker cache (/__gc__/)…', 'ok');
           try {
-            const put = await gcPutZipAssetsToSW({
-              paths: Object.keys(zipFileMap),
+            const put = await Promise.race([
+              gcPutZipAssetsToSW({
+              paths: assetPaths,
               clear: true,
               onProgress: function (done, all, cached) {
                 if (done === all || done % 40 === 0) {
@@ -10621,8 +10626,10 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
                   if (running2) running2.textContent = 'SW cache: ' + cached + ' / ' + all;
                 }
               }
-            });
-            if (put && put.ok && Number(put.count || 0) === Object.keys(zipFileMap).length) {
+              }),
+              new Promise(function (resolve) { setTimeout(function () { resolve({ ok: false, error: 'cache-timeout' }); }, 5000); })
+            ]);
+            if (put && put.ok && Number(put.count || 0) === assetPaths.length) {
               appendLog('SW cache preview: ' + (put.count || 0) + ' file', 'ok');
               const origin = window.location.origin;
               for (const p of Object.keys(zipFileMap)) {
@@ -10633,7 +10640,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
                 }).join('/');
               }
             } else {
-              appendLog('SW cache tidak lengkap (' + ((put && put.count) || 0) + '/' + Object.keys(zipFileMap).length + ') — fallback blob URL aktif', 'warn');
+              appendLog('SW cache tidak lengkap/terlambat (' + ((put && put.count) || 0) + '/' + assetPaths.length + ') — fallback blob URL aktif', 'warn');
             }
           } catch (eSw) {
             appendLog('SW cache error — fallback blob: ' + (eSw.message || eSw), 'warn');
@@ -10666,6 +10673,31 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           }
         }
 
+        // Rewrite url(...) di CSS agar gambar/font relatif ikut memakai asset ZIP.
+        for (const [p, entry] of Object.entries(zipFileMap)) {
+          if (!/\.css$/i.test(p) || !blobUrls[p] || String(blobUrls[p]).indexOf('/__gc__/') >= 0) continue;
+          try {
+            const cssSource = openFiles.has(p) ? openFiles.get(p) : await entry.async('string');
+            const cssDir = p.includes('/') ? p.slice(0, p.lastIndexOf('/') + 1) : '';
+            const resolveCssPath = function (rel) {
+              if (!rel || /^(data:|blob:|https?:|#)/i.test(rel)) return null;
+              const parts = (cssDir + rel.trim()).split('/');
+              const clean = [];
+              parts.forEach(function (seg) { if (!seg || seg === '.') return; if (seg === '..') clean.pop(); else clean.push(seg); });
+              return clean.join('/');
+            };
+            const rewrittenCss = cssSource.replace(/url\(\s*(['"]?)([^'"\)]+)\1\s*\)/gi, function (all, quote, rel) {
+              const resolved = resolveCssPath(rel);
+              return resolved && blobUrls[resolved] ? 'url("' + blobUrls[resolved] + '")' : all;
+            });
+            if (rewrittenCss !== cssSource) {
+              const oldCssUrl = blobUrls[p];
+              blobUrls[p] = URL.createObjectURL(new Blob([rewrittenCss], { type: 'text/css' }));
+              activePreviewBlobUrls.push(blobUrls[p]);
+              try { URL.revokeObjectURL(oldCssUrl); } catch (_) {}
+            }
+          } catch (cssError) { appendLog('Rewrite CSS dilewati: ' + p, 'warn'); }
+        }
         let html = openFiles.has(entryPath) ? openFiles.get(entryPath) : await zipFileMap[entryPath].async('string');
 
         // Rewrite relative src/href to blob URLs (best-effort)
@@ -11551,6 +11583,20 @@ function isApiLike(u){
           frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups');
           frame.removeAttribute('allow');
         }
+        frame.onload = () => {
+          appendLog('Iframe Preview aktif: ' + entryPath, 'ok');
+          try {
+            const w = frame.contentWindow;
+            if (w) {
+              w.addEventListener('error', (ev) => appendLog('Runtime error: ' + (ev.message || ev), 'err'));
+              w.addEventListener('unhandledrejection', (ev) => appendLog('Promise rejection: ' + (ev.reason && ev.reason.message || ev.reason || ev), 'err'));
+            }
+          } catch (_) { appendLog('Iframe aktif; detail error runtime dibatasi sandbox.', 'warn'); }
+        };
+        frame.onerror = () => {
+          appendLog('Iframe Preview gagal memuat entry HTML: ' + entryPath, 'err');
+          if (running) running.textContent = 'Gagal memuat: ' + entryPath;
+        };
         frame.src = pageBlob;
         previewReload = function(nextMode) {
           startPreview(nextMode || activePreviewMode);
@@ -11671,22 +11717,6 @@ function isApiLike(u){
           });
         }
 
-        // Capture iframe errors (fallback jika bridge gagal)
-        frame.onload = () => {
-          try {
-            const w = frame.contentWindow;
-            if (w) {
-              w.addEventListener('error', (ev) => {
-                appendLog('Runtime error: ' + (ev.message || ev) + (ev.filename ? ' @ ' + ev.filename + ':' + ev.lineno : ''), 'err');
-              });
-              w.addEventListener('unhandledrejection', (ev) => {
-                appendLog('Promise rejection: ' + (ev.reason && ev.reason.message || ev.reason || ev), 'err');
-              });
-            }
-          } catch (e) {
-            appendLog('Catatan: partial sandbox — beberapa error runtime mungkin tidak tertangkap.', 'warn');
-          }
-        };
       } catch (e) {
         appendLog('Preview gagal: ' + e.message, 'err');
       }

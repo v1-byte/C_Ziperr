@@ -28,3 +28,12 @@ test('Custom API opens without extracting the whole ZIP and Monaco is deferred',
   assert.match(html, /setTimeout\(function\(\) \{ if \(typeof initMonacoEditor/);
   assert.match(html, /\}, 3000\);/);
 });
+
+test('ZIP preview does not wait indefinitely for Service Worker cache', () => {
+  assert.match(html, /preview-policy-timeout/);
+  assert.match(html, /cache-timeout/);
+  assert.match(html, /assetPaths\.length <= 120/);
+  assert.match(html, /Rewrite url\(\.\.\.\) di CSS/);
+  assert.match(html, /Iframe Preview aktif/);
+  assert.match(html, /frame\.onerror/);
+});
