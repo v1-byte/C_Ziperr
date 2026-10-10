@@ -50,3 +50,10 @@ test('Workspace and Preview yield on mobile-sized workloads', () => {
   assert.match(html, /function gcYield\(\)/);
   assert.match(html, /previewAssetIndex\+\+ % 10/);
 });
+
+test('Workspace removes duplicate preview and hosting buttons', () => {
+  assert.doesNotMatch(html, /id="btn-run-file"/);
+  assert.doesNotMatch(html, /✓ Ready Hosting/);
+  assert.match(html, /id="btn-preview-zip" onclick="startPreview\('sandbox'\)"/);
+  assert.match(html, /id="btn-custom-ai-top" onclick="openCustomAIManager\(\)"/);
+});
