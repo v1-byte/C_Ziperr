@@ -44,3 +44,9 @@ test('AI Offline button repairs candidates then opens sandbox preview', () => {
   assert.match(html, /AI Offline selesai — membuka Preview ZIP otomatis/);
   assert.match(html, /startPreview\('sandbox'\)/);
 });
+
+test('Workspace and Preview yield on mobile-sized workloads', () => {
+  assert.match(html, /Jangan render seluruh isi folder saat ZIP dibuka/);
+  assert.match(html, /function gcYield\(\)/);
+  assert.match(html, /previewAssetIndex\+\+ % 10/);
+});

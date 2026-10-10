@@ -5653,12 +5653,15 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       return `<span class="file-icon-wrap"><svg class="ui-icon ui-icon-sm" aria-hidden="true"><use href="#${icon}"></use></svg></span>`;
     }
 
-    function setLoading(visible, title, detail) {
+      function setLoading(visible, title, detail) {
         const overlay = document.getElementById('gc-loading-overlay'); if (!overlay) return;
         overlay.hidden = !visible; overlay.setAttribute('aria-busy', visible ? 'true' : 'false');
         const titleEl = document.getElementById('gc-loading-title'); const detailEl = document.getElementById('gc-loading-detail');
         if (titleEl && title) titleEl.textContent = title; if (detailEl && detail !== undefined) detailEl.textContent = detail;
       }
+      // Beri browser satu frame untuk menggambar ulang UI sebelum lanjut ke
+      // dekompresi/analisis berikutnya. Ini mencegah kesan stuck di WebView HP.
+      function gcYield() { return new Promise(function (resolve) { setTimeout(resolve, 0); }); }
       function setAIProcess(active, detail, stages) {
         var list = document.getElementById('gc-ai-stage-list');
         if (!active) { if (list) { list.hidden = true; list.innerHTML = ''; } return; }
@@ -6167,9 +6170,17 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           folderEl.dataset.folderName = name;
           folderEl.dataset.folderPath = folderPath;
 
-          const childWrap = buildTreeLevel(entry.__children, depth + 1, folderPath);
+          // Jangan render seluruh isi folder saat ZIP dibuka. Isi folder dibuat
+          // saat folder pertama kali disentuh agar Explorer tetap ringan di HP.
+          let childWrap = null;
           wrap.appendChild(folderEl);
-          wrap.appendChild(childWrap);
+          function ensureFolderChildren() {
+            if (childWrap) return childWrap;
+            childWrap = buildTreeLevel(entry.__children, depth + 1, folderPath);
+            childWrap.style.display = 'none';
+            wrap.appendChild(childWrap);
+            return childWrap;
+          }
 
           const folderAddBtn = folderEl.querySelector('.file-tree-folder-add');
           if (folderAddBtn) {
@@ -6180,8 +6191,9 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
           }
 
           folderEl.addEventListener('click', () => {
-            const isOpen = childWrap.style.display !== 'none';
-            childWrap.style.display = isOpen ? 'none' : 'block';
+            const children = ensureFolderChildren();
+            const isOpen = children.style.display !== 'none';
+            children.style.display = isOpen ? 'none' : 'block';
             folderEl.innerHTML = folderIconHTML(!isOpen) + `<span class="file-tree-name">${name}</span>` +
               `<button type="button" class="file-tree-folder-add" title="Tambah file di folder ini" aria-label="Tambah file">+</button>`;
             const btn = folderEl.querySelector('.file-tree-folder-add');
@@ -10659,7 +10671,9 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
 
         const textExt = /\.(html?|js|mjs|css|json|svg|xml|txt|md)$/i;
         // Lengkapi path yang belum punya URL (SW gagal sebagian / tanpa SW)
+        let previewAssetIndex = 0;
         for (const [p, entry] of Object.entries(zipFileMap)) {
+          if ((previewAssetIndex++ % 10) === 0) await gcYield();
           if (blobUrls[p] && String(blobUrls[p]).indexOf('/__gc__/') >= 0) continue;
           try {
             if (textExt.test(p)) {
@@ -10685,6 +10699,7 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
 
         // Rewrite url(...) di CSS agar gambar/font relatif ikut memakai asset ZIP.
         for (const [p, entry] of Object.entries(zipFileMap)) {
+          if ((previewAssetIndex++ % 10) === 0) await gcYield();
           if (!/\.css$/i.test(p) || !blobUrls[p] || String(blobUrls[p]).indexOf('/__gc__/') >= 0) continue;
           try {
             const cssSource = openFiles.has(p) ? openFiles.get(p) : await entry.async('string');
