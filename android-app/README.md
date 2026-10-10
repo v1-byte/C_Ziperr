@@ -20,7 +20,11 @@ Android tetap mewajibkan pengguna menyetujui pemasangan dan mungkin meminta izin
 
 ## Penyimpanan ZIP hasil Collect
 
-Pada build native versi `1.2.5` atau lebih baru, ZIP hasil System Collect, GitHub Actions, R2, dan Workspace dari WebView disimpan ke direktori internal aplikasi melalui `expo-file-system`. APK menampilkan notifikasi setelah file berhasil disimpan. Build APK lama tetap memakai perilaku download WebView biasa.
+Mulai versi `1.2.7` (versionCode 14), ZIP hasil Collect disimpan per-potongan ke `Documents/captures` pada penyimpanan internal privat aplikasi. WebView menunggu ACK untuk setiap potongan dan verifikasi ukuran file sebelum memuat ZIP ke Workspace; koleksi baru memakai nama bertimestamp agar tidak menimpa hasil sebelumnya. Build lama tidak memiliki jaminan transfer internal yang terkonfirmasi dan sebaiknya diperbarui.
+
+Collect utama berjalan melalui runner GitHub Actions, bukan batas CPU kecil Worker, dan collector tidak lagi membuang respons individual hanya karena melewati 18 MiB. Ukuran total tetap dibatasi kapasitas nyata runner, artifact GitHub, dan ruang kosong HP; tidak ada sistem penyimpanan yang dapat menjamin koleksi tanpa batas fisik.
+
+Setelah paket masuk Workspace, **AI Auto Repair Offline** berjalan otomatis jika opsi AI Offline Readiness aktif (default). Perbaikan membuat salinan cadangan, membatasi file teks yang dianalisis, dan melewati patch yang membuat referensi lokal hilang. ZIP awal disimpan terlebih dahulu; salinan hasil persiapan offline disimpan terpisah setelah proses selesai. AI tidak diminta melewati login, CAPTCHA, DRM, pembayaran, atau keamanan, dan tidak dapat menjamin seluruh game bekerja offline jika API/server game tidak tersedia.
 
 ## Konfigurasi AI Worker
 

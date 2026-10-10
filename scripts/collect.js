@@ -476,7 +476,6 @@ async function main() {
       const parsedUrl = (() => { try { return new URL(url); } catch { return null; } })();
       const buffer = await response.body();
       if (!buffer || buffer.length === 0) return;
-      if (buffer.length > 18 * 1024 * 1024) return;
 
       const ct = response.headers()["content-type"] || "";
       const apiKind = isApi ? classifyApiResource(url, ct) : null;

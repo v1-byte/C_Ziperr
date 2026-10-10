@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, AppState, Linking, Platform, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
-const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.6';
+const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.7';
 const UPDATE_MANIFEST_URL = 'https://github.com/v1-byte/C_Ziperr/releases/latest/download/update.json';
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? 'com.fblabb.zipscope';
 const CURRENT_VERSION = Constants.expoConfig?.version ?? '0.0.0';
@@ -49,26 +50,82 @@ const DOWNLOAD_BRIDGE = `
   if (window.__CZIPERR_DOWNLOAD_BRIDGE__) return true;
   window.__CZIPERR_DOWNLOAD_BRIDGE__ = true;
   var originalClick = HTMLAnchorElement.prototype.click;
+  var waiters = Object.create(null);
+  function waitFor(id, phase, index, timeoutMs) {
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () {
+        delete waiters[id];
+        reject(new Error('Android tidak mengonfirmasi penulisan ZIP (' + phase + ').'));
+      }, timeoutMs);
+      waiters[id] = { phase: phase, index: index, resolve: resolve, reject: reject, timer: timer };
+    });
+  }
+  window.__CZIPERR_TRANSFER_ACK__ = function (id, phase, index, ok, detail) {
+    var waiter = waiters[id];
+    if (!waiter || waiter.phase !== phase || waiter.index !== index) return false;
+    clearTimeout(waiter.timer);
+    delete waiters[id];
+    if (ok) waiter.resolve(detail || null);
+    else waiter.reject(new Error(String(detail || 'Penulisan ZIP ke penyimpanan internal gagal.')));
+    return true;
+  };
+  function post(message) {
+    if (!window.ReactNativeWebView) throw new Error('Bridge penyimpanan Android tidak tersedia.');
+    window.ReactNativeWebView.postMessage(JSON.stringify(message));
+  }
+  function toBase64(bytes) {
+    var binary = '';
+    for (var offset = 0; offset < bytes.length; offset += 32768) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(offset, Math.min(offset + 32768, bytes.length)));
+    }
+    return btoa(binary);
+  }
+  async function saveZip(blob, filename) {
+    if (!blob || !blob.size) throw new Error('ZIP kosong; tidak ada file untuk disimpan.');
+    var id = 'zip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    try {
+      var ready = waitFor(id, 'ready', 0, 30000);
+      post({ type: 'zip_save_begin', transferId: id, filename: filename, size: blob.size });
+      await ready;
+      var chunkSize = 256 * 1024;
+      var count = Math.ceil(blob.size / chunkSize);
+      for (var index = 0; index < count; index++) {
+        var start = index * chunkSize;
+        var bytes = new Uint8Array(await blob.slice(start, Math.min(start + chunkSize, blob.size)).arrayBuffer());
+        var written = waitFor(id, 'chunk', index, 60000);
+        post({ type: 'zip_save_chunk', transferId: id, index: index, base64: toBase64(bytes) });
+        await written;
+      }
+      var complete = waitFor(id, 'complete', 0, 60000);
+      post({ type: 'zip_save_finish', transferId: id });
+      return await complete;
+    } catch (error) {
+      try { post({ type: 'zip_save_cancel', transferId: id }); } catch (_) {}
+      throw error;
+    }
+  }
+  window.__CZIPERR_SAVE_ZIP__ = saveZip;
+  window.addEventListener('gc-native-zip-save-request', function (event) {
+    var detail = event.detail || {};
+    saveZip(detail.blob, detail.filename).then(function (result) {
+      window.dispatchEvent(new CustomEvent('gc-native-zip-saved', { detail: result }));
+    }).catch(function (error) {
+      try { post({ type: 'zip_save_external_error', message: String(error && error.message || error) }); } catch (_) {}
+    });
+  });
   HTMLAnchorElement.prototype.click = function () {
     var anchor = this;
     var href = anchor.href || '';
     var name = anchor.download || '';
     var isZipDownload = name && (href.indexOf('blob:') === 0 || /\.zip(?:[?#]|$)/i.test(href) || /\/api\/(?:r2\/download|github\/(?:artifact|package\/download))/i.test(href));
     if (isZipDownload && window.ReactNativeWebView) {
-      fetch(href).then(function (response) { return response.blob(); }).then(function (blob) {
-        var reader = new FileReader();
-        reader.onloadend = function () {
-          var result = String(reader.result || '');
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'save_internal_download',
-            filename: name,
-            base64: result.split(',')[1] || ''
-          }));
-        };
-        reader.readAsDataURL(blob);
+      fetch(href).then(function (response) {
+        if (!response.ok) throw new Error('Unduhan ZIP gagal (' + response.status + ').');
+        return response.blob();
+      }).then(function (blob) { return saveZip(blob, name); }).then(function (result) {
+        window.dispatchEvent(new CustomEvent('gc-native-zip-saved', { detail: result }));
       }).catch(function (error) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'save_internal_download_error', message: String(error && error.message || error) }));
-        return originalClick.call(anchor);
+        try { post({ type: 'zip_save_external_error', message: String(error && error.message || error) }); } catch (_) {}
       });
       return;
     }
@@ -79,21 +136,124 @@ true;
 `;
 
 function safeDownloadName(value: string) {
-  const cleaned = String(value || 'game-resources.zip').replace(/[^a-zA-Z0-9._-]/g, '_');
+  const cleaned = String(value || 'game-resources.zip').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
   return cleaned.toLowerCase().endsWith('.zip') ? cleaned : `${cleaned}.zip`;
 }
 
-async function saveInternalDownload(raw: string) {
-  const message = JSON.parse(raw);
-  if (message?.type === 'save_internal_download_error') {
-    Alert.alert('Simpan ZIP gagal', message.message || 'Download tidak dapat diproses.');
+type ZipTransfer = {
+  file: File;
+  handle: ReturnType<File['open']>;
+  filename: string;
+  expectedBytes: number;
+  receivedBytes: number;
+  nextIndex: number;
+};
+
+function acknowledgeZipTransfer(webView: WebView | null, transferId: string, phase: string, index: number, ok: boolean, detail: unknown) {
+  const args = JSON.stringify([transferId, phase, index, ok, detail]);
+  webView?.injectJavaScript(`if(window.__CZIPERR_TRANSFER_ACK__){window.__CZIPERR_TRANSFER_ACK__.apply(null,${args});} true;`);
+}
+
+function decodeBase64Chunk(value: string) {
+  const binary = atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+  return bytes;
+}
+
+function discardZipTransfer(transfers: Map<string, ZipTransfer>, transferId: string) {
+  const transfer = transfers.get(transferId);
+  if (!transfer) return;
+  transfers.delete(transferId);
+  try { transfer.handle.close(); } catch { /* already closed */ }
+  try { transfer.file.delete(); } catch { /* partial file cleanup is best effort */ }
+}
+
+async function handleZipTransferMessage(raw: string, transfers: Map<string, ZipTransfer>, webView: WebView | null) {
+  let message: Record<string, unknown>;
+  try { message = JSON.parse(raw) as Record<string, unknown>; } catch { return; }
+  if (message.type === 'zip_save_external_error') {
+    Alert.alert('Simpan ZIP gagal', String(message.message || 'ZIP tidak dapat disimpan ke penyimpanan internal.'));
     return;
   }
-  if (message?.type !== 'save_internal_download' || !message.base64) return;
-  const filename = safeDownloadName(message.filename);
-  const uri = `${FileSystem.documentDirectory}${filename}`;
-  await FileSystem.writeAsStringAsync(uri, message.base64, { encoding: FileSystem.EncodingType.Base64 });
-  Alert.alert('ZIP tersimpan', `${filename}\nDisimpan di penyimpanan internal C.Ziperr.`);
+  const transferId = typeof message.transferId === 'string' ? message.transferId : '';
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(transferId)) return;
+
+  if (message.type === 'zip_save_begin') {
+    let handle: ReturnType<File['open']> | null = null;
+    try {
+      const expectedBytes = Number(message.size);
+      if (!Number.isSafeInteger(expectedBytes) || expectedBytes < 1) throw new Error('Ukuran ZIP tidak valid.');
+      const available = Paths.availableDiskSpace;
+      if (Number.isFinite(available) && available > 0 && expectedBytes + 16 * 1024 * 1024 > available) {
+        throw new Error('Ruang internal HP tidak cukup untuk menyimpan ZIP ini. Kosongkan ruang lalu coba lagi.');
+      }
+      const filename = safeDownloadName(String(message.filename || 'game-resources.zip'));
+      const directory = new Directory(Paths.document, 'captures');
+      if (!directory.exists) directory.create({ intermediates: true, idempotent: true });
+      const file = new File(directory, filename);
+      file.create({ overwrite: true, intermediates: true });
+      handle = file.open();
+      transfers.set(transferId, { file, handle, filename, expectedBytes, receivedBytes: 0, nextIndex: 0 });
+      acknowledgeZipTransfer(webView, transferId, 'ready', 0, true, { filename });
+    } catch (error) {
+      try { handle?.close(); } catch { /* nothing to close */ }
+      const reason = error instanceof Error ? error.message : 'ZIP tidak dapat disimpan.';
+      acknowledgeZipTransfer(webView, transferId, 'ready', 0, false, reason);
+      Alert.alert('Simpan ZIP gagal', reason);
+    }
+    return;
+  }
+
+  if (message.type === 'zip_save_cancel') {
+    discardZipTransfer(transfers, transferId);
+    return;
+  }
+
+  const transfer = transfers.get(transferId);
+  if (!transfer) {
+    const phase = message.type === 'zip_save_chunk' ? 'chunk' : 'complete';
+    const index = Number(message.index) || 0;
+    acknowledgeZipTransfer(webView, transferId, phase, index, false, 'Transfer ZIP tidak ditemukan; mulai ulang Collect.');
+    return;
+  }
+
+  if (message.type === 'zip_save_chunk') {
+    const index = Number(message.index);
+    try {
+      const encoded = typeof message.base64 === 'string' ? message.base64 : '';
+      if (!Number.isSafeInteger(index) || index !== transfer.nextIndex) throw new Error('Urutan potongan ZIP tidak valid.');
+      if (!encoded || encoded.length > 400_000) throw new Error('Potongan ZIP terlalu besar atau kosong.');
+      const bytes = decodeBase64Chunk(encoded);
+      if (transfer.receivedBytes + bytes.byteLength > transfer.expectedBytes) throw new Error('Ukuran ZIP melebihi manifest transfer.');
+      transfer.handle.writeBytes(bytes);
+      transfer.receivedBytes += bytes.byteLength;
+      transfer.nextIndex++;
+      acknowledgeZipTransfer(webView, transferId, 'chunk', index, true, { receivedBytes: transfer.receivedBytes });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Potongan ZIP tidak dapat ditulis.';
+      discardZipTransfer(transfers, transferId);
+      acknowledgeZipTransfer(webView, transferId, 'chunk', Number(message.index) || 0, false, reason);
+      Alert.alert('Simpan ZIP gagal', reason);
+    }
+    return;
+  }
+
+  if (message.type === 'zip_save_finish') {
+    try {
+      if (transfer.receivedBytes !== transfer.expectedBytes) throw new Error('ZIP belum lengkap; jumlah byte yang tersimpan tidak cocok.');
+      transfer.handle.close();
+      const actualSize = transfer.file.info().size;
+      if (actualSize !== transfer.expectedBytes) throw new Error('Ukuran file internal berbeda dari ZIP yang diterima.');
+      transfers.delete(transferId);
+      acknowledgeZipTransfer(webView, transferId, 'complete', 0, true, { filename: transfer.filename, bytes: actualSize });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'ZIP tersimpan tidak lengkap.';
+      discardZipTransfer(transfers, transferId);
+      acknowledgeZipTransfer(webView, transferId, 'complete', 0, false, reason);
+      Alert.alert('Simpan ZIP gagal', reason);
+    }
+  }
 }
 
 export default function CollectorApp() {
@@ -102,6 +262,8 @@ export default function CollectorApp() {
   const [updateInfo, setUpdateInfo] = useState<UpdateManifest | null>(null);
   const [dismissedVersionCode, setDismissedVersionCode] = useState(0);
   const [updateProgress, setUpdateProgress] = useState<number | null>(null);
+  const webViewRef = useRef<WebView>(null);
+  const zipTransfers = useRef(new Map<string, ZipTransfer>());
   const updateCheckInFlight = useRef(false);
   const installInProgress = useRef(false);
   const lastUpdateCheckAt = useRef(0);
@@ -236,6 +398,7 @@ export default function CollectorApp() {
         ) : (
           <View style={styles.content}>
             <WebView
+              ref={webViewRef}
               source={{ uri: MAIN_WEB_URL }}
               style={styles.webview}
               originWhitelist={['https://*']}
@@ -251,7 +414,7 @@ export default function CollectorApp() {
               onLoadEnd={() => setLoading(false)}
               onError={() => { setLoading(false); setFailed(true); }}
               onHttpError={(event) => { if (event.nativeEvent.statusCode >= 500) { setLoading(false); setFailed(true); } }}
-              onMessage={(event) => { saveInternalDownload(event.nativeEvent.data).catch((error) => Alert.alert('Simpan ZIP gagal', error?.message || 'File tidak dapat disimpan.')); }}
+              onMessage={(event) => { void handleZipTransferMessage(event.nativeEvent.data, zipTransfers.current, webViewRef.current); }}
             />
             {loading && <View style={styles.loading}><ActivityIndicator size="large" color="#5ee1c0" /><Text style={styles.loadingText}>Memuat C.Ziperr…</Text></View>}
             {updatePrompt}

@@ -4096,9 +4096,9 @@
           <div class="collect-ai-assist gc-legacy-hidden" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 10px;padding:10px;border:1px solid rgba(94,225,192,.28);border-radius:10px;background:rgba(94,225,192,.06);">
             <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-secondary);cursor:pointer;">
               <input type="checkbox" id="collect-ai-readiness" checked>
-              <b>AI Offline Readiness Assistant</b>
+              <b>AI Auto Repair Offline</b>
             </label>
-            <span style="font-size:11px;color:var(--text-muted);">Audit otomatis setelah ZIP selesai: asset, API, realtime, URL online, dan blocker.</span>
+            <span style="font-size:11px;color:var(--text-muted);">Audit dan Auto Repair dimulai setelah ZIP tersimpan dan dimuat; akses terlindungi tidak dilewati.</span>
             <span id="collect-ai-status" style="font-size:11px;color:var(--text-muted);margin-left:auto;">Siap membantu setelah capture.</span>
           </div>
 
@@ -5624,21 +5624,88 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       gcSetCaptureResultActions(!!(window.__gcLastCaptureBlob || window.__gcLastCaptureDownloadUrl), false);
     }
 
+    var gcNativeSavedBlobs = new WeakMap();
+    async function gcEnsureNativeSaved(blob, filename) {
+      if (!window.ReactNativeWebView) return null;
+      if (!blob || !blob.size) throw new Error('ZIP kosong; tidak ada hasil untuk disimpan.');
+      if (typeof window.__CZIPERR_SAVE_ZIP__ !== 'function') {
+        throw new Error('APK ini belum mendukung simpan ZIP terkonfirmasi. Perbarui C.Ziperr lalu ulangi Collect.');
+      }
+      var prior = gcNativeSavedBlobs.get(blob);
+      if (prior) return await prior;
+      var pending = window.__CZIPERR_SAVE_ZIP__(blob, filename || 'game-resources.zip');
+      gcNativeSavedBlobs.set(blob, pending);
+      try {
+        var saved = await pending;
+        try { appendLog('ZIP disimpan di internal HP: ' + (saved && saved.filename || filename || 'game-resources.zip'), 'ok'); } catch (_) {}
+        return saved;
+      } catch (error) {
+        gcNativeSavedBlobs.delete(blob);
+        throw error;
+      }
+    }
+    async function gcSaveOfflinePreparedWorkspace(filename) {
+      if (!window.ReactNativeWebView || typeof currentZip === 'undefined' || !currentZip || typeof currentZip.generateAsync !== 'function') return null;
+      var repairedBlob = await currentZip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 4 } });
+      if (!repairedBlob || !repairedBlob.size) return null;
+      var base = String(filename || 'game-resources.zip').replace(/\.zip$/i, '');
+      var preparedName = base + '-offline-prepared.zip';
+      await gcEnsureNativeSaved(repairedBlob, preparedName);
+      window.__gcLastCaptureBlob = repairedBlob;
+      window.__gcLastCaptureName = preparedName;
+      try { appendLog('Salinan hasil persiapan offline disimpan terpisah: ' + preparedName, 'ok'); } catch (_) {}
+      return preparedName;
+    }
+    async function gcAutoRepairWorkspaceAfterImport(previousZip, filename) {
+      if (!gcCollectAIEnabled() || window.__gcAutoRepairAfterCollectRunning) return;
+      window.__gcAutoRepairAfterCollectRunning = true;
+      try {
+        var importedZip = null;
+        var deadline = Date.now() + 45000;
+        while (Date.now() < deadline) {
+          try {
+            if (typeof currentZip !== 'undefined' && currentZip && currentZip !== previousZip && currentZip.files && Object.keys(currentZip.files).length) {
+              importedZip = currentZip;
+              break;
+            }
+          } catch (_) {}
+          await new Promise(function (resolve) { setTimeout(resolve, 150); });
+        }
+        if (!importedZip) {
+          try { appendLog('AI Auto Repair dilewati: Workspace belum mengonfirmasi ZIP baru.', 'warn'); } catch (_) {}
+          return;
+        }
+        try { appendLog('AI Auto Repair Offline berjalan otomatis setelah ZIP tersimpan dan dimuat ke Workspace.', 'ok'); } catch (_) {}
+        if (typeof runAiZipRepair === 'function') await runAiZipRepair();
+        try { await gcSaveOfflinePreparedWorkspace(filename); } catch (error) {
+          try { appendLog('Workspace sudah diproses, tetapi salinan offline-prepared gagal disimpan: ' + String(error && error.message || error), 'warn'); } catch (_) {}
+        }
+      } catch (error) {
+        try { appendLog('AI Auto Repair Offline gagal; ZIP asli tetap tersimpan: ' + String(error && error.message || error), 'warn'); } catch (_) {}
+      } finally {
+        window.__gcAutoRepairAfterCollectRunning = false;
+      }
+    }
     async function gcLoadCaptureBlobToWorkspace(blob, filename, focusWorkspace) {
       if (!blob || !blob.size) return false;
+      var safeFilename = filename || 'game-resources.zip';
+      if (window.ReactNativeWebView) await gcEnsureNativeSaved(blob, safeFilename);
       var input = document.getElementById('zip-input');
       if (!input || typeof DataTransfer === 'undefined') return false;
+      var previousZip = typeof currentZip !== 'undefined' ? currentZip : null;
       try {
         var transfer = new DataTransfer();
-        transfer.items.add(new File([blob], filename || 'game-resources.zip', { type: 'application/zip' }));
+        transfer.items.add(new File([blob], safeFilename, { type: 'application/zip' }));
         input.files = transfer.files;
         input.dispatchEvent(new Event('change', { bubbles: true }));
         if (focusWorkspace) {
           var nav = document.querySelector('[data-panel="workspace"]');
           if (nav) nav.click();
         }
+        if (gcCollectAIEnabled()) setTimeout(function () { void gcAutoRepairWorkspaceAfterImport(previousZip, safeFilename); }, 150);
         return true;
-      } catch (_) {
+      } catch (error) {
+        if (window.ReactNativeWebView) throw error;
         return false;
       }
     }
@@ -5673,6 +5740,10 @@ $ # Tidak bisa apt/npm install di server — ini browser + Cloudflare Worker
       var name = window.__gcLastCaptureName || 'game-resources.zip';
       var downloadUrl = window.__gcLastCaptureDownloadUrl;
       if (blob && blob.size) {
+        if (window.ReactNativeWebView) {
+          try { await gcEnsureNativeSaved(blob, name); return blob; }
+          catch (error) { appendLog('ZIP tidak dapat disimpan ke internal HP: ' + String(error && error.message || error), 'err'); return null; }
+        }
         var blobUrl = URL.createObjectURL(blob);
         var link = document.createElement('a');
         link.href = blobUrl;
@@ -14120,11 +14191,11 @@ function isApiLike(u){
       const bar = document.getElementById('gc-live-bar');
       const wrap = document.getElementById('gc-live-capture');
       if (wrap) wrap.classList.remove('hidden');
-      if (meta) meta.textContent = (total || (files && files.length) || 0) + ' file' + (pct ? ' · ' + pct + '%' : '');
+      if (meta) meta.textContent = (total || (files && files.length) || 0) + ' aset' + (pct ? ' · ' + pct + '%' : '') + (files && files.length > 100 ? ' · 100 terbaru ditampilkan' : '');
       if (bar) bar.style.width = Math.max(0, Math.min(100, Number(pct) || 0)) + '%';
       if (!list || !Array.isArray(files)) return;
       // Render newest first; keep DOM light
-      const slice = files.slice(0, 24);
+      const slice = files.slice(0, 100);
       list.innerHTML = slice.map(function (f) {
         const cat = gcEscapeText(f.category || f.type || 'other');
         const nm = gcEscapeText(f.name || f.path || '?');
@@ -14134,8 +14205,8 @@ function isApiLike(u){
       }).join('');
       var toastList = document.getElementById('gc-ct-list');
       var toastNote = document.getElementById('gc-ct-note');
-      if (toastList && files.length) toastList.innerHTML = gcActualFileRows(files, 24);
-      if (toastNote && files.length) toastNote.textContent = 'File aktual: menampilkan ' + Math.min(files.length, 24) + ' terbaru dari ' + (total || files.length) + ' file hasil capture.';
+      if (toastList && files.length) toastList.innerHTML = gcActualFileRows(files, 60);
+      if (toastNote && files.length) toastNote.textContent = 'Asset aktual: menampilkan ' + Math.min(files.length, 60) + ' terbaru dari ' + (total || files.length) + ' hasil capture.';
     }
     function gcShowIncomplete(completeness, suggestions) {
       const box = document.getElementById('gc-incomplete');
@@ -14612,22 +14683,37 @@ function isApiLike(u){
             }).catch(function () {});
           } catch (_) {}
           var autoPackageName = gcAutoPackageName(gameUrl);
+          var packageStorageName = incomplete ? autoPackageName.replace(/\.zip$/i, '-partial.zip') : autoPackageName;
+          try {
+            if (typeof JSZip !== 'undefined') {
+              var directZip = await JSZip.loadAsync(blob, { checkCRC32: false, createFolders: false });
+              await gcPublishZipAssets(directZip, incomplete ? 'ZIP parsial diterima' : 'ZIP diterima');
+            }
+          } catch (assetError) {
+            try { appendLog('Daftar asset hasil Cloudflare tidak dapat dibaca: ' + String(assetError && assetError.message || assetError), 'warn'); } catch (_) {}
+          }
+          // Simpan semua hasil, termasuk paket parsial, sebelum membuka atau memindahkannya ke Workspace.
+          await gcEnsureNativeSaved(blob, packageStorageName);
+          gcRememberLastCapture(blob, packageStorageName, '');
+          gcSetCaptureResultActions(true, false);
           try {
             gcRunOfflineReadinessAssistant(blob, autoPackageName, { source: 'Cloudflare Capture', urlHost: new URL(gameUrl).host, collectMeta: window.__gcLastCollectMeta }).catch(function () {});
           } catch (_) {}
-          // Hanya paket yang benar-benar lengkap yang diunduh dan dimasukkan ke Workspace.
+          // Semua ZIP disimpan; paket tidak lengkap tetap diberi label parsial agar dapat diperiksa/direpair tanpa dianggap lengkap.
           if (!incomplete && stillMissing === 0) {
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = autoPackageName;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(a.href);
+            if (!window.ReactNativeWebView) {
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = autoPackageName;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              URL.revokeObjectURL(a.href);
+            }
 
             // Auto-load ZIP lengkap ke Workspace
-            var loadedWorkspace = await gcLoadCaptureBlobToWorkspace(blob, autoPackageName, false);
-            gcRememberLastCapture(blob, autoPackageName, '');
+            var loadedWorkspace = await gcLoadCaptureBlobToWorkspace(blob, packageStorageName, false);
+            gcRememberLastCapture(blob, packageStorageName, '');
             gcSetCaptureResultActions(true, loadedWorkspace);
             gcUpdateCapturePreviewProgress(100, loadedWorkspace ? '100% · ZIP siap · paket dimuat ke Workspace' : '100% · ZIP siap diunduh');
             var captureStatus = document.getElementById('gc-cockpit-preview-status');
@@ -14638,7 +14724,11 @@ function isApiLike(u){
           }
 
           if (incomplete || stillMissing > 0) {
+            var partialWorkspaceLoaded = await gcLoadCaptureBlobToWorkspace(blob, packageStorageName, false);
+            gcSetCaptureResultActions(true, partialWorkspaceLoaded);
             statusEl.textContent = 'Status: [3/6 ZIP] Selesai tapi BELUM LENGKAP — ' + totalFiles + ' file · missing ' + stillMissing + (overall ? ' · skor ' + overall : '');
+            gcUpdateCapturePreviewProgress(100, '100% · ZIP parsial disimpan · ' + totalFiles + ' file');
+            gcSetCapturePreviewStatus('Capture selesai sebagian · ZIP parsial disimpan' + (partialWorkspaceLoaded ? ' dan dimuat untuk Auto Repair' : '') + '; indikator file hilang tetap berlaku.', 'ready');
             try {
               gcPipelineSet('capture', 'ok', 'Selesai');
               gcPipelineSet('zip', 'ok', totalFiles + ' file · missing ' + stillMissing);
@@ -14940,40 +15030,42 @@ function isApiLike(u){
                 gcUpdateCapturePreviewProgress(92, '92% · ZIP diterima · menyiapkan unduhan dan Workspace…');
                 var capturePreviewStatus = document.getElementById('gc-cockpit-preview-status');
                 if (capturePreviewStatus) capturePreviewStatus.textContent = 'Capture selesai · ZIP diterima, menyiapkan unduhan dan Workspace.';
-                // 1) Unduh file ke HP (cadangan kalau auto-load Workspace gagal di Android)
-                try {
-                  try { gcCollectToastShow('Mengunduh & cek paket…'); } catch (_) {}
+                var captureFilename = gcAutoPackageName((document.getElementById('url') || {}).value || '');
+                // Tampilkan file nyata hasil ZIP pada panel aset permanen, bukan hanya checklist target.
+                try { gcCollectToastShow('Menyimpan ZIP dan menampilkan asset…'); } catch (_) {}
+                if (typeof JSZip !== 'undefined') {
                   try {
-                    if (typeof JSZip !== 'undefined') {
-                      var z = await JSZip.loadAsync(blob);
-                      var rep = await gcInspectZipCompleteness(z);
-                      gcUpdateCollectProgress(rep, 'sebelum unduh');
-                    }
-                  } catch (_) {}
-                  var savedName = 'game-resources.zip';
-                  try {
-                    savedName = (await gcDownloadBlobNamed(blob, 'game-resources.zip')) || 'game-resources.zip';
-                  } catch (_) {
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'game-resources.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
+                    var z = await JSZip.loadAsync(blob, { checkCRC32: false, createFolders: false });
+                    await gcPublishZipAssets(z, 'ZIP diterima · menyimpan ke HP');
+                  } catch (assetError) {
+                    try { appendLog('Daftar asset ZIP gagal dibaca: ' + String(assetError && assetError.message || assetError), 'warn'); } catch (_) {}
                   }
-                } catch (_) {}
-                // 2) Coba load ke Workspace
-                var loadedWs = await gcLoadCaptureBlobToWorkspace(blob, 'game-resources.zip', true);
+                }
+                var savedName = captureFilename;
+                try {
+                  savedName = (await gcDownloadBlobNamed(blob, captureFilename)) || captureFilename;
+                } catch (downloadError) {
+                  if (window.ReactNativeWebView) throw downloadError;
+                  var a = document.createElement('a');
+                  a.href = URL.createObjectURL(blob);
+                  a.download = captureFilename;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                }
+                // 2) Simpan terkonfirmasi di HP lebih dahulu, baru import ZIP ke Workspace.
+                var loadedWs = await gcLoadCaptureBlobToWorkspace(blob, captureFilename, true);
                 gcClearGithubToken();
                 gcSetCaptureResultActions(true, loadedWs);
-                gcUpdateCapturePreviewProgress(100, loadedWs ? '100% · ZIP diunduh · paket siap di Workspace' : '100% · ZIP diunduh · buka Workspace untuk Load ZIP');
+                var storageLabel = window.ReactNativeWebView ? 'disimpan internal' : 'diunduh';
+                gcUpdateCapturePreviewProgress(100, '100% · ZIP ' + storageLabel + (loadedWs ? ' · paket siap di Workspace' : ' · buka Workspace untuk Load ZIP'));
                 var githubPreviewStatus = document.getElementById('gc-cockpit-preview-status');
                 if (githubPreviewStatus) {
-                  githubPreviewStatus.textContent = loadedWs ? 'Capture selesai · ZIP diunduh dan dimuat ke Workspace.' : 'Capture selesai · ZIP diunduh; buka Workspace untuk memuat paket.';
+                  githubPreviewStatus.textContent = loadedWs ? 'Capture selesai · ZIP ' + storageLabel + ' dan dimuat ke Workspace.' : 'Capture selesai · ZIP ' + storageLabel + '; buka Workspace untuk memuat paket.';
                   githubPreviewStatus.classList.add('is-ready');
                 }
                 if (loadedWs) {
-                  statusEl.textContent = 'Status: Selesai — ZIP ' + sizeMb + ' MB diunduh & dimuat ke Workspace';
+                  statusEl.textContent = 'Status: Selesai — ZIP ' + sizeMb + ' MB ' + (window.ReactNativeWebView ? 'disimpan internal' : 'diunduh') + ' & dimuat ke Workspace';
                 try {
                   setTimeout(function () {
                     if (false && window.confirm('ZIP dimuat')) {
@@ -14983,7 +15075,7 @@ function isApiLike(u){
                 } catch (_) {}
                 try { setTimeout(gcCollectToastHide, 2500); } catch (_) {}
                 } else {
-                  statusEl.textContent = 'Status: Selesai — ZIP ' + sizeMb + ' MB diunduh ke Download. Buka Workspace → Load ZIP manual.';
+                  statusEl.textContent = 'Status: Selesai — ZIP ' + sizeMb + ' MB ' + (window.ReactNativeWebView ? 'tersimpan di internal HP' : 'diunduh ke perangkat') + '. Buka Workspace → Load ZIP manual.';
                 try { setTimeout(gcCollectToastHide, 2500); } catch (_) {}
                 }
               } catch (dlErr) {
@@ -14991,7 +15083,10 @@ function isApiLike(u){
                 var msg = (dlErr && dlErr.name === 'AbortError')
                   ? 'timeout unduh (jaringan lambat). Coba WiFi / Capture (Cloudflare).'
                   : (dlErr && dlErr.message ? dlErr.message : String(dlErr));
-                statusEl.textContent = 'Status: Selesai tapi unduh gagal — ' + msg;
+                statusEl.textContent = 'Status: Collect selesai, tetapi ZIP gagal disimpan/diunduh — ' + msg;
+                gcSetCaptureResultActions(false, false);
+                gcUpdateCapturePreviewProgress(100, '100% · Capture selesai, ZIP belum tersimpan');
+                gcSetCapturePreviewStatus('Capture selesai tetapi ZIP belum tersimpan. Periksa ruang internal HP dan ulangi unduhan; Workspace belum dibuka.', 'error');
               }
             } else {
                   const failedJob = (data.jobs || []).find(function (job) {
@@ -15081,6 +15176,48 @@ function isApiLike(u){
       var pct = required.length ? Math.round((okReq / required.length) * 100) : 0;
       return { names: names, meta: meta, items: items, pct: pct, fileCount: meta.fileCount };
     }
+    async function gcReadPackageAssetRows(zip, fallbackNames) {
+      var paths = Object.keys((zip && zip.files) || {});
+      var rows = [];
+      var used = new Set();
+      try {
+        var manifestPath = paths.find(function (p) { return /(^|\/)manifest\.json$/i.test(p); });
+        if (manifestPath && zip.files[manifestPath]) {
+          var doc = JSON.parse(await zip.files[manifestPath].async('string'));
+          var resources = Array.isArray(doc) ? doc : (doc && (doc.resources || doc.assets || doc.files));
+          if (Array.isArray(resources)) resources.forEach(function (resource) {
+            if (!resource || typeof resource !== 'object') return;
+            var path = String(resource.localPath || resource.path || resource.file || '').replace(/\\/g, '/').replace(/^\/+/, '');
+            if (!path) return;
+            if (!zip.files[path]) {
+              var match = paths.find(function (candidate) { return candidate.endsWith('/' + path); });
+              if (match) path = match;
+            }
+            if (!zip.files[path] || zip.files[path].dir || used.has(path)) return;
+            used.add(path);
+            var bytes = Number(resource.size) || Number(zip.files[path]._data && zip.files[path]._data.uncompressedSize) || 0;
+            rows.push({ path: path, name: path.split('/').pop() || path, type: resource.category || resource.type || (path.split('.').pop() || 'file'), category: resource.category || resource.type || 'asset', size: bytes, status: resource.status || 'captured' });
+          });
+        }
+      } catch (_) { rows = []; }
+      if (!rows.length) {
+        (fallbackNames || paths.filter(function (p) { return zip.files[p] && !zip.files[p].dir; })).forEach(function (path) {
+          if (!path || used.has(path) || !zip.files[path] || zip.files[path].dir) return;
+          used.add(path);
+          var bytes = Number(zip.files[path]._data && zip.files[path]._data.uncompressedSize) || 0;
+          rows.push({ path: path, name: path.split('/').pop() || path, type: path.split('.').pop() || 'file', category: /^(manifest|api-map|analisis|keterangan)/i.test(path.split('/').pop() || '') ? 'metadata' : 'asset', size: bytes, status: 'captured' });
+        });
+      }
+      return rows;
+    }
+    async function gcPublishZipAssets(zip, statusLabel) {
+      var inspected = await gcInspectZipCompleteness(zip);
+      var rows = await gcReadPackageAssetRows(zip, inspected.names);
+      var report = Object.assign({}, inspected, { names: rows, recentFiles: rows, assetCount: rows.length });
+      gcUpdateCollectProgress(report, statusLabel || 'ZIP diterima');
+      gcRenderLiveFiles(rows.slice().reverse(), rows.length, 100);
+      return report;
+    }
 
     function gcCollectToastShow(title) {
       var el = document.getElementById('gc-collect-toast');
@@ -15109,7 +15246,7 @@ function isApiLike(u){
       var cl = document.getElementById('gc-cm-checklist');
       if (p1) p1.textContent = pct + '%';
       if (b1) b1.style.width = pct + '%';
-      if (f1) f1.textContent = (report.fileCount || 0) + ' file dalam paket' + (statusLabel ? ' · ' + statusLabel : '');
+      if (f1) f1.textContent = (report.assetCount != null ? report.assetCount + ' asset aktual' : (report.fileCount || 0) + ' file dalam paket') + (statusLabel ? ' · ' + statusLabel : '');
       if (cl) {
         cl.innerHTML = (report.items || []).map(function (it) {
           return '<div class="' + (it.ok ? 'ok' : 'no') + '">' + (it.ok ? '✓' : '·') + ' ' + it.label + (it.optional && !it.ok ? ' (opsional)' : '') + '</div>';
@@ -15156,7 +15293,11 @@ function isApiLike(u){
     }
     window.gcAutoPackageName = gcAutoPackageName;
     async function gcDownloadBlobNamed(blob, fallbackName) {
-      var name = gcGetDownloadName() || fallbackName || 'game-resources.zip';
+      var name = fallbackName || gcGetDownloadName() || 'game-resources.zip';
+      if (window.ReactNativeWebView) {
+        await gcEnsureNativeSaved(blob, name);
+        return name;
+      }
       try {
         var suggested = window.prompt('Nama file sebelum unduh:', name);
         if (suggested === null) return null;

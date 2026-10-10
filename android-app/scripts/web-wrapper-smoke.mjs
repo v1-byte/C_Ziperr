@@ -15,12 +15,19 @@ assert.match(source, /android\.intent\.action\.INSTALL_PACKAGE/);
 assert.match(source, /getContentUriAsync/);
 assert.match(source, /apkSizeBytes/);
 assert.match(source, /AppState\.addEventListener/);
+assert.match(source, /zip_save_begin/);
+assert.match(source, /zip_save_chunk/);
+assert.match(source, /zip_save_finish/);
+assert.match(source, /__CZIPERR_TRANSFER_ACK__/);
+assert.match(source, /writeBytes\(bytes\)/);
+assert.match(source, /Paths\.document/);
+assert.doesNotMatch(source, /readAsDataURL/);
 assert.match(workflow, /Verify APK signing certificate continuity/);
 assert.match(workflow, /release\/update\.json/);
 assert.doesNotMatch(source, /ZipPreviewScreen|DocumentPicker|expo-av|JSZip|KeyboardProvider/);
 
-assert.equal(appConfig.version, '1.2.6');
-assert.equal(appConfig.android.versionCode, 13);
+assert.equal(appConfig.version, '1.2.7');
+assert.equal(appConfig.android.versionCode, 14);
 assert.ok(appConfig.android.permissions.includes('REQUEST_INSTALL_PACKAGES'));
 
 const manifest = createUpdateManifest({
@@ -30,8 +37,8 @@ const manifest = createUpdateManifest({
   apkSizeBytes: 64_000_000,
 });
 assert.equal(manifest.appId, 'com.fblabb.zipscope');
-assert.equal(manifest.versionName, '1.2.6');
-assert.equal(manifest.versionCode, 13);
+assert.equal(manifest.versionName, '1.2.7');
+assert.equal(manifest.versionCode, 14);
 assert.equal(manifest.releaseTag, 'apk-42');
 assert.equal(manifest.apkSizeBytes, 64_000_000);
 assert.equal(manifest.apkUrl, 'https://github.com/v1-byte/C_Ziperr/releases/download/apk-42/app-release.apk');
