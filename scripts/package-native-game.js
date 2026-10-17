@@ -5,6 +5,14 @@ import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 
 const root = path.resolve(process.argv[2] || "native-game");
+// Refresh manifests before packaging
+try {
+  execFileSync(process.execPath, [path.resolve("scripts/generate-asset-manifest.mjs"), "--dir", root, "--out", path.join(root, "manifests/asset-manifest.json")], { stdio: "inherit" });
+  execFileSync(process.execPath, [path.resolve("scripts/generate-integrity.mjs"), "--dir", root, "--out", path.join(root, "manifests/integrity.json")], { stdio: "inherit" });
+} catch (e) {
+  console.warn("[package-native] manifest/integrity refresh skipped:", e.message);
+}
+
 const config = JSON.parse(fs.readFileSync(path.join(root, "config/native-game-config.json"), "utf8"));
 const outputDir = path.resolve(process.argv[3] || "artifacts/native");
 fs.mkdirSync(outputDir, { recursive: true });

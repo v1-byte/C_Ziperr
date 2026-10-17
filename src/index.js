@@ -2193,6 +2193,55 @@ async function handleRequest(request, env) {
         realtime: { sessions: safeRealtime.length, framesReceived: safeRealtime.reduce((total, item) => total + item.received, 0), framesSent: safeRealtime.reduce((total, item) => total + item.sent, 0) }
       };
       zipFiles['replication-report.json'] = strToU8(JSON.stringify(replicationReport, null, 2));
+
+      // Offline bootstrap helpers embedded in every collect ZIP
+      try {
+        const offlineBoot = [
+          "/* C_Ziperr offline bootstrap */",
+          "(function(){",
+          "  if (window.__cZiperrOfflineBoot) return; window.__cZiperrOfflineBoot = true;",
+          "  var REMOTE = /eajzzxhro\\.com/i;",
+          "  var API = /\\/api\\/(spin|balance|result|play)/i;",
+          "  var origFetch = window.fetch;",
+          "  window.fetch = function(input, init){",
+          "    var url = String((input && input.url) || input || '');",
+          "    if (REMOTE.test(url)) {",
+          "      if (API.test(url)) {",
+          "        var local = /balance/i.test(url) ? '/api/game/balance' : '/api/game/spin';",
+          "        var headers = new Headers((init && init.headers) || {});",
+          "        if (!headers.has('X-Idempotency-Key') && String((init && init.method) || 'GET').toUpperCase() === 'POST') headers.set('X-Idempotency-Key', crypto.randomUUID());",
+          "        return origFetch.call(this, local, Object.assign({}, init, { headers: headers }));",
+          "      }",
+          "      return Promise.reject(new Error('Blocked remote host (offline)'));",
+          "    }",
+          "    return origFetch.call(this, input, init);",
+          "  };",
+          "  document.addEventListener('click', function unlock(){",
+          "    try { if (window.Howler && Howler.ctx && Howler.ctx.state === 'suspended') Howler.ctx.resume(); } catch (e) {}",
+          "    document.removeEventListener('click', unlock);",
+          "  }, { once: true });",
+          "})();"
+        ].join("\n");
+        zipFiles["offline-bootstrap.js"] = strToU8(offlineBoot);
+        if (zipFiles["index.html"]) {
+          let htmlBoot = new TextDecoder().decode(zipFiles["index.html"]);
+          if (!htmlBoot.includes("offline-bootstrap.js")) {
+            const tag = '<script src="./offline-bootstrap.js"></script>\n';
+            htmlBoot = /<\/body>/i.test(htmlBoot) ? htmlBoot.replace(/<\/body>/i, tag + "</body>") : htmlBoot + tag;
+            zipFiles["index.html"] = strToU8(htmlBoot);
+          }
+        }
+        zipFiles["offline-readiness.json"] = strToU8(JSON.stringify({
+          version: "v2-final",
+          offlineBootstrap: true,
+          sitePlugin: smart?.sitePlugin || null,
+          stripTokens: stripTokens,
+          generatedAt: new Date().toISOString()
+        }, null, 2));
+      } catch (bootErr) {
+        try { zipFiles["offline-bootstrap-error.json"] = strToU8(JSON.stringify({ error: String(bootErr?.message || bootErr) })); } catch {}
+      }
+
       zipFiles['protected-resource-report.json'] = strToU8(JSON.stringify({ version: 1, generatedAt: new Date().toISOString(), status: protectedResources.length ? 'BLOCKED' : 'PASS', resources: protectedResources.slice(0, 40), policy: 'detect-and-exclude; never bypass DRM or protected access controls' }, null, 2));
       zipFiles['realtime.json'] = strToU8(JSON.stringify({ version: 1, generatedAt: new Date().toISOString(), sessions: safeRealtime }, null, 2));
       const manifestData = {

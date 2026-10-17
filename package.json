@@ -29,7 +29,11 @@
     "security:audit": "node scripts/security-audit.cjs . --json audit/reports/project-security.json",
     "test:security-auditor": "node --test tests/security/*.test.cjs",
     "generate:manifest": "node scripts/generate-asset-manifest.mjs --dir native-game --game eajzzxhro-74",
-    "start:native": "python3 -m http.server 4173 --directory native-game"
+    "start:native": "python3 -m http.server 4173 --directory native-game",
+    "generate:integrity": "node scripts/generate-integrity.mjs --dir native-game",
+    "package:native": "node scripts/generate-asset-manifest.mjs --dir native-game && node scripts/generate-integrity.mjs --dir native-game && node scripts/package-native-game.js",
+    "post-collect:offline": "node scripts/post-collect-offline.mjs",
+    "deploy:full": "bash deploy.sh"
   },
   "dependencies": {
     "@cloudflare/playwright": "^1.3.0",

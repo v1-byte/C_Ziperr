@@ -9,7 +9,7 @@ const checks = [];
 const exists = (relative) => fs.existsSync(path.join(root, relative));
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const add = (name, status, details, extra = {}) => checks.push({ check_name: name, status, details, ...extra });
-const required = ["index.html", "shell/bootstrap.js", "shell/router.js", "shell/state-store.js", "shell/error-boundary.js", "shell/telemetry.js", "shell/accessibility.js", "shell/app.js", "api/api-contract.json", "api/error-codes.json", "api/edu-network-adapter.js", "config/native-game-config.json", "config/feature-flags.json", "config/environment.schema.json", "manifests/asset-manifest.json", "manifests/dependency-manifest.json", "legal/LICENSES.txt", "legal/OWNERSHIP.txt", "legal/NOTICE.txt", "SECURITY.txt", "CHANGELOG.txt", "NATIVE_COLLECT_SYSTEM.txt"];
+const required = ["manifests/integrity.json", "config/host.json", "shell/brotli-loader.js", "shell/network-hijack.js", "sw.js", "index.html", "shell/bootstrap.js", "shell/router.js", "shell/state-store.js", "shell/error-boundary.js", "shell/telemetry.js", "shell/accessibility.js", "shell/app.js", "api/api-contract.json", "api/error-codes.json", "api/edu-network-adapter.js", "config/native-game-config.json", "config/feature-flags.json", "config/environment.schema.json", "manifests/asset-manifest.json", "manifests/dependency-manifest.json", "legal/LICENSES.txt", "legal/OWNERSHIP.txt", "legal/NOTICE.txt", "SECURITY.txt", "CHANGELOG.txt", "NATIVE_COLLECT_SYSTEM.txt"];
 
 for (const file of required) add(`required:${file}`, exists(file) ? "PASS" : "FAIL", exists(file) ? "file present" : "required file missing");
 
