@@ -1,4 +1,65 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+/* FULL HD / HIGH-DPI PIXEL MAX */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+  font-smooth: always;
+}
+body {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+/* Prefer physical pixels on 2x/3x screens */
+@media (min-resolution: 2dppx) {
+  body { font-size: 15.5px; }
+  .btn, .in, .card, nav.tabs button { transform: translateZ(0); }
+  .brand b { letter-spacing: 0.02em; }
+  .stat b { font-weight: 600; }
+}
+@media (min-resolution: 3dppx) {
+  body { font-size: 16px; }
+  .card { border-width: 0.5px; }
+  nav.tabs { border-top-width: 0.5px; }
+}
+/* Full-HD layout canvas: use up to ~5600 CSS px on ultra-wide / desktop while staying fluid on phone */
+.app {
+  max-width: min(100%, 5600px);
+  margin-inline: auto;
+}
+@media (min-width: 1280px) {
+  .app { max-width: min(96vw, 5600px); }
+  main { padding-inline: clamp(16px, 2vw, 48px); }
+  .head h1 { font-size: clamp(28px, 2.2vw, 42px); }
+  .card { border-radius: 12px; padding: 18px; }
+}
+@media (min-width: 1920px) {
+  body { font-size: 16px; }
+  .grid2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+}
+/* SVG / icon sharpness */
+svg { shape-rendering: geometricPrecision; }
+img, canvas { image-rendering: auto; max-width: 100%; }
+/* Subpixel-safe hairlines */
+.card, .stat, .in, .btn, .vs {
+  box-shadow:
+    0 0 0 0.5px color-mix(in srgb, var(--line) 80%, transparent),
+    0 12px 32px -20px rgba(0, 0, 0, 0.5);
+}
+/* HD skin: denser contrast */
+html[data-skin="hd"] body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(47, 214, 203, 0.08), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(56, 189, 248, 0.06), transparent 50%),
+    var(--bg);
+}
+html[data-skin="hd"] .btn {
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--accent) 40%, transparent), 0 8px 24px -12px var(--accent);
+}
+
+</style></head><body>
 <title>C.Ziperr</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
