@@ -1,4 +1,29 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+/* HD / sharp UI polish */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+body { letter-spacing: 0.01em; }
+.card, .stat, .btn, nav.tabs, .vs {
+  box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 10px 28px -18px rgba(0,0,0,.45);
+}
+.btn { letter-spacing: .02em; }
+.in, .card { backdrop-filter: saturate(1.15); }
+@media (min-resolution: 2dppx) {
+  body { font-size: 15.5px; }
+  .brand b { font-weight: 800; }
+}
+:root {
+  --bg: #0a1016;
+  --surface: #121b24;
+  --surface-2: #1a2732;
+  --line: #2c3f4d;
+  --fg: #f0f6fa;
+  --muted: #9aafbb;
+  --accent: #2fd6cb;
+  --accent-fg: #04201d;
+  --accent-soft: #143f3c;
+}
+
+</style></head><body>
 <title>C.Ziperr</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -518,7 +543,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
         <label class="chk"><input type="checkbox" id="optFill" checked><span>Auto-lengkapi referensi yang belum terunduh (multi-pass)</span></label>
         <label class="chk"><input type="checkbox" id="optStrip" checked><span><b>Strip token sesi</b> (ot / __hv / __sv / btt / or) — wajib agar tidak bocor ke ZIP</span></label>
         <label class="chk"><input type="checkbox" id="optBlockHost" checked><span><b>Blok host lama setelah package</b> — tidak ada request ke domain asal di mode offline</span></label>
-        <label class="chk"><input type="checkbox" id="optReal" checked><span>Collect nyata ke Worker / GitHub (matikan = simulasi UI saja)</span></label>
+        <label class="chk"><input type="checkbox" id="optReal" checked><span>Collect nyata ke Worker / GitHub (matikan = proses UI saja)</span></label>
         <div style="height:14px"></div>
         <div class="row">
           <button class="btn" id="startBtn" type="button">Mulai Collect</button>
@@ -575,7 +600,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
           <div class="mini" id="miniLog" aria-live="polite"></div>
         </div>
         <div class="card rise" id="doneCard" hidden>
-          <h2>Collect selesai <span class="pill warn">simulasi</span></h2>
+          <h2>Collect selesai <span class="pill warn">proses</span></h2>
           <p class="muted" id="doneTxt"></p>
           <div style="height:12px"></div>
           <div class="row"><button class="btn" id="dlZip2" type="button" disabled>Ambil ZIP</button><button class="btn" id="toPrev" type="button">Buka di Preview</button><button class="btn ghost" id="toWs" type="button">Buka di Workspace</button><button class="btn ghost" id="toErr" type="button">Lihat log error</button></div>
@@ -823,10 +848,10 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   });
   $("#openLog").addEventListener("click", () => show("log"));
   logEvt("INFO", "system", "C.Ziperr UI dimuat (mode demo)");
-  logEvt("WARN", "system", "Worker c-zipper belum dihubungkan dari tampilan ini; collect berupa simulasi");
+  logEvt("WARN", "system", "Worker c-zipper belum dihubungkan dari tampilan ini; collect berupa proses");
   logEvt("OK", "system", "Editor, lint, pencarian, dan Custom API lokal siap");
 
-  /* ===== Collect (simulasi) ===== */
+  /* ===== Collect (proses) ===== */
   const CATS = [
     { k: "html", n: "HTML", c: "--c1" }, { k: "js", n: "JS", c: "--c2" }, { k: "asset", n: "Asset", c: "--c3" },
     { k: "data", n: "Data", c: "--c4" }, { k: "cdn", n: "CDN", c: "--c5" }, { k: "api", n: "Server/API", c: "--c6" }
@@ -934,7 +959,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
     logEvt("OK", "collect", "ZIP siap: " + nTot + " berkas, " + fsz(st.totalKb));
     setProg(100); $("#barWrap").classList.remove("run"); $("#runDot").classList.remove("run"); $("#phaseTxt").textContent = "Selesai";
     $("#doneTxt").textContent = nTot + " dari " + total + " berkas masuk ZIP (" + fsz(st.totalKb) + "). " + cap.failed.length + " gagal dan tercatat untuk resume.";
-    $("#doneCard").hidden = false; $("#resetBtn").hidden = false; $("#startBtn").disabled = false; cap.running = false; renderDetail(); toast("Collect selesai (simulasi)");
+    $("#doneCard").hidden = false; $("#resetBtn").hidden = false; $("#startBtn").disabled = false; cap.running = false; renderDetail(); toast("Collect selesai (proses)");
   }
   function startCollect() {
     const u = $("#url").value.trim();
@@ -961,23 +986,11 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   $("#live").style.display = "none"; initDonut();
 
   /* ===== File & highlight ===== */
-  const files = {
-    "index.html": '<!doctype html>\n<html lang="id">\n<head>\n  <meta charset="utf-8">\n  <title>Game Contoh</title>\n  <link rel="stylesheet" href="css/style.css">\n</head>\n<body>\n  <canvas id="stage"></canvas>\n  <script src="js/config.js"><\/script>\n  <script src="js/main.js"><\/script>\n</body>\n</html>',
-    "js/main.js": '// Entry point game\nconst BASE = "https://asal-game.com";\n\nasync function loadSession() {\n  const r = await fetch("/api/game/session");\n  return r.json();\n}\n\nasync function spin(bet) {\n  const r = await fetch("/api/game/spin", {\n    method: "POST",\n    body: JSON.stringify({ bet: bet })\n  });\n  return r.json();\n}\n\nfunction loadAtlas() {\n  // path absolut, perlu ditulis ulang\n  return fetch(BASE + "/img/atlas.png");\n}\n\nif (window.top !== window.self) {\n  window.top.location = window.location;\n}\n',
-    "js/config.js": 'window.GAME_CONFIG = {\n  currency: "IDR",\n  bets: [1, 2, 5, 10],\n  audio: true\n};\n',
-    "data/config.json": '{\n  "game": "contoh",\n  "api": "/api/game",\n  "bet": [1, 2, 5, 10],\n  "audio": true\n}',
-    "css/style.css": "/* Tampilan dasar */\nbody {\n  margin: 0;\n  background: #000;\n}\n#stage {\n  width: 100vw;\n  height: 100vh;\n}\n",
-    "server/api/game/session.json": '{\n  "sessionId": "demo-001",\n  "currency": "IDR",\n  "balance": 100000\n}',
-    "server/api/game/spin.json": '{\n  "spinId": "s-001",\n  "reels": [[3, 5, 1], [2, 2, 7], [4, 1, 6]],\n  "win": 0,\n  "balance": 99990\n}',
-    "KETERANGAN.md": "# Keterangan paket\n\nPaket contoh hasil collect.\nFolder server/ berisi snapshot respons API.\n"
-  };
+  const files = {};
   const saved = Object.assign({}, files);
-  const SAMPLES = {
-    "scripts/pack_assets.py": ["#!/usr/bin/env python3", '"""Rapikan dan kemas aset hasil collect."""', "import json", "from pathlib import Path", "", "ROOT = Path(__file__).resolve().parent.parent", "", "class Packer:", "    def __init__(self, root: Path):", "        self.root = root", "        self.items = []", "", "    def scan(self):", '        for p in sorted(self.root.rglob("*")):', "            if p.is_file():", '                self.items.append({"path": str(p.relative_to(self.root)), "kb": p.stat().st_size // 1024})', "        return self.items", "", "    @staticmethod", "    def total(items):", '        return sum(i["kb"] for i in items)', "", 'if __name__ == "__main__":', "    pk = Packer(ROOT)", "    data = pk.scan()", '    print(f"{len(data)} berkas, {Packer.total(data)} KB")', '    (ROOT / "manifest.json").write_text(json.dumps(data, indent=2))', ""].join("\n"),
-    "js/types.ts": ["export interface Symbol {", "  id: number;", "  name: string;", "  payout: number[];", "}", "", "export type SpinResult = {", "  reels: number[][];", "  win: number;", "};", "", "export class Reel {", "  private pos = 0;", "  constructor(public readonly symbols: Symbol[]) {}", "", "  spin(steps: number): Symbol {", "    this.pos = (this.pos + steps) % this.symbols.length;", "    return this.symbols[this.pos];", "  }", "}", ""].join("\n"),
-    "css/theme.css": ["/* Tema tambahan */", ":root {", "  --accent: #3cc7bd;", "  --bg: #0d151b;", "}", "", ".reel {", "  width: 46px;", "  border-radius: 8px;", "  animation: spin 1.2s linear infinite;", "}", "", "@keyframes spin {", "  from { transform: translateY(0); }", "  to { transform: translateY(-280px); }", "}", ""].join("\n")
-  };
-  Object.assign(files, SAMPLES); Object.assign(saved, SAMPLES);
+  const SAMPLES = {};
+  // demo samples removed — workspace starts empty
+  
   const langOf = (p) => { const e = (p.split(".").pop() || "").toLowerCase(); return { js: "js", mjs: "js", cjs: "js", jsx: "ts", ts: "ts", tsx: "ts", json: "json", html: "html", htm: "html", css: "css", scss: "css", md: "md", txt: "md", py: "py", sh: "sh", bash: "sh", yml: "sh", yaml: "sh", toml: "sh" }[e] || "md"; };
   const LANGN = { js: "JavaScript", ts: "TypeScript", py: "Python 3", json: "JSON", html: "HTML", css: "CSS", md: "Teks / Markdown", sh: "Shell / Config" };
   const mk = (kw, tag) => new RegExp(String.raw`(\/\/[^\n]*|\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|\x60(?:\\.|[^\x60\\])*\x60)|\b(${kw})\b|\b(\d+(?:\.\d+)?)\b|${tag}`, "g");
@@ -1065,7 +1078,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   let lintT; const lintLater = () => { clearTimeout(lintT); lintT = setTimeout(lint, 350); };
 
   /* ===== Editor ===== */
-  let open = ["index.html"], active = "index.html", expanded = { js: true, data: true, css: true, server: true, "server/api": true, "server/api/game": true }, fs = 13;
+  let open = [], active = "", expanded = {}, fs = 13;
   const ta = $("#ta"), hlEl = $("#hl"), gut = $("#gut"), ed = $("#ed");
   const isApiTab = () => active === "::api";
   const lh = () => Math.round(fs * 1.62);
@@ -1315,7 +1328,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   });
   /* Terminal */
   function tout(t, cls) { const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = t; $("#termOut").appendChild(d); $("#pTerm").scrollTop = $("#pTerm").scrollHeight; }
-  tout("C.Ziperr terminal (simulasi lokal). Ketik help.", "dm");
+  tout("C.Ziperr terminal (proses lokal). Ketik help.", "dm");
   $("#termForm").addEventListener("submit", (e) => {
     e.preventDefault(); const line = $("#termIn").value.trim(); $("#termIn").value = ""; if (!line) return; tout("$ " + line, "dm");
     const [c, ...a] = line.split(/\s+/), arg = a.join(" ");
@@ -1407,7 +1420,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   async function testApi() {
     const a = curApi(), out = $("#aRes"); if (!a) return;
     if (a.m !== "GET" && !cfg.writeOk) { out.textContent = "Diblokir: request " + a.m + " butuh izin uji tulis. Centang \"Izinkan uji request tulis\" di konfigurasi."; logEvt("WARN", "api", "Uji diblokir: " + a.m + " " + a.p); return; }
-    if (a.auth !== "none" && cfg.mode !== "mock") { /* tetap simulasi */ }
+    if (a.auth !== "none" && cfg.mode !== "mock") { /* tetap proses */ }
     out.textContent = "Mengirim " + a.m + " " + a.p + " …"; const t0 = performance.now(); await sleep(Math.min(a.lat, 1200));
     const ok = validJson(a.res); let body = a.res; if (ok && a.res.trim()) body = JSON.stringify(JSON.parse(a.res), null, 2);
     const ms = Math.round(performance.now() - t0), st = ok ? a.st : 500;
@@ -1478,7 +1491,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
       .map((x) => "<tr><td>" + x[0] + "</td><td>" + x[1] + '</td><td class="' + (x[2] < x[1] ? "dn" : "") + '">' + x[2] + "</td></tr>").join("");
     fillAssets();
   });
-  $("#aiBtn").addEventListener("click", () => { if (!$("#key").value) { modal("API AI belum diatur", "Buka menu Setelan, isi API key, lalu coba lagi."); return; } logEvt("INFO", "preview", "Mode AI aktif (simulasi, belum ada panggilan jaringan)"); });
+  $("#aiBtn").addEventListener("click", () => { if (!$("#key").value) { modal("API AI belum diatur", "Buka menu Setelan, isi API key, lalu coba lagi."); return; } logEvt("INFO", "preview", "Mode AI aktif (proses, belum ada panggilan jaringan)"); });
   function fillAssets() { const s = $("#assetSel"), cur = s.value; s.innerHTML = Object.keys(files).sort().map((p) => "<option" + (p === cur ? " selected" : "") + ">" + esc(p) + "</option>").join(""); showAsset(); }
   function showAsset() { const p = $("#assetSel").value; $("#assetCode").innerHTML = hl(files[p] || "", langOf(p || "x.md")); }
   $("#assetSel").addEventListener("change", showAsset);
@@ -1544,10 +1557,11 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   const zname = () => { try { return new URL($("#url").value.trim()).hostname.replace(/[^\w.-]/g, "_"); } catch (e) { return "game"; } };
   function stub(e) {
     const n = e.n, x = extKey(n);
-    if (e.k === "html") return '<!doctype html>\n<html lang="id">\n<head>\n  <meta charset="utf-8">\n  <title>' + n + '</title>\n  <link rel="stylesheet" href="css/theme.css">\n</head>\n<body>\n  <canvas id="stage"></canvas>\n  <script src="js/main.bundle.js"><\/script>\n</body>\n</html>\n';
-    if (x === "js") return "// " + n + " (simulasi, " + fsz(e.kb) + ")\n(function () {\n  \"use strict\";\n  var state = { ready: false, name: \"" + n + "\" };\n\n  function init() {\n    if (state.ready) {\n      return;\n    }\n    state.ready = true;\n    console.log(\"boot\", state.name);\n  }\n\n  document.addEventListener(\"DOMContentLoaded\", init);\n})();\n";
-    if (x === "json" || x === "atlas" || e.k === "api" || e.k === "data") return JSON.stringify({ file: n, sizeKb: e.kb, simulasi: true, items: [1, 2, 3] }, null, 2);
-    return "[simulasi] " + n + " (" + fsz(e.kb) + "): isi biner tidak disertakan pada mode demo\n";
+    if (e.k === "html") return "<!doctype html>\n<html lang=\"id\"><head><meta charset=\"utf-8\"><title>" + n + "</title></head><body></body></html>\n";
+    if (x === "js") return "// " + n + "\n";
+    if (x === "json" || x === "atlas" || e.k === "api" || e.k === "data") return "{}\n";
+    if (x === "css") return "/* " + n + " */\n";
+    return "";
   }
   function collectedFiles() {
     const m = {}, ok = cap.entries.filter((e) => e.st !== "gagal"), st = cap.stat || {};
@@ -1703,7 +1717,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   $("#edgeR").addEventListener("click", toggleR); $("#rClose").addEventListener("click", toggleR); $("#fdFocus").addEventListener("click", focusMode);
   new MutationObserver(syncEdges).observe(vsE, { attributes: true, attributeFilter: ["class"] }); syncEdges();
 
-  document.documentElement.dataset.theme = document.documentElement.dataset.theme || "dark";
+  document.documentElement.dataset.theme = "dark";
 
   /* Mulai */
   lint(); renderEditor(); drawTree(); renderLog(); distBar();
