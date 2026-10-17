@@ -4216,6 +4216,10 @@
               <input type="checkbox" id="gc-mock-offline">
               <span>Siapkan mock offline dan replay API</span>
             </label>
+            <label style="display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--text-secondary);margin-top:8px;">
+              <input type="checkbox" id="collect-strip-tokens" checked>
+              <span><b>Strip token sesi</b><br><span style="color:var(--text-muted);">Hapus ot / __hv / __sv / btt / or dari URL sebelum collect (wajib untuk eajzzxhro &amp; game sejenis). Token tidak disimpan di ZIP.</span></span>
+            </label>
           </details>
           <p style="font-size:11px;color:var(--text-muted);margin:0 0 10px;">
             Alur: <b>Paste URL</b> → <b>Preview &amp; Capture</b> → <b>Download ZIP</b> → <b>Workspace</b>.
@@ -14531,7 +14535,8 @@ function isApiLike(u){
       const history = String(document.getElementById('collect-history')?.value === '0' ? '0' : '1');
       const unlimited = !!(document.getElementById('collect-unlimited') && document.getElementById('collect-unlimited').checked);
       const mockOffline = !!document.getElementById('gc-mock-offline')?.checked;
-      return { wait_seconds: wait, auto_spins: spins, spin_delay_ms: spinDelay, auto_history: history, unlimited: unlimited, large_capture: unlimited, mode: unlimited ? 'unlimited' : undefined, mock_offline: mockOffline };
+      var stripTokens = !(document.getElementById('collect-strip-tokens') && !document.getElementById('collect-strip-tokens').checked);
+      return { wait_seconds: wait, auto_spins: spins, spin_delay_ms: spinDelay, auto_history: history, unlimited: unlimited, large_capture: unlimited, mode: unlimited ? 'unlimited' : undefined, mock_offline: mockOffline, strip_tokens: stripTokens };
     }
 
     let _gcGithubTokenResolve = null;
@@ -15083,7 +15088,8 @@ function isApiLike(u){
             spin_delay_ms: opts.spin_delay_ms,
             auto_history: opts.auto_history,
             mock_offline: opts.mock_offline,
-            large_capture: opts.large_capture
+            large_capture: opts.large_capture,
+            strip_tokens: opts.strip_tokens
           })
         });
         const res = authResult.res;

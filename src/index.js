@@ -18,7 +18,8 @@ import { classifyApiSemantics } from "./classify/api-semantics.js";
 import { buildKeterangan } from "./package/keterangan.js";
 import { buildApiMap } from "./package/api-map.js";
 import { handleAssetProxy } from "./lib/asset-proxy.js";
-import { smartPackage } from "./package/smart-rewrite.js";
+import { smartPackage, applySitePlugins } from "./package/smart-rewrite.js";
+import { cleanCollectUrl, findPlugin } from "./plugins/index.js";
 import { applyHybridCdnFix } from "./package/hybrid-cdn-fix.js";
 import { buildOfflineSuperReport, injectOfflineBootstrap, ensureCriticalApiMocks } from "./package/offline-engine.js";
 import { analyzeGameContent } from "./analyze/content.js";
@@ -507,13 +508,16 @@ async function handleRequest(request, env) {
       try { body = await request.json(); } catch {
         return Response.json({ error: "JSON tidak valid" }, { status: 400 });
       }
-      const gameUrl = String(body.url || "").trim();
+      let gameUrl = String(body.url || "").trim();
       const waitSeconds = String(body.wait_seconds || "22");
       try {
         const u = new URL(gameUrl);
         if (!["http:", "https:"].includes(u.protocol)) throw 0;
       } catch {
         return Response.json({ error: "URL http/https tidak valid" }, { status: 400 });
+      }
+      if (body.strip_tokens !== false) {
+        gameUrl = cleanCollectUrl(gameUrl);
       }
       const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
       const dispatchRequestId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
@@ -1267,6 +1271,13 @@ async function handleRequest(request, env) {
       return Response.json({ error: "URL http/https tidak valid" }, { status: 400 });
     }
 
+    // Strip short-lived session tokens (ot/__hv/__sv/...) when requested or site plugin matches
+    const stripTokens = body.strip_tokens !== false;
+    if (stripTokens) {
+      const cleaned = cleanCollectUrl(target.toString());
+      try { target = new URL(cleaned); } catch (_) {}
+    }
+
     const mockOffline = body.mock_offline !== false;
 
     // Selective collect filter (include/exclude by category or subfolder)
@@ -1959,6 +1970,12 @@ async function handleRequest(request, env) {
       await report(72, "rewrite", "Smart path rewrite + frame-buster...", { files: manifest.length });
       // Smart offline packaging: path rewrite (signed URL → lokal) + frame-buster
       let smart = smartPackage(zipFiles, manifest);
+      try {
+        const siteReport = applySitePlugins(zipFiles, target.href);
+        smart.sitePlugin = siteReport;
+      } catch (e) {
+        smart.sitePlugin = { error: String(e?.message || e) };
+      }
       // Pass 2 rewrite if recovery menambah file baru
       if (recoveryReport && recoveryReport.recovered > 0) {
         const smart2 = smartPackage(zipFiles, manifest);

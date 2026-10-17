@@ -58,6 +58,47 @@ export async function handleNativeApi(request, env = {}) {
   if (request.method === "POST" && path === "/init") return json({ ...NATIVE_CONFIG, initialized_at: timestamp() });
   let input = {};
   if (request.method === "POST") { try { input = await bodyOf(request); } catch (error) { return fail(error.code || "INVALID_JSON", error.message || "Body tidak valid.", error.status || 400); } }
+
+  // Offline demo endpoints used by network-hijack / native-game package (no session required).
+  // Marked DEMO_OFFLINE_SPIN — non-monetary substitute only.
+  if (request.method === "GET" && (path === "/balance" || path === "/game/balance")) {
+    const session = sessionOf(request);
+    const playerId = session?.player_id || url.searchParams.get("sessionId") || "player1";
+    const state = stateFor(playerId);
+    return json({ ok: true, sessionId: playerId, balance: state.balance, available_balance: state.balance, spinCount: state.rounds.length, currency: NATIVE_CONFIG.currency, version: state.version, demo: true });
+  }
+  if (request.method === "POST" && (path === "/spin" || path === "/game/spin")) {
+    const session = sessionOf(request);
+    const playerId = session?.player_id || String(input.sessionId || input.player_id || "player1");
+    const state = stateFor(playerId);
+    const bet = Number(input.bet ?? 100);
+    const allowed = [100, 200, 500, 1000];
+    if (!allowed.includes(bet) && (bet < NATIVE_CONFIG.limits.min_bet || bet > NATIVE_CONFIG.limits.max_bet)) {
+      return fail("BET_OUT_OF_RANGE", "Nilai bet di luar batas demo.", 400);
+    }
+    if (state.balance < bet) return fail("INSUFFICIENT_BALANCE", "Saldo tidak mencukupi.", 422);
+    const key = request.headers.get("X-Idempotency-Key") || request.headers.get("Idempotency-Key") || requestKey(input) || uuid();
+    if (state.idempotency.has(key)) return json(state.idempotency.get(key));
+    const seed = Number(input.seed) || (Date.now() + state.rounds.length);
+    const roll = seed % 10;
+    const win_amount = roll >= 7 ? bet * (roll === 9 ? 5 : 2) : 0;
+    const before = state.balance;
+    state.balance = before - bet + win_amount;
+    state.version += 1;
+    const matrix = [
+      [roll % 5, (roll + 1) % 5, (roll + 2) % 5],
+      [(roll + 1) % 5, (roll + 2) % 5, (roll + 3) % 5],
+      [(roll + 2) % 5, (roll + 3) % 5, (roll + 4) % 5],
+      [(roll + 3) % 5, (roll + 4) % 5, roll % 5],
+      [(roll + 4) % 5, roll % 5, (roll + 1) % 5]
+    ];
+    const payload = { ok: true, sessionId: playerId, idempotency_key: key, bet, win: win_amount, balance: state.balance, spinCount: state.rounds.length + 1, matrix, server_timestamp: timestamp(), demo: true };
+    state.idempotency.set(key, payload);
+    state.rounds.unshift({ round_id: uuid(), bet, win: win_amount, created_at: timestamp() });
+    addHistory(state, "round.spin", key, input.request_id || null);
+    return json(payload);
+  }
+
   if (request.method === "POST" && path === "/session") {
     if (env.NATIVE_API_KEY && request.headers.get("X-Native-Api-Key") !== env.NATIVE_API_KEY) return fail("UNAUTHORIZED", "API key native tidak valid.", 401);
     const rawPlayerId = String(input.player_id || "demo-player").trim();

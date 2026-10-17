@@ -19,7 +19,7 @@ function headersFor(request, env, contentType = "") {
     "Cross-Origin-Resource-Policy": "same-origin"
   };
   if (/text\/html/i.test(contentType)) {
-    headers["Content-Security-Policy"] = String(env.CONTENT_SECURITY_POLICY || "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; connect-src 'self' https://api.github.com https://*.workers.dev; img-src 'self' data: blob: https:; media-src 'self' blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:");
+    headers["Content-Security-Policy"] = String(env.CONTENT_SECURITY_POLICY || "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; connect-src 'self' https://api.github.com https://*.workers.dev; form-action 'self'");
   }
   const allowed = originAllowed(request, env);
   if (allowed) {
@@ -33,8 +33,21 @@ export function withSecurityHeaders(response, request, env) {
   const out = new Headers(response.headers);
   const contentType = out.get("Content-Type") || "";
   for (const [key, value] of Object.entries(headersFor(request, env, contentType))) out.set(key, value);
+  try {
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/native-game")) {
+      out.set(
+        "Content-Security-Policy",
+        "default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; " +
+          "img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; " +
+          "connect-src 'self' /api/game/*; form-action 'self'"
+      );
+    }
+  } catch (_) {}
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers: out });
 }
+
 
 export function preflightResponse(request, env) {
   const allowed = originAllowed(request, env);
