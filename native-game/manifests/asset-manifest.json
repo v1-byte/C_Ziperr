@@ -1,7 +1,97 @@
 {
   "schema_version": "1.0",
-  "package": "frostbyte-collector@1.0.0",
+  "package": "eajzzxhro-74@1.0.0",
+  "game": "eajzzxhro-74",
+  "version": "v2-final",
+  "totalFiles": 39,
+  "offlineReady": true,
+  "server": "custom /api/game/*",
+  "generatedAt": "2026-10-17T13:28:03.884Z",
   "assets": [
+    {
+      "path": "CHANGELOG.txt",
+      "type": "asset",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "NATIVE_COLLECT_SYSTEM.txt",
+      "type": "asset",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "SECURITY.txt",
+      "type": "asset",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "api/api-contract.json",
+      "type": "data",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "api/balance.js",
+      "type": "native-api",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "api/edu-network-adapter.js",
+      "type": "native-api",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "api/error-codes.json",
+      "type": "data",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "api/index.js",
+      "type": "native-api",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "api/spin.js",
+      "type": "native-api",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "config/environment.schema.json",
+      "type": "config",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "config/feature-flags.json",
+      "type": "config",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "config/host.json",
+      "type": "config",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "config/native-game-config.json",
+      "type": "config",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "debug-panel.js",
+      "type": "script",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
     {
       "path": "index.html",
       "type": "entrypoint",
@@ -9,7 +99,67 @@
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
+      "path": "legal/LICENSES.txt",
+      "type": "asset",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "legal/NOTICE.txt",
+      "type": "asset",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "legal/OWNERSHIP.txt",
+      "type": "asset",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "manifest.json",
+      "type": "manifest",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "manifests/asset-manifest.json",
+      "type": "manifest",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "manifests/dependency-manifest.json",
+      "type": "manifest",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "manifests/provenance.json",
+      "type": "data",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "manifests/sbom.json",
+      "type": "data",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "shell/accessibility.js",
+      "type": "script",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
       "path": "shell/app.js",
+      "type": "script",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "shell/audio-unlock.js",
       "type": "script",
       "critical": true,
       "permission_status": "AUTHORIZED_OWNER"
@@ -21,59 +171,118 @@
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
-      "path": "api/edu-network-adapter.js",
-      "type": "native-api",
+      "path": "shell/brotli-loader.js",
+      "type": "script",
       "critical": true,
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
-      "path": "config/native-game-config.json",
-      "type": "config",
+      "path": "shell/error-boundary.js",
+      "type": "script",
       "critical": true,
-      "permission_status": "AUTHORIZED_OWNER"
-    },
-    {
-      "path": "debug-panel.js",
-      "type": "script",
-      "critical": false,
-      "permission_status": "AUTHORIZED_OWNER"
-    },
-    {
-      "path": "shell/audio-unlock.js",
-      "type": "script",
-      "critical": false,
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
       "path": "shell/network-hijack.js",
       "type": "script",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "shell/router.js",
+      "type": "script",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "shell/state-store.js",
+      "type": "script",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "shell/telemetry.js",
+      "type": "script",
+      "critical": true,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "start-game.sh",
+      "type": "asset",
       "critical": false,
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
-      "path": "api/spin.js",
-      "type": "native-api",
+      "path": "sw.js",
+      "type": "service-worker",
       "critical": true,
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
-      "path": "api/balance.js",
-      "type": "native-api",
-      "critical": true,
+      "path": "validation/network-report.json",
+      "type": "data",
+      "critical": false,
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
-      "path": "api/index.js",
-      "type": "native-api",
-      "critical": true,
+      "path": "validation/performance-report.json",
+      "type": "data",
+      "critical": false,
       "permission_status": "AUTHORIZED_OWNER"
     },
     {
-      "path": "config/host.json",
-      "type": "config",
+      "path": "validation/security-report.json",
+      "type": "data",
+      "critical": false,
+      "permission_status": "AUTHORIZED_OWNER"
+    },
+    {
+      "path": "vendor/brotli-decode.js",
+      "type": "script",
       "critical": false,
       "permission_status": "AUTHORIZED_OWNER"
     }
+  ],
+  "files": [
+    "./CHANGELOG.txt",
+    "./NATIVE_COLLECT_SYSTEM.txt",
+    "./SECURITY.txt",
+    "./api/api-contract.json",
+    "./api/balance.js",
+    "./api/edu-network-adapter.js",
+    "./api/error-codes.json",
+    "./api/index.js",
+    "./api/spin.js",
+    "./config/environment.schema.json",
+    "./config/feature-flags.json",
+    "./config/host.json",
+    "./config/native-game-config.json",
+    "./debug-panel.js",
+    "./index.html",
+    "./legal/LICENSES.txt",
+    "./legal/NOTICE.txt",
+    "./legal/OWNERSHIP.txt",
+    "./manifest.json",
+    "./manifests/asset-manifest.json",
+    "./manifests/dependency-manifest.json",
+    "./manifests/provenance.json",
+    "./manifests/sbom.json",
+    "./shell/accessibility.js",
+    "./shell/app.js",
+    "./shell/audio-unlock.js",
+    "./shell/bootstrap.js",
+    "./shell/brotli-loader.js",
+    "./shell/error-boundary.js",
+    "./shell/network-hijack.js",
+    "./shell/router.js",
+    "./shell/state-store.js",
+    "./shell/telemetry.js",
+    "./start-game.sh",
+    "./sw.js",
+    "./validation/network-report.json",
+    "./validation/performance-report.json",
+    "./validation/security-report.json",
+    "./vendor/brotli-decode.js"
   ],
   "excluded_classes": [
     "DRM",
@@ -83,8 +292,5 @@
     "PRIVATE_KEY",
     "PROTECTED_BINARY",
     "EXTERNAL_BACKEND"
-  ],
-  "offlineReady": true,
-  "game": "frostbyte-collector",
-  "server": "custom /api/game/*"
+  ]
 }

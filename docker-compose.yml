@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  native-shell:
+    build: .
+    ports:
+      - "4173:4173"
+    volumes:
+      - ./native-game:/app/native-game
+    command: ["python3", "-m", "http.server", "4173", "--directory", "native-game"]
