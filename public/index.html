@@ -962,163 +962,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
 
   /* ===== File & highlight ===== */
   const files = {
-    "index.html": '<!doctype html>\n<html lang="id">\n<head>\n  <meta charset="utf-8">\n  <title>Game Contoh</title>\n  <link rel="stylesheet" href="css/style.css">\n</head>\n<body>\n  <canvas id="stage"></canvas>\n  <script src="js/config.js"><\/script>\n  <script src="js/main.js"><\/script>\n
-<script>
-/* C_Ziperr real-collect bridge + hard block old host after offline package */
-(function () {
-  const STRIP = ["ot", "__hv", "__sv", "btt", "or"];
-  function $(s) { return document.querySelector(s); }
-  function stripUrl(raw) {
-    try {
-      const u = new URL(raw, location.href);
-      STRIP.forEach((k) => u.searchParams.delete(k));
-      return u.toString();
-    } catch (_) { return String(raw || "").replace(/([?&])(ot|__hv|__sv|btt|or)=[^&]*/gi, "").replace(/\?&/, "?").replace(/[?&]$/, ""); }
-  }
-  function hostOf(raw) {
-    try { return new URL(raw, location.href).hostname; } catch (_) { return ""; }
-  }
-
-  // Global network hard-block for configured old hosts (offline / after collect)
-  const blockedHosts = new Set();
-  window.__cZiperrBlockHost = function (host) {
-    if (host) blockedHosts.add(String(host).toLowerCase());
-  };
-  window.__cZiperrClearBlock = function () { blockedHosts.clear(); };
-
-  const origFetch = window.fetch.bind(window);
-  window.fetch = function (input, init) {
-    const url = String(input && input.url || input || "");
-    try {
-      const h = new URL(url, location.href).hostname.toLowerCase();
-      if (blockedHosts.size && [...blockedHosts].some((b) => h === b || h.endsWith("." + b))) {
-        console.warn("[C_Ziperr] BLOCKED request to old host:", url);
-        return Promise.reject(new Error("Blocked old host (offline policy): " + h));
-      }
-    } catch (_) {}
-    return origFetch(input, init);
-  };
-
-  const XO = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function (method, url) {
-    try {
-      const h = new URL(String(url), location.href).hostname.toLowerCase();
-      if (blockedHosts.size && [...blockedHosts].some((b) => h === b || h.endsWith("." + b))) {
-        console.warn("[C_Ziperr] BLOCKED XHR to old host:", url);
-        url = "about:blank";
-      }
-    } catch (_) {}
-    return XO.call(this, method, url, ...Array.prototype.slice.call(arguments, 2));
-  };
-
-  async function realCollect(useGithub) {
-    const input = $("#url");
-    let raw = (input && input.value || "").trim();
-    if (!raw) { alert("Isi URL game dulu"); return; }
-    const strip = !$("#optStrip") || $("#optStrip").checked;
-    const clean = strip ? stripUrl(raw) : raw;
-    if (input) input.value = clean;
-    const host = hostOf(clean);
-    const big = document.querySelector('#capMode button[aria-pressed="true"]');
-    const modeBig = big && big.getAttribute("data-v") === "big";
-    const body = {
-      url: clean,
-      strip_tokens: strip,
-      wait_seconds: 22,
-      auto_spins: 6,
-      auto_history: 1,
-      unlimited: !!(useGithub || modeBig),
-      large_capture: !!(useGithub || modeBig),
-      mock_offline: true
-    };
-    const note = $("#collectNote");
-    if (note) note.textContent = useGithub || modeBig
-      ? "Collect via GitHub runner… token sudah di-strip."
-      : "Collect via Worker… token sudah di-strip.";
-
-    // During live collect we must allow the worker to reach the game host.
-    // Block only engages after package / offline mode.
-    window.__cZiperrClearBlock();
-
-    const endpoint = useGithub || modeBig ? "/api/github/collect" : "/api/collect";
-    const headers = { "Content-Type": "application/json" };
-    try {
-      const res = await origFetch(endpoint, { method: "POST", headers, body: JSON.stringify(body) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (note) note.textContent = "Collect gagal: " + (data.message || data.error || res.status);
-        alert("Collect gagal: " + (data.message || data.error || res.status));
-        return data;
-      }
-      if (note) note.textContent = "Collect diterima. Setelah ZIP offline, host lama akan diblok: " + host;
-      // After successful collect kickoff, prepare offline policy for that host
-      if ($("#optBlockHost") && $("#optBlockHost").checked && host) {
-        window.__cZiperrBlockHost(host);
-        // also block parent domain eajzzxhro.com style
-        const parts = host.split(".");
-        if (parts.length >= 2) window.__cZiperrBlockHost(parts.slice(-2).join("."));
-      }
-      return data;
-    } catch (e) {
-      if (note) note.textContent = "Collect error: " + e.message;
-      throw e;
-    }
-  }
-
-  function wire() {
-    const real = $("#optReal");
-    const start = $("#startBtn");
-    const gh = $("#ghBtn");
-    const verify = $("#verifyBtn");
-
-    if (start) {
-      start.addEventListener("click", function (ev) {
-        if (real && !real.checked) return; // allow demo simulation handlers
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        realCollect(false);
-      }, true);
-    }
-    if (gh) {
-      gh.addEventListener("click", function () {
-        realCollect(true);
-      });
-    }
-    if (verify) {
-      verify.addEventListener("click", async function () {
-        const note = $("#collectNote");
-        try {
-          const res = await origFetch("/api/health");
-          const ok = res.ok;
-          if (note) note.textContent = ok
-            ? "Worker health OK. Blok host aktif: " + [...blockedHosts].join(", ")
-            : "Worker health gagal (" + res.status + ")";
-        } catch (e) {
-          if (note) note.textContent = "Verifikasi: " + e.message + " | host diblok: " + [...blockedHosts].join(", ");
-        }
-      });
-    }
-
-    // Sandbox offline mode buttons: enable hard block on current URL host
-    document.querySelectorAll('#pvMode button, [data-v="Sandbox (offline)"]').forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        const u = $("#url") && $("#url").value;
-        const h = hostOf(u || "");
-        if (h) {
-          window.__cZiperrBlockHost(h);
-          const parts = h.split(".");
-          if (parts.length >= 2) window.__cZiperrBlockHost(parts.slice(-2).join("."));
-        }
-      });
-    });
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
-  else wire();
-})();
-</script>
-
-</body>\n</html>',
+    "index.html": '<!doctype html>\n<html lang="id">\n<head>\n  <meta charset="utf-8">\n  <title>Game Contoh</title>\n  <link rel="stylesheet" href="css/style.css">\n</head>\n<body>\n  <canvas id="stage"></canvas>\n  <script src="js/config.js"><\/script>\n  <script src="js/main.js"><\/script>\n</body>\n</html>',
     "js/main.js": '// Entry point game\nconst BASE = "https://asal-game.com";\n\nasync function loadSession() {\n  const r = await fetch("/api/game/session");\n  return r.json();\n}\n\nasync function spin(bet) {\n  const r = await fetch("/api/game/spin", {\n    method: "POST",\n    body: JSON.stringify({ bet: bet })\n  });\n  return r.json();\n}\n\nfunction loadAtlas() {\n  // path absolut, perlu ditulis ulang\n  return fetch(BASE + "/img/atlas.png");\n}\n\nif (window.top !== window.self) {\n  window.top.location = window.location;\n}\n',
     "js/config.js": 'window.GAME_CONFIG = {\n  currency: "IDR",\n  bets: [1, 2, 5, 10],\n  audio: true\n};\n',
     "data/config.json": '{\n  "game": "contoh",\n  "api": "/api/game",\n  "bet": [1, 2, 5, 10],\n  "audio": true\n}',
@@ -1867,6 +1711,127 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
 })();
 (function(){var r=document.documentElement,b=document.getElementById("skinBtn");function set(g){r.dataset.skin=g?"game":"clean";b.textContent=g?"Mode: Game PC":"Mode: Bersih";}
 set(true);b.addEventListener("click",function(){set(r.dataset.skin!=="game");});})();
+</script>
+
+
+<script>
+/* C_Ziperr real-collect bridge + hard block old host after offline package */
+(function () {
+  const STRIP = ["ot", "__hv", "__sv", "btt", "or"];
+  function $(s) { return document.querySelector(s); }
+  function stripUrl(raw) {
+    try {
+      const u = new URL(raw, location.href);
+      STRIP.forEach(function (k) { u.searchParams.delete(k); });
+      return u.toString();
+    } catch (_) {
+      return String(raw || "").replace(/([?&])(ot|__hv|__sv|btt|or)=[^&]*/gi, "").replace(/\?&/, "?").replace(/[?&]$/, "");
+    }
+  }
+  function hostOf(raw) {
+    try { return new URL(raw, location.href).hostname; } catch (_) { return ""; }
+  }
+  const blockedHosts = new Set();
+  window.__cZiperrBlockHost = function (host) {
+    if (host) blockedHosts.add(String(host).toLowerCase());
+  };
+  window.__cZiperrClearBlock = function () { blockedHosts.clear(); };
+  const origFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    const url = String((input && input.url) || input || "");
+    try {
+      const h = new URL(url, location.href).hostname.toLowerCase();
+      if (blockedHosts.size && Array.from(blockedHosts).some(function (b) { return h === b || h.endsWith("." + b); })) {
+        console.warn("[C_Ziperr] BLOCKED request to old host:", url);
+        return Promise.reject(new Error("Blocked old host (offline policy): " + h));
+      }
+    } catch (_) {}
+    return origFetch(input, init);
+  };
+  const XO = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    try {
+      const h = new URL(String(url), location.href).hostname.toLowerCase();
+      if (blockedHosts.size && Array.from(blockedHosts).some(function (b) { return h === b || h.endsWith("." + b); })) {
+        console.warn("[C_Ziperr] BLOCKED XHR to old host:", url);
+        url = "about:blank";
+      }
+    } catch (_) {}
+    return XO.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
+  };
+  async function realCollect(useGithub) {
+    const input = $("#url");
+    const raw = ((input && input.value) || "").trim();
+    if (!raw) { alert("Isi URL game dulu"); return; }
+    const strip = !$("#optStrip") || $("#optStrip").checked;
+    const clean = strip ? stripUrl(raw) : raw;
+    if (input) input.value = clean;
+    const host = hostOf(clean);
+    const big = document.querySelector('#capMode button[aria-pressed="true"]');
+    const modeBig = big && big.getAttribute("data-v") === "big";
+    const body = {
+      url: clean,
+      strip_tokens: strip,
+      wait_seconds: 22,
+      auto_spins: 6,
+      auto_history: 1,
+      unlimited: !!(useGithub || modeBig),
+      large_capture: !!(useGithub || modeBig),
+      mock_offline: true
+    };
+    const note = $("#collectNote");
+    if (note) note.textContent = (useGithub || modeBig) ? "Collect via GitHub runner… token sudah di-strip." : "Collect via Worker… token sudah di-strip.";
+    window.__cZiperrClearBlock();
+    const endpoint = (useGithub || modeBig) ? "/api/github/collect" : "/api/collect";
+    try {
+      const res = await origFetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json().catch(function () { return {}; });
+      if (!res.ok) {
+        if (note) note.textContent = "Collect gagal: " + (data.message || data.error || res.status);
+        alert("Collect gagal: " + (data.message || data.error || res.status));
+        return data;
+      }
+      if (note) note.textContent = "Collect diterima. Setelah ZIP offline, host lama akan diblok: " + host;
+      if ($("#optBlockHost") && $("#optBlockHost").checked && host) {
+        window.__cZiperrBlockHost(host);
+        var parts = host.split(".");
+        if (parts.length >= 2) window.__cZiperrBlockHost(parts.slice(-2).join("."));
+      }
+      return data;
+    } catch (e) {
+      if (note) note.textContent = "Collect error: " + e.message;
+      throw e;
+    }
+  }
+  function wire() {
+    var real = $("#optReal");
+    var start = $("#startBtn");
+    var gh = $("#ghBtn");
+    var verify = $("#verifyBtn");
+    if (start) {
+      start.addEventListener("click", function (ev) {
+        if (real && !real.checked) return;
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        realCollect(false);
+      }, true);
+    }
+    if (gh) gh.addEventListener("click", function () { realCollect(true); });
+    if (verify) {
+      verify.addEventListener("click", async function () {
+        var note = $("#collectNote");
+        try {
+          var res = await origFetch("/api/health");
+          if (note) note.textContent = res.ok ? ("Worker health OK. Blok host aktif: " + Array.from(blockedHosts).join(", ")) : ("Worker health gagal (" + res.status + ")");
+        } catch (e) {
+          if (note) note.textContent = "Verifikasi: " + e.message + " | host diblok: " + Array.from(blockedHosts).join(", ");
+        }
+      });
+    }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", wire);
+  else wire();
+})();
 </script>
 
 </body></html>
