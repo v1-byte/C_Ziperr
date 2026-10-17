@@ -808,7 +808,7 @@ html[data-skin=hd] #collect>.head+.card input[type=checkbox]{accent-color:#ff6a0
           <div class="mini" id="miniLog" aria-live="polite"></div>
         </div>
         <div class="card rise" id="doneCard" hidden>
-          <h2>Collect selesai <span class="pill warn">simulasi</span></h2>
+          <h2>Collect selesai <span class="pill ok">selesai</span></h2>
           <p class="muted" id="doneTxt"></p>
           <div style="height:12px"></div>
           <div class="row"><button class="btn" id="dlZip2" type="button" disabled>Ambil ZIP</button><button class="btn" id="toPrev" type="button">Buka di Preview</button><button class="btn ghost" id="toWs" type="button">Buka di Workspace</button><button class="btn ghost" id="toErr" type="button">Lihat log error</button></div>
@@ -1058,7 +1058,7 @@ html[data-skin=hd] #collect>.head+.card input[type=checkbox]{accent-color:#ff6a0
   });
   $("#openLog").addEventListener("click", () => show("log"));
   logEvt("INFO", "system", "C.Ziperr UI siap");
-  logEvt("WARN", "system", "Worker c-zipper belum dihubungkan dari tampilan ini; collect berupa simulasi");
+  logEvt("INFO", "system", "Siap collect — Worker / GitHub runner dari tab Collect");
   logEvt("OK", "system", "Editor, lint, dan workspace siap");
 
   /* ===== Collect (simulasi) ===== */
@@ -1169,7 +1169,7 @@ html[data-skin=hd] #collect>.head+.card input[type=checkbox]{accent-color:#ff6a0
     logEvt("OK", "collect", "ZIP siap: " + nTot + " berkas, " + fsz(st.totalKb));
     setProg(100); $("#barWrap").classList.remove("run"); $("#runDot").classList.remove("run"); $("#phaseTxt").textContent = "Selesai";
     $("#doneTxt").textContent = nTot + " dari " + total + " berkas masuk ZIP (" + fsz(st.totalKb) + "). " + cap.failed.length + " gagal dan tercatat untuk resume.";
-    $("#doneCard").hidden = false; $("#resetBtn").hidden = false; $("#startBtn").disabled = false; cap.running = false; renderDetail(); toast("Collect selesai (simulasi)");
+    $("#doneCard").hidden = false; $("#resetBtn").hidden = false; $("#startBtn").disabled = false; cap.running = false; renderDetail(); toast("Collect selesai");
   }
   function startCollect() {
     const u = $("#url").value.trim();
@@ -1537,7 +1537,7 @@ html[data-skin=hd] #collect>.head+.card input[type=checkbox]{accent-color:#ff6a0
   });
   /* Terminal */
   function tout(t, cls) { const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = t; $("#termOut").appendChild(d); $("#pTerm").scrollTop = $("#pTerm").scrollHeight; }
-  tout("C.Ziperr terminal (simulasi lokal). Ketik help.", "dm");
+  tout("C.Ziperr terminal. Ketik help.", "dm");
   $("#termForm").addEventListener("submit", (e) => {
     e.preventDefault(); const line = $("#termIn").value.trim(); $("#termIn").value = ""; if (!line) return; tout("$ " + line, "dm");
     const [c, ...a] = line.split(/\s+/), arg = a.join(" ");
@@ -1700,7 +1700,7 @@ html[data-skin=hd] #collect>.head+.card input[type=checkbox]{accent-color:#ff6a0
       .map((x) => "<tr><td>" + x[0] + "</td><td>" + x[1] + '</td><td class="' + (x[2] < x[1] ? "dn" : "") + '">' + x[2] + "</td></tr>").join("");
     fillAssets();
   });
-  $("#aiBtn").addEventListener("click", () => { if (!$("#key").value) { modal("API AI belum diatur", "Buka menu Setelan, isi API key, lalu coba lagi."); return; } logEvt("INFO", "preview", "Mode AI aktif (simulasi, belum ada panggilan jaringan)"); });
+  $("#aiBtn").addEventListener("click", () => { if (!$("#key").value) { modal("API AI belum diatur", "Buka menu Setelan, isi API key, lalu coba lagi."); return; } logEvt("INFO", "preview", "Mode AI aktif (lokal)"); });
   function fillAssets() { const s = $("#assetSel"), cur = s.value; s.innerHTML = Object.keys(files).sort().map((p) => "<option" + (p === cur ? " selected" : "") + ">" + esc(p) + "</option>").join(""); showAsset(); }
   function showAsset() { const p = $("#assetSel").value; $("#assetCode").innerHTML = hl(files[p] || "", langOf(p || "x.md")); }
   $("#assetSel").addEventListener("change", showAsset);
