@@ -1,4 +1,5 @@
 import { strToU8 } from "fflate";
+import { findPlugin } from "../plugins/index.js";
 
 const FRAME_BUSTER_RE = [
   /if\s*\(\s*(?:window\.)?top\s*!==?\s*(?:window\.)?(?:self|this)\s*\)/gi,
@@ -487,5 +488,56 @@ export function smartPackage(zipFiles, manifest) {
     }
   } catch {}
 
+  // Site-specific plugin (eajzzxhro token strip, path rewrite, anti-debug)
+  try {
+    const siteReport = applySitePlugins(zipFiles, result.baseUrl || "");
+    result.sitePlugin = siteReport;
+  } catch (e) {
+    result.sitePlugin = { error: String(e?.message || e) };
+  }
+
   return result;
+}
+
+
+/**
+ * Apply matching site plugin rewrite to HTML files in zip (eajzzxhro etc).
+ * @param {Record<string, Uint8Array|string>} zipFiles
+ * @param {string} [baseUrl]
+ */
+export function applySitePlugins(zipFiles, baseUrl = "") {
+  let plugin = findPlugin(baseUrl || "");
+  // Auto-detect from HTML content when baseUrl unknown
+  if (!plugin) {
+    const decoder = new TextDecoder();
+    for (const [name, data] of Object.entries(zipFiles)) {
+      if (!/\.(html?|htm)$/i.test(name) && name !== "index.rendered.html") continue;
+      try {
+        const sample = typeof data === "string" ? data.slice(0, 8000) : decoder.decode(data.slice(0, 8000));
+        if (sample.includes("eajzzxhro")) {
+          plugin = findPlugin("https://m.eajzzxhro.com/74/");
+          break;
+        }
+      } catch (_) {}
+    }
+  }
+  const report = { site: plugin?.id || null, files: 0, tokensStripped: 0, pathRewrites: 0, protections: [] };
+  if (!plugin) return report;
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  for (const [name, data] of Object.entries(zipFiles)) {
+    if (!/\.(html?|htm)$/i.test(name) && name !== "index.rendered.html") continue;
+    try {
+      const html = typeof data === "string" ? data : decoder.decode(data);
+      const result = plugin.rewriteHtml(html);
+      zipFiles[name] = typeof data === "string" ? result.html : encoder.encode(result.html);
+      report.files += 1;
+      report.tokensStripped += result.report?.tokensStripped || 0;
+      report.pathRewrites += result.report?.pathRewrites || 0;
+      for (const f of result.report?.protections || []) {
+        if (!report.protections.includes(f)) report.protections.push(f);
+      }
+    } catch (_) {}
+  }
+  return report;
 }

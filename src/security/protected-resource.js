@@ -1,6 +1,8 @@
 const PATTERNS = [
   { type: "DRM", pattern: /(?:encrypted.?media|media.?keys|requestMediaKeySystemAccess|widevine|playready|fairplay|clearkey|\bcdm\b|\bdrm\b|license(?:[-_ ]|url|server|request|response))/i },
   { type: "TOKEN", pattern: /(?:access[_-]?token|refresh[_-]?token|id[_-]?token|bearer\s+[A-Za-z0-9._~-]{12,}|jwt|authorization)/i },
+  // eajzzxhro short-lived session / anti-tamper query tokens
+  { type: "TOKEN", pattern: /(?:[?&]ot=[a-f0-9]{16,64}|[?&]__hv=[^&\s]+|[?&]__sv=[^&\s]+|[?&]btt=\d+)/i },
   { type: "COOKIE", pattern: /(?:set-cookie|document\.cookie|cookie\s*[:=])/i },
   { type: "PRIVATE_KEY", pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i },
   { type: "SIGNED_REQUEST", pattern: /(?:signed[_-]?request|signature\s*[:=]|x-(?:amz|sign|signature)|hmac|presigned)/i },

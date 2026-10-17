@@ -1,0 +1,24 @@
+{
+  "original_host": "m.eajzzxhro.com",
+  "new_host": "c-zipper.corelink-ai.workers.dev",
+  "api_prefix": "/api/game",
+  "strip_tokens": ["ot", "__hv", "__sv", "btt", "or"],
+  "wasm_brotli": true,
+  "websocket_hijack": true,
+  "service_worker": true,
+  "audio_unlock": true,
+  "offlineReady": true,
+  "version": "v2-final-100-percent",
+  "game": "eajzzxhro-74",
+  "variants": {
+    "74": { "path": "/74/", "assets": "./assets/74/" },
+    "74a": { "path": "/74a/", "assets": "./assets/74a/" },
+    "74b": { "path": "/74b/", "assets": "./assets/74b/" }
+  },
+  "paytable_example": {
+    "WILD": { "3": 10, "4": 50, "5": 200 },
+    "note": "Demo paytable only — do not copy production tables"
+  },
+  "allowed_bets": [100, 200, 500, 1000],
+  "rate_limit_spins_per_second": 5
+}
