@@ -1933,47 +1933,111 @@ html[data-skin=hd] #collect>.head+.card input[type=checkbox]{accent-color:#ff6a0
   show((location.hash || "").replace("#", ""));
 })();
 (function(){
-var r=document.documentElement,b=document.getElementById("skinBtn"),S=["hd","game","clean"],N={hd:"Mode: HD Max Pro",game:"Mode: Game PC",clean:"Mode: Bersih"};
-function set(k){r.dataset.skin=k;b.textContent=N[k];}
-set("hd");b.addEventListener("click",function(){set(S[(S.indexOf(r.dataset.skin)+1)%3]);});
-/* ripple */
-document.addEventListener("click",function(e){var t=e.target.closest(".btn,nav.tabs button");if(!t||r.dataset.skin!=="hd")return;var c=t.getBoundingClientRect(),d=Math.max(c.width,c.height),s=document.createElement("span");s.className="rpl";s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-c.left-d/2)+"px;top:"+(e.clientY-c.top-d/2)+"px";if(getComputedStyle(t).position==="static")t.style.position="relative";t.style.overflow="hidden";t.appendChild(s);setTimeout(function(){s.remove()},650);});
-/* toast animasi + konfeti */
-var ts=document.getElementById("toast"),cv=document.getElementById("hdFx"),cx=cv.getContext("2d"),P=[],W,H,run=false;
-function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
-var COL=["#ff6a00","#38bdf8","#ff9a3d","#ffb27a","#ffffff","#2dd4bf"];
-for(var i=0;i<46;i++)P.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2.4+.8,vx:(Math.random()-.5)*.3,vy:Math.random()*.4+.1,c:COL[i%6],f:0});
-var C=[];function boom(){for(var i=0;i<90;i++)C.push({x:W/2,y:H*.7,vx:(Math.random()-.5)*14,vy:-Math.random()*14-4,c:COL[i%6],s:Math.random()*6+3,l:90});}
-function loop(){cx.clearRect(0,0,W,H);P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;if(p.y>H)p.y=-5;if(p.x<0||p.x>W)p.vx*=-1;cx.globalAlpha=.7;cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();});
-C=C.filter(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=.4;p.l--;cx.globalAlpha=Math.max(p.l/90,0);cx.fillStyle=p.c;cx.fillRect(p.x,p.y,p.s,p.s*.6);return p.l>0;});requestAnimationFrame(loop);}
-
-new MutationObserver(function(){if(ts.hidden)return;ts.classList.remove("hdin");void ts.offsetWidth;ts.classList.add("hdin");var ok=/selesai|berhasil|sukses|tersimpan|diunduh|siap|disalin/i.test(ts.textContent),bad=/gagal|error|tidak/i.test(ts.textContent);ts.style.borderLeftColor=bad?"#fb7185":ok?"#34d399":"#ff6a00";if(ok&&r.dataset.skin==="hd")boom();}).observe(ts,{attributes:true,attributeFilter:["hidden"],childList:true,characterData:true,subtree:true});
-
+try{
+  var r=document.documentElement,b=document.getElementById("skinBtn");
+  var S=["hd","game","clean"],N={hd:"Mode: HD Max Pro",game:"Mode: Game PC",clean:"Mode: Bersih"};
+  function set(k){r.dataset.skin=k;if(b)b.textContent=N[k]||k;}
+  set("hd");
+  if(b)b.addEventListener("click",function(){set(S[(S.indexOf(r.dataset.skin)+1)%3]);});
+  document.addEventListener("click",function(e){
+    var t=e.target.closest(".btn,nav.tabs button");
+    if(!t||r.dataset.skin!=="hd")return;
+    try{
+      var c=t.getBoundingClientRect(),d=Math.max(c.width,c.height),s=document.createElement("span");
+      s.className="rpl";
+      s.style.cssText="width:"+d+"px;height:"+d+"px;left:"+(e.clientX-c.left-d/2)+"px;top:"+(e.clientY-c.top-d/2)+"px";
+      if(getComputedStyle(t).position==="static")t.style.position="relative";
+      t.style.overflow="hidden";t.appendChild(s);setTimeout(function(){s.remove()},650);
+    }catch(_){}
+  });
+  var ts=document.getElementById("toast"),cv=document.getElementById("hdFx");
+  if(cv&&cv.getContext){
+    var cx=cv.getContext("2d"),P=[],W,H,C=[];
+    function rs(){W=cv.width=innerWidth||1;H=cv.height=innerHeight||1;}
+    try{rs();addEventListener("resize",rs);}catch(_){}
+    var COL=["#ff6a00","#38bdf8","#ff9a3d","#ffb27a","#ffffff","#2dd4bf"];
+    for(var i=0;i<30;i++)P.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.6,vx:(Math.random()-.5)*.25,vy:Math.random()*.3+.08,c:COL[i%6]});
+    function boom(){for(var i=0;i<60;i++)C.push({x:W/2,y:H*.7,vx:(Math.random()-.5)*12,vy:-Math.random()*12-3,c:COL[i%6],s:Math.random()*5+2,l:70});}
+    function loop(){
+      try{
+        cx.clearRect(0,0,W,H);
+        P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;if(p.y>H)p.y=-5;if(p.x<0||p.x>W)p.vx*=-1;cx.globalAlpha=.55;cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();});
+        C=C.filter(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=.35;p.l--;cx.globalAlpha=Math.max(p.l/70,0);cx.fillStyle=p.c;cx.fillRect(p.x,p.y,p.s,p.s*.6);return p.l>0;});
+      }catch(_){}
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+    if(ts){
+      new MutationObserver(function(){
+        if(ts.hidden)return;
+        try{
+          ts.classList.remove("hdin");void ts.offsetWidth;ts.classList.add("hdin");
+          var ok=/selesai|berhasil|sukses|tersimpan|diunduh|siap|disalin/i.test(ts.textContent||"");
+          var bad=/gagal|error|tidak/i.test(ts.textContent||"");
+          ts.style.borderLeftColor=bad?"#fb7185":ok?"#34d399":"#ff6a00";
+          if(ok&&r.dataset.skin==="hd")boom();
+        }catch(_){}
+      }).observe(ts,{attributes:true,attributeFilter:["hidden"],childList:true,characterData:true,subtree:true});
+    }
+  }
+}catch(e){console.warn("HD skin init",e);}
 })();
 (function(){
-var sp=document.getElementById("hdSplash"),lg=sp.querySelector(".log"),sg=sp.querySelector(".seg"),pc=document.getElementById("hdPc"),done=false,n=0,v=0;
-var T=["Inisialisasi modul inti","Memuat editor kode","Menerapkan tema HD Max Pro","Sistem siap"];
-for(var q=0;q<10;q++)sg.appendChild(document.createElement("i"));
-var iv=setInterval(function(){v=Math.min(100,v+4);pc.textContent=("00"+v).slice(-3)+"%";var f=Math.floor(v/10);[].forEach.call(sg.children,function(x,j){x.classList.toggle("on",j<f);});
-while(n<=Math.min(Math.floor(v/26),3)){var d=document.createElement("div");d.innerHTML="<b>[ OK ]</b> "+T[n++];lg.appendChild(d);}
-if(v>=100){clearInterval(iv);setTimeout(end,650);}},85);
-function end(){if(done)return;done=true;clearInterval(iv);sp.classList.add("out");setTimeout(function(){sp.remove();},900);}
-sp.addEventListener("click",end);addEventListener("keydown",function(e){if(e.key==="Escape"||e.key==="Enter")end();});
-/* tombol pengaturan di beranda */
-var br=document.querySelector(".brand"),sk=document.getElementById("skinBtn"),g=document.createElement("button");g.className="theme";g.id="hdSet";g.type="button";g.title="Pengaturan";g.setAttribute("aria-label","Pengaturan");g.textContent="Pengaturan";sk.after(g);
-g.addEventListener("click",function(){document.querySelector('[data-tab="setelan"]').click();scrollTo({top:0,behavior:"smooth"});});
-/* VS Code: zoom + layar penuh, judul tombol */
-var vs=document.getElementById("vs"),ed=document.getElementById("ed"),mb=document.querySelector(".mbar .ttl");
-mb.insertAdjacentHTML("afterend",'<button class="vsx" data-a="zo" type="button" title="Perkecil huruf" aria-label="Perkecil huruf">A-</button><button class="vsx" data-a="zi" type="button" title="Perbesar huruf" aria-label="Perbesar huruf">A+</button><button class="vsx" data-a="fs" type="button" title="Layar penuh (Esc untuk keluar)" aria-label="Layar penuh">Layar penuh</button>');
-document.querySelectorAll("#vs .ib").forEach(function(b){if(!b.title)b.title=b.textContent.trim();b.setAttribute("aria-label",b.title);});
-function fs(d){var c=parseFloat(getComputedStyle(ed).getPropertyValue("--ed-fs"))||14,n=Math.max(10,Math.min(26,c+d));ed.style.setProperty("--ed-fs",n+"px");ed.style.setProperty("--ed-lh",Math.round(n*1.65)+"px");ed.dispatchEvent(new Event("scroll"));}
-function full(on){vs.classList.toggle("hdfull",on);document.body.style.overflow=on?"hidden":"";}
-mb.parentNode.addEventListener("click",function(e){var b=e.target.closest(".vsx");if(!b)return;if(b.dataset.a==="zi")fs(1);else if(b.dataset.a==="zo")fs(-1);else full(!vs.classList.contains("hdfull"));});
-addEventListener("keydown",function(e){if(e.key==="Escape"&&vs.classList.contains("hdfull"))full(false);});
+  var sp=document.getElementById("hdSplash");
+  if(!sp)return;
+  var lg=sp.querySelector(".log"),sg=sp.querySelector(".seg"),pc=document.getElementById("hdPc");
+  var done=false,n=0,v=0;
+  var T=["Inisialisasi modul inti","Memuat editor kode","Menerapkan tema HD Max Pro","Sistem siap"];
+  try{if(sg){for(var q=0;q<10;q++)sg.appendChild(document.createElement("i"));}}catch(_){}
+  function end(){
+    if(done)return;done=true;
+    try{sp.classList.add("out");}catch(_){}
+    setTimeout(function(){try{sp.remove();}catch(_){try{sp.style.display="none";}catch(__){}}},400);
+  }
+  var iv=setInterval(function(){
+    v=Math.min(100,v+8);
+    try{if(pc)pc.textContent=("00"+v).slice(-3)+"%";}catch(_){}
+    try{
+      var f=Math.floor(v/10);
+      if(sg){[].forEach.call(sg.children,function(x,j){x.classList.toggle("on",j<f);});}
+      while(n<=Math.min(Math.floor(v/26),3)){
+        if(lg){var d=document.createElement("div");d.innerHTML="<b>[ OK ]</b> "+T[n++];lg.appendChild(d);}
+        else n++;
+      }
+    }catch(_){}
+    if(v>=100){clearInterval(iv);setTimeout(end,300);}
+  },50);
+  // hard fail-safe: never stay on splash > 3.5s
+  setTimeout(end,3500);
+  try{sp.addEventListener("click",end);}catch(_){}
+  try{addEventListener("keydown",function(e){if(e.key==="Escape"||e.key==="Enter")end();});}catch(_){}
+  try{
+    var sk=document.getElementById("skinBtn");
+    if(sk&&!document.getElementById("hdSet")){
+      var g=document.createElement("button");g.className="theme";g.id="hdSet";g.type="button";g.title="Pengaturan";g.textContent="Pengaturan";
+      sk.after(g);
+      g.addEventListener("click",function(){var t=document.querySelector('[data-tab="setelan"]');if(t)t.click();scrollTo({top:0,behavior:"smooth"});});
+    }
+  }catch(_){}
+  try{
+    var vs=document.getElementById("vs"),ed=document.getElementById("ed"),mb=document.querySelector(".mbar .ttl");
+    if(vs&&ed&&mb&&!mb.parentNode.querySelector(".vsx")){
+      mb.insertAdjacentHTML("afterend",'<button class="vsx" data-a="zo" type="button" title="Perkecil">A-</button><button class="vsx" data-a="zi" type="button" title="Perbesar">A+</button><button class="vsx" data-a="fs" type="button" title="Layar penuh">Layar penuh</button>');
+      function fs(d){var c=parseFloat(getComputedStyle(ed).getPropertyValue("--ed-fs"))||14,n=Math.max(10,Math.min(26,c+d));ed.style.setProperty("--ed-fs",n+"px");ed.style.setProperty("--ed-lh",Math.round(n*1.65)+"px");}
+      function full(on){vs.classList.toggle("hdfull",on);document.body.style.overflow=on?"hidden":"";}
+      mb.parentNode.addEventListener("click",function(e){var b=e.target.closest(".vsx");if(!b)return;if(b.dataset.a==="zi")fs(1);else if(b.dataset.a==="zo")fs(-1);else full(!vs.classList.contains("hdfull"));});
+      addEventListener("keydown",function(e){if(e.key==="Escape"&&vs.classList.contains("hdfull"))full(false);});
+    }
+  }catch(_){}
 })();
-(function(){var c=document.getElementById("collect");if(!c||c.querySelector(".hero"))return;
-c.insertAdjacentHTML("afterbegin",'<div class="hero"><span class="tg"><i></i>Sistem aktif</span><h2><span style="--n:0">Kumpulkan.</span><span style="--n:1"><em>Kemas.</em></span><span style="--n:2"><u>Jalankan.</u></span></h2><p>Tempel alamat game, C.Ziperr menangkap resource-nya dan mengemasnya jadi ZIP yang siap diedit.</p><div class="hs"><div><b>6</b><small>Lapisan resource</small></div><div><b>ZIP</b><small>Siap edit di Workspace</small></div><div><b>LOG</b><small>Catatan tiap berkas</small></div></div></div>');
-var h=c.querySelector(".head");if(h)h.style.display="none";})();
+(function(){
+  try{
+    var c=document.getElementById("collect");
+    if(!c||c.querySelector(".hero"))return;
+    c.insertAdjacentHTML("afterbegin",'<div class="hero"><span class="tg"><i></i>Sistem aktif</span><h2><span style="--n:0">Kumpulkan.</span><span style="--n:1"><em>Kemas.</em></span><span style="--n:2"><u>Jalankan.</u></span></h2><p>Tempel alamat game, C.Ziperr menangkap resource dan mengemasnya jadi ZIP.</p></div>');
+    var h=c.querySelector(".head");if(h)h.style.display="none";
+  }catch(_){}
+})();
 </script>
 
 
