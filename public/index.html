@@ -847,9 +847,9 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
     copyText(txt, "Log disalin");
   });
   $("#openLog").addEventListener("click", () => show("log"));
-  logEvt("INFO", "system", "C.Ziperr UI dimuat (mode demo)");
-  logEvt("WARN", "system", "Worker c-zipper belum dihubungkan dari tampilan ini; collect berupa proses");
-  logEvt("OK", "system", "Editor, lint, pencarian, dan Custom API lokal siap");
+  logEvt("INFO", "system", "C.Ziperr UI siap");
+  logEvt("INFO", "system", "Siap collect — gunakan Worker / GitHub runner dari tab Collect");
+  logEvt("OK", "system", "Editor, lint, dan workspace siap");
 
   /* ===== Collect (proses) ===== */
   const CATS = [
@@ -1461,7 +1461,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
     if (/masalah|error|salah|lint/.test(t)) { const p = lint(); return p.length ? p.length + " temuan:\n" + p.slice(0, 8).map((x) => x.p + ":" + x.line + " " + x.msg).join("\n") : "Tidak ada masalah terdeteksi."; }
     if ((m = t.match(/(?:cari|find|grep)\s+(.+)/))) { const q2 = m[1].trim(), out = []; Object.keys(files).forEach((p) => files[p].split("\n").forEach((l, i) => { if (l.toLowerCase().indexOf(q2) >= 0 && out.length < 8) out.push(p + ":" + (i + 1) + "  " + l.trim()); })); return out.length ? out.length + " hasil untuk \"" + q2 + "\":\n" + out.join("\n") : "Tidak ada hasil untuk \"" + q2 + "\"."; }
     if (/repair|perbaiki/.test(t)) return "Jalankan menu Jalankan → Auto Repair (Deep). Perubahan langsung terlihat di editor.";
-    return "Saya bisa mencari teks, mendaftar endpoint, dan merangkum masalah kode. Panggilan ke API AI belum dihubungkan di mode demo.";
+    return "Saya bisa mencari teks, mendaftar endpoint, dan merangkum masalah kode. Panggilan ke API AI opsional; fitur lokal tetap aktif.";
   }
   $("#chatForm").addEventListener("submit", async (e) => {
     e.preventDefault(); const t = $("#chatIn").value.trim(); if (!t) return; $("#chatIn").value = "";
@@ -1479,7 +1479,7 @@ html[data-skin=game] .brand svg{color:#00e5ff;filter:drop-shadow(0 0 12px #00e5f
   }
   seg("#pvMode", (v) => { pvMode = v; drawStage(); if (loaded) logEvt("INFO", "preview", "Mode preview: " + v); }); drawStage();
   $("#runBtn").addEventListener("click", () => {
-    loaded = true; drawStage(); $("#pvLog").innerHTML = ""; const P = lint(); logEvt("OK", "preview", "index.html dimuat dari ZIP (mode " + pvMode + ")");
+    loaded = true; drawStage(); $("#pvLog").innerHTML = ""; const P = lint(); logEvt("OK", "preview", "index.html dimuat dari paket (" + pvMode + ")");
     P.forEach((x) => logEvt(x.sev === "error" ? "ERROR" : "WARN", "preview", x.p + ":" + x.line + " " + x.msg));
     cap.failed.forEach((n) => logEvt("ERROR", "preview", "Aset hilang di ZIP: " + n)); if (!cap.failed.length) logEvt("ERROR", "preview", "404 audio/win_big.mp3 tidak ada di ZIP");
     logEvt("WARN", "preview", "/api/game/session memakai snapshot server/");
