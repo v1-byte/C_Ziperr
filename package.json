@@ -33,7 +33,11 @@
     "generate:integrity": "node scripts/generate-integrity.mjs --dir native-game",
     "package:native": "node scripts/generate-asset-manifest.mjs --dir native-game && node scripts/generate-integrity.mjs --dir native-game && node scripts/package-native-game.js",
     "post-collect:offline": "node scripts/post-collect-offline.mjs",
-    "deploy:full": "bash deploy.sh"
+    "deploy:full": "bash deploy.sh",
+    "verify:offline": "node scripts/verify-offline.mjs",
+    "verify:offline:browser": "node scripts/verify-offline.mjs --browser",
+    "offline:pipeline": "node scripts/post-collect-offline.mjs",
+    "offline:full": "node scripts/post-collect-offline.mjs"
   },
   "dependencies": {
     "@cloudflare/playwright": "^1.3.0",

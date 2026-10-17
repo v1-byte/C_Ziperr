@@ -1,0 +1,15 @@
+{
+  "version": "v2-final",
+  "game": "native-shell",
+  "offlineReady": true,
+  "server": "custom /api/game/*",
+  "generatedAt": "2026-10-17T00:00:00.000Z",
+  "checklist": {
+    "shellInjected": true,
+    "serviceWorker": true,
+    "networkHijack": true,
+    "audioUnlock": true,
+    "assetManifest": true,
+    "integrity": true
+  }
+}

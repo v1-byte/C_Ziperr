@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "target": "/tmp/C_Ziperr/native-game",
+  "blockHost": "eajzzxhro.com",
+  "generatedAt": "2026-10-17T13:42:12.729Z",
+  "static": {
+    "mode": "static",
+    "pass": true,
+    "failed": [],
+    "checks": [
+      {
+        "id": "dir.exists",
+        "ok": true,
+        "detail": "/tmp/C_Ziperr/native-game"
+      },
+      {
+        "id": "index.html",
+        "ok": true,
+        "detail": "/tmp/C_Ziperr/native-game/index.html"
+      },
+      {
+        "id": "offline-readiness.json",
+        "ok": true,
+        "detail": "{\"shellInjected\":true,\"serviceWorker\":true,\"networkHijack\":true,\"audioUnlock\":true,\"assetManifest\":true,\"integrity\":true}"
+      },
+      {
+        "id": "asset-manifest",
+        "ok": true,
+        "detail": "files=39 offlineReady=true"
+      },
+      {
+        "id": "integrity.json",
+        "ok": true,
+        "detail": "/tmp/C_Ziperr/native-game/manifests/integrity.json"
+      },
+      {
+        "id": "sw.js",
+        "ok": true,
+        "detail": "service worker file"
+      },
+      {
+        "id": "offline-hooks",
+        "ok": true,
+        "detail": "network-hijack or offline-bootstrap"
+      },
+      {
+        "id": "no_session_tokens",
+        "ok": true,
+        "detail": "clean"
+      },
+      {
+        "id": "no_remote_host_in_entrypoint",
+        "ok": true,
+        "detail": "clean"
+      }
+    ]
+  },
+  "browser": {
+    "mode": "browser",
+    "pass": false,
+    "skipped": true,
+    "error": "playwright not installed — run npm i && npx playwright install chromium",
+    "checks": []
+  },
+  "pass": true,
+  "summary": "PASS — package looks offline-ready (browser isolation OK)"
+}

@@ -226,3 +226,15 @@ if (args.mergeNative) {
   copyDir(outDir, assetsDest);
   console.log("Merged into", assetsDest);
 }
+
+// Auto step-4 verification (static; use --browser separately for network isolation)
+try {
+  execFileSync(
+    process.execPath,
+    [path.join(repoRoot, "scripts/verify-offline.mjs"), "--dir", outDir, "--block-host", "eajzzxhro.com"],
+    { stdio: "inherit" }
+  );
+} catch (e) {
+  console.warn("verify-offline reported issues (exit non-zero). See offline-verify-report.json");
+  process.exitCode = 1;
+}
