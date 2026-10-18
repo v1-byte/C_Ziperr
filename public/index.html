@@ -1,27 +1,85 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
-/* Workspace full-bleed: brand disembunyikan, kiri-kanan rata HP */
+/* Workspace nyaman HP: full-bleed + editor lega */
 html.ws-full body {
   padding-left: 0 !important;
   padding-right: 0 !important;
+  overflow: hidden;
 }
 html.ws-full main {
-  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   max-width: none;
 }
 html.ws-full .app { max-width: none; margin: 0; }
 html.ws-full #workspace {
   gap: 0;
-  min-height: calc(100dvh - 72px - env(safe-area-inset-bottom, 0px));
+  min-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px));
 }
 html.ws-full #workspace .head { display: none; }
 html.ws-full #workspace .vs,
 html.ws-full #vs {
   border-radius: 0;
-  min-height: calc(100dvh - 72px - env(safe-area-inset-bottom, 0px));
+  height: 100%;
+  min-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px));
   border-left: 0;
   border-right: 0;
+  border-bottom: 0;
 }
 html.ws-full header.brand[hidden] { display: none !important; }
+html.ws-full nav.tabs {
+  padding-top: 4px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+}
+/* Touch targets & readable code on phone */
+@media (max-width: 720px) {
+  html.ws-full .mbar {
+    padding: 6px 8px;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  html.ws-full .mbar .mb,
+  html.ws-full .mbar button,
+  html.ws-full .mbar .vsx {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  html.ws-full .act button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  html.ws-full .ed {
+    --ed-fs: 15px;
+    --ed-lh: 24px;
+  }
+  html.ws-full #code,
+  html.ws-full .ed textarea {
+    font-size: 15px !important;
+    line-height: 24px !important;
+    padding: 12px 10px !important;
+    caret-color: var(--accent);
+  }
+  html.ws-full .tabs-bar,
+  html.ws-full .tb {
+    min-height: 40px;
+  }
+  html.ws-full .status {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  /* Sembunyikan menu bar teks panjang di HP — fokus editor */
+  html.ws-full .mbar .mb > span:not(.ttl) {
+    /* keep */
+  }
+}
+/* Empty state lebih lega */
+html.ws-full .idle,
+html.ws-full #welcome {
+  padding: 28px 20px !important;
+}
 
 </style></head><body>
 <title>C.Ziperr</title>
@@ -972,7 +1030,17 @@ html[data-skin=hd] .dll .nm{font-size:12px}
     if (brand) brand.hidden = (id === "workspace");
     document.documentElement.classList.toggle("ws-full", id === "workspace");
     window.scrollTo(0, 0);
-    if (id === "workspace") { renderEditor(); }
+    if (id === "workspace") {
+      // HP: lipat explorer + panel kanan biar editor lega
+      const vs = document.getElementById("vs");
+      if (vs && window.matchMedia("(max-width: 720px)").matches) {
+        vs.classList.add("noside", "norside");
+        const panel = document.getElementById("panel");
+        if (panel) panel.hidden = true;
+      }
+      renderEditor();
+      try { setTimeout(function(){ var ta=document.getElementById("code"); if(ta) ta.focus(); }, 200); } catch(_){}
+    }
     if (id === "log") { unseen = 0; updBd(); const b = $("#logbox"); b.scrollTop = b.scrollHeight; }
   }
   $$("[data-tab]").forEach((b) => b.addEventListener("click", () => show(b.dataset.tab)));
