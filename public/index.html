@@ -2321,6 +2321,124 @@ draw();})();
     }, 900);
   }
 
+  function classifyPath(name) {
+    var n = String(name || "").toLowerCase();
+    if (/\.(html?|htm)$/.test(n) || /(^|\/)index\.html?$/.test(n)) return "html";
+    if (/\.(js|mjs|cjs|jsx|ts|tsx)$/.test(n)) return "js";
+    if (/\.(json|atlas|xml|csv|txt|md)$/.test(n)) return "data";
+    if (/(^|\/)(api|server)\//.test(n) || /api[-_]?map/.test(n)) return "api";
+    if (/(^|\/)cdn\//.test(n)) return "cdn";
+    if (/\.(png|jpe?g|gif|webp|svg|ico|bmp|mp3|ogg|wav|m4a|mp4|webm|wasm|woff2?|ttf|otf|css)$/.test(n)) return "asset";
+    return "asset";
+  }
+
+  /** List files from a ZIP ArrayBuffer (local header scan; sizes from headers). */
+  function listZipEntries(buf) {
+    var u = new Uint8Array(buf);
+    var v = new DataView(buf);
+    var out = [];
+    var i = 0;
+    while (i + 30 <= u.length) {
+      if (v.getUint32(i, true) !== 0x04034b50) {
+        // seek next possible signature
+        i++;
+        continue;
+      }
+      var gp = v.getUint16(i + 6, true);
+      var method = v.getUint16(i + 8, true);
+      var csz = v.getUint32(i + 18, true);
+      var usz = v.getUint32(i + 22, true);
+      var nl = v.getUint16(i + 26, true);
+      var xl = v.getUint16(i + 28, true);
+      var nameBytes = u.subarray(i + 30, i + 30 + nl);
+      var name = "";
+      try { name = new TextDecoder().decode(nameBytes); } catch (_) { name = "file"; }
+      if (!name.endsWith("/")) {
+        var kb = Math.max(1, Math.round((usz || csz || 1) / 1024));
+        out.push({ n: name.replace(/^\.?\//, ""), kb: kb, k: classifyPath(name), csz: csz, usz: usz, method: method });
+      }
+      // zip64 / data descriptor not fully handled — advance by local header + data when sizes known
+      if (csz === 0xffffffff || (gp & 0x08)) {
+        // data descriptor or zip64 — stop safe scan, return what we have
+        break;
+      }
+      i = i + 30 + nl + xl + csz;
+    }
+    return out;
+  }
+
+  async function ingestArtifactToUI(artifact, meta) {
+    meta = meta || {};
+    if (!artifact || !artifact.id) {
+      finishUI(true, meta.message || "Selesai (tanpa artifact id)");
+      return;
+    }
+    setProgUI(92, "Mengunduh artifact #" + artifact.id + "…");
+    try {
+      var res = await origFetch("/api/github/artifact?artifact_id=" + encodeURIComponent(artifact.id));
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        // still show size from metadata
+        var kbMeta = Math.round((artifact.size || 0) / 1024);
+        if (typeof window.__dlStart === "function") {
+          window.__dlStart([{ n: "artifact-" + artifact.id + ".zip", kb: kbMeta || 1, k: "data" }]);
+        }
+        if (typeof window.__dl === "function") {
+          window.__dl({ n: "artifact-" + artifact.id + ".zip", kb: kbMeta || 1, k: "data" }, "ok");
+        }
+        setProgUI(100, "Artifact tersedia (" + kbMeta + " KB) — unduh manual jika gagal proxy", {
+          files: 1,
+          sizeLabel: kbMeta + " KB"
+        });
+        finishUI(true, (meta.message || "Selesai") + " · proxy artifact: " + (err.error || res.status));
+        return;
+      }
+      var buf = await res.arrayBuffer();
+      var entries = listZipEntries(buf);
+      // GitHub artifact is often a nested zip — if single .zip inside, try deeper one level via names only
+      if (entries.length === 1 && /\.zip$/i.test(entries[0].n)) {
+        // can't inflate without library — treat outer listing
+      }
+      if (!entries.length) {
+        entries = [{ n: "game-resources.zip", kb: Math.max(1, Math.round(buf.byteLength / 1024)), k: "data" }];
+      }
+      if (typeof window.__dlStart === "function") {
+        window.__dlStart(entries.map(function (e) { return { n: e.n, kb: e.kb, k: e.k }; }));
+      }
+      var totalKb = 0;
+      entries.forEach(function (e) {
+        totalKb += e.kb;
+        if (typeof window.__dl === "function") {
+          try { window.__dl({ n: e.n, kb: e.kb, k: e.k }, "ok"); } catch (_) {}
+        }
+      });
+      // auto-download full artifact for user
+      try {
+        var blob = new Blob([buf], { type: "application/zip" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "c-ziperr-github-" + artifact.id + ".zip";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      } catch (_) {}
+
+      setProgUI(100, "Selesai · " + entries.length + " berkas · " + totalKb + " KB", {
+        files: entries.length,
+        sizeLabel: totalKb + " KB"
+      });
+      if (el("stOk")) el("stOk").textContent = String(entries.length);
+      if (el("stSize")) el("stSize").textContent = totalKb + " KB";
+      var asS = el("asS");
+      if (asS) asS.textContent = "Selesai";
+      var asx = el("asx");
+      if (asx) { asx.classList.remove("run"); asx.classList.add("fin"); }
+      finishUI(true, (meta.message || "Selesai di GitHub Actions") + " · " + entries.length + " berkas di ZIP");
+    } catch (e) {
+      finishUI(true, (meta.message || "Selesai") + " · gagal baca ZIP: " + (e.message || e));
+    }
+  }
+
   function startGithubPoll(runId) {
     if (pollTimer) clearInterval(pollTimer);
     var t0 = Date.now();
@@ -2339,7 +2457,7 @@ draw();})();
         var pct = 15;
         if (status === "queued") pct = 10;
         else if (status === "in_progress") pct = Math.min(90, 25 + ticks * 2);
-        else if (status === "completed") pct = data.conclusion === "success" ? 100 : 0;
+        else if (status === "completed") pct = data.conclusion === "success" ? 95 : 0;
         var elapsed = ((Date.now() - t0) / 1000).toFixed(1).replace(".", ",") + " s";
         setProgUI(pct, phase, { elapsed: elapsed });
         if (status === "completed") {
@@ -2351,7 +2469,8 @@ draw();})();
               msg += " · artifact #" + data.artifact.id + " (" + Math.round((data.artifact.size || 0) / 1024) + " KB)";
             }
             if (data.html_url) msg += " · " + data.html_url;
-            finishUI(true, msg);
+            // sync donut + daftar unduhan from real artifact
+            await ingestArtifactToUI(data.artifact, { message: msg, html_url: data.html_url });
           } else {
             finishUI(false, "GitHub Actions gagal: " + (data.conclusion || "unknown") + (data.html_url ? " · " + data.html_url : ""));
           }
