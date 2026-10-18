@@ -14,13 +14,15 @@ APK membutuhkan koneksi internet untuk memuat aplikasi web utama dan API capture
 
 ## Pembaruan APK
 
-Mulai versi 1.2.7 (versionCode 14), APK memeriksa manifest rilis GitHub saat aplikasi dibuka, kembali ke foreground, dan berkala ketika tetap aktif. Jika versionCode terbaru lebih tinggi, banner update menawarkan unduhan APK secara resumable; setelah ukuran file cocok dengan manifest, APK membuka Android Package Installer.
+Mulai versi 1.2.8 (versionCode 15), APK memeriksa manifest rilis GitHub saat aplikasi dibuka, kembali ke foreground, dan berkala ketika tetap aktif. Jika versionCode terbaru lebih tinggi, banner update menawarkan unduhan APK secara resumable; setelah ukuran file cocok dengan manifest, APK membuka Android Package Installer.
 
 Android tetap mewajibkan pengguna menyetujui pemasangan dan mungkin meminta izin **Izinkan pemasangan dari sumber ini** untuk C.Ziperr. Aplikasi tidak memasang APK diam-diam. Workflow rilis menerbitkan `update.json` bersama APK dan memverifikasi fingerprint sertifikat signing historis sebelum rilis, agar pembaruan tidak terbit jika tanda tangan berubah dan ditolak Android.
 
 ## Penyimpanan ZIP hasil Collect
 
-Pada build native versi `1.2.5` atau lebih baru, ZIP hasil System Collect, GitHub Actions, R2, dan Workspace dari WebView disimpan ke direktori internal aplikasi melalui `expo-file-system`. APK menampilkan notifikasi setelah file berhasil disimpan. Build APK lama tetap memakai perilaku download WebView biasa.
+Pada build native versi `1.2.8` atau lebih baru, ZIP hasil System Collect, GitHub Actions, R2, dan Workspace dari WebView dikirim bertahap melalui bridge dengan back-pressure, lalu ditulis langsung ke file sementara dan dipindahkan ke direktori dokumen internal persisten aplikasi melalui `expo-file-system`. APK memeriksa ukuran akhir, menampilkan progres, dan menyediakan daftar untuk membuka atau menghapus ZIP tersimpan. File tetap privat untuk aplikasi C.Ziperr; file tidak otomatis muncul di folder Downloads bersama.
+
+Penyimpanan tetap bergantung pada unduhan yang berhasil, ruang internal yang cukup, dan izin sistem. Paket besar dapat gagal jika perangkat kehabisan ruang atau OS menutup aplikasi. Aplikasi tidak dapat menjamin unduhan tanpa batas maupun mengambil resource yang dibatasi DRM, autentikasi, atau kontrol akses.
 
 ## Konfigurasi AI Worker
 

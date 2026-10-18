@@ -2319,7 +2319,7 @@ draw();})();
     while (lastFilesSynced < filesCount) {
       lastFilesSynced++;
       var i = lastFilesSynced;
-      var k = i % 6 === 0 ? "html" : (i % 6 === 1 ? "js" : (i % 6 === 2 ? "asset" : (i % 6 === 3 ? "data" : (i % 6 === 4 ? "cdn" : "api")));
+      var k = ["html", "js", "asset", "data", "cdn", "api"][i % 6];
       var kb = sizeKb && filesCount ? Math.max(1, Math.round(sizeKb / filesCount)) : 1;
       if (typeof window.__dl === "function") {
         try { window.__dl({ n: "resource-" + i, kb: kb, k: k }, "ok"); } catch (_) {}
