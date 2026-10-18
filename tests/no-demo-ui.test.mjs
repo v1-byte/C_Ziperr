@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
 const worker = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
 const collector = await readFile(new URL("../scripts/collect.js", import.meta.url), "utf8");
+const androidApp = await readFile(new URL("../android-app/app/index.tsx", import.meta.url), "utf8");
 
 test("collect and analysis screens do not generate demo ZIPs or synthetic progress entries", () => {
   assert.doesNotMatch(html, /Jalankan ZIP contoh|game-contoh\.zip|contoh-game\.com|Coba: "cari spin"|resource-\d+|function stub\(|demo-001|respons contoh/i);
@@ -38,4 +39,24 @@ test("workspace does not expose simulated terminal, canned AI chat, or old reel 
 
 test("system log starts empty instead of showing fabricated startup activity", () => {
   assert.doesNotMatch(html, /C\.Ziperr UI siap|Siap collect — Worker \/ GitHub runner dari tab Collect|Editor, lint, dan workspace siap/);
+});
+
+test("the real asset donut summary remains visible", () => {
+  assert.match(html, /\.asx\{display:grid;gap:14px\}/);
+  assert.doesNotMatch(html, /#asx\{display:none!important\}/);
+  assert.match(html, /id="asx"/);
+});
+
+test("a phone-stored collect ZIP can be opened in Workspace and exported again", () => {
+  assert.match(html, /id="collectSaveNote"/);
+  assert.match(html, /function readWorkspaceZip\(source, filename\)/);
+  assert.match(html, /github-artifact/i);
+  assert.match(html, /window\.__CZIPERR_IMPORT_SAVED_ZIP = async function/);
+  assert.match(html, /type: "open_saved_zip_list"/);
+  assert.match(html, /function exportZip\(\) \{ saveBlob\(makeZip\(files\)/);
+  assert.match(androidApp, /loadSavedZipToWorkspace/);
+  assert.match(androidApp, /open_saved_zip_list/);
+  assert.match(androidApp, /load_saved_zip_ack/);
+  assert.match(androidApp, /FileSystem\.readAsStringAsync\(file\.uri,[\s\S]*?position,[\s\S]*?length/);
+  assert.match(androidApp, />Workspace<\/Text>/);
 });

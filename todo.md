@@ -12,3 +12,8 @@
 - Iframe hasil rewrite dibatasi ke lebar/tinggi viewport untuk atribut/style ekstrem; sandbox tetap dipertahankan.
 - Tes regresi engine-specific repair, resume, SSE, iframe, dan UI ditambahkan.
 - [x] Tombol Scan Error menjalankan audit A Core Raa dari evidence dan menambahkan hasil ke panel detail yang sudah ada; layout/style tidak diubah.
+
+
+## Pemulihan donut dan alur ZIP ponsel (2026-10-18)
+- [x] Kartu donut/ringkasan aset yang sudah ada kembali terlihat; jangan menghapus menu atau fitur yang sudah ada.
+- [x] Hasil collect dapat diunduh dan disimpan di memori HP sebelum dibuka di Workspace; ZIP tersimpan dapat dibuka untuk mengedit kode dan diekspor kembali sebagai ZIP baru.

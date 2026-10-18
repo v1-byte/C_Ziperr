@@ -834,7 +834,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 .asx .dt ul{list-style:none;margin:0;padding:0;max-height:220px;overflow:auto}
 .asx .dt li{display:flex;justify-content:space-between;gap:12px;padding:6px 12px;font:12.5px var(--f-mono);border-bottom:1px solid #1d1d1d;animation:dlin .2s steps(4) both}.asx .dt li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.asx .dt li span:last-child{color:var(--muted);flex:none}
 .asx .dt .e{display:block;padding:14px 12px;color:var(--muted);font:13px var(--f-body)}
-#live>.grid2,#live>#detCard,#asx{display:none!important}
+#live>.grid2,#live>#detCard{display:none!important}
 </style>
 
 <div id="hdSplash" role="status" aria-label="Memuat C.Ziperr"><div class="bg"></div><div class="scan"></div><i class="cr a"></i><i class="cr b"></i><i class="cr c"></i><i class="cr d"></i><div class="top"><span>C.ZIPERR // BOOT</span><b>● LIVE</b><span>HD MAX PRO v2</span></div><div class="ct"><div class="rd"><div class="sw"></div><u style="top:34%;left:66%"></u><u style="top:68%;left:30%;animation-delay:.4s"></u><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M50 14A26 26 0 1 0 50 50"/><circle cx="32" cy="32" r="11"/><path d="M21 32h22M32 21c-6 6-6 16 0 22M32 21c6 6 6 16 0 22" stroke-width="2"/></svg></div><h1>C.ZIPERR</h1><p>Sistem kumpul, edit, dan kemas resource game web</p><div class="log"></div><div class="seg"></div><div class="pc"><span>INISIALISASI</span><span id="hdPc">000%</span></div></div><div class="sk">[ KETUK UNTUK LEWATI ]</div></div>
@@ -932,6 +932,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
         <div class="card rise" id="doneCard" hidden>
           <h2>Collect selesai <span class="pill ok">live</span></h2>
           <p class="muted" id="doneTxt"></p>
+          <p class="note" id="collectSaveNote" style="margin-top:10px">Simpan ZIP asli ke HP terlebih dahulu. Setelah tersimpan, buka “File tersimpan” lalu pilih “Workspace” untuk mengedit kode. Gunakan Ekspor ZIP untuk menyimpan versi hasil edit sebagai ZIP baru.</p>
           <div style="height:12px"></div>
           <div class="row"><button class="btn" id="dlZip2" type="button" disabled>Unduh ZIP asli</button><button class="btn" id="toPrev" type="button">Analisis ZIP di Workspace</button><button class="btn ghost" id="toWs" type="button">Buka di Workspace</button><button class="btn ghost" id="toErr" type="button">Lihat log error</button></div>
           <p class="note" style="margin-top:10px">Folder <span class="mono">server/</span> hanya snapshot respons API, bukan backend yang hidup.</p>
@@ -1218,7 +1219,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   seg("#capMode", (v) => { cap.mode = v; });
   $("#resetBtn").addEventListener("click", () => { if (window.__cZiperrStopPoll) window.__cZiperrStopPoll(); cap.running = false; $("#live").hidden = true; $("#live").style.display = "none"; $("#resetBtn").hidden = true; $("#startBtn").disabled = false; $("#url").focus(); });
   $("#toPrev").addEventListener("click", () => show("preview"));
-  $("#toWs").addEventListener("click", () => show("workspace"));
+  $("#toWs").addEventListener("click", () => { if (cap.entries.length) toWorkspace(); else show("workspace"); });
   $("#toErr").addEventListener("click", () => { lf.lvl = "ERROR"; $$("#logStats .stat").forEach((x) => x.setAttribute("aria-pressed", x.dataset.lvl === "ERROR" ? "true" : "false")); renderLog(); show("log"); });
   $("#live").style.display = "none"; initDonut();
 
@@ -1757,6 +1758,14 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     }
     return out;
   }
+  async function readWorkspaceZip(source, filename) {
+    let list = await readZip(await source.arrayBuffer());
+    if (/github-artifact/i.test(String(filename || ""))) {
+      const nested = list.filter((entry) => entry.data && /\.zip$/i.test(entry.name));
+      if (nested.length === 1) list = await readZip(await new Blob([nested[0].data], { type: "application/zip" }).arrayBuffer());
+    }
+    return list;
+  }
   function saveBlob(b, n) { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = n; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
   const zname = () => { try { return new URL($("#url").value.trim()).hostname.replace(/[^\w.-]/g, "_"); } catch (e) { return "game"; } };
   let latestCollectResult = { blob: null, artifactId: null, r2Url: null, filename: "", sizeBytes: 0 };
@@ -1787,7 +1796,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   function recordZipResult(filename, sizeBytes, blob, artifactId, r2Url) {
     latestCollectResult = { blob: blob || null, artifactId: artifactId || null, r2Url: r2Url || null, filename: filename, sizeBytes: Number(sizeBytes) || 0 };
     cap.entries = [{ k: "data", n: filename, kb: Math.max(1, Math.round((Number(sizeBytes) || 1) / 1024)), st: "ok" }];
-    setResultButtons(true, !!blob);
+    setResultButtons(true, !!(blob || artifactId || r2Url));
     if (typeof window.__dlStart === "function") window.__dlStart([{ n: filename, kb: Math.max(1, Math.round((Number(sizeBytes) || 1) / 1024)), k: "data" }]);
     if (typeof window.__dl === "function") window.__dl({ n: filename, kb: Math.max(1, Math.round((Number(sizeBytes) || 1) / 1024)), k: "data" }, "ok");
   }
@@ -1809,16 +1818,52 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   function guardReplace(go) { if (Object.keys(files).some(dirty)) ask({ title: "Ganti isi workspace?", text: "Ada perubahan yang belum disimpan. Memuat berkas baru menggantikan semua isi workspace.", ok: "Ganti" }, go); else go(); }
   const dz = $("#dz"), zin = $("#zipIn");
   async function zipFile(f) {
-    if (!/\.zip$/i.test(f.name) && f.type.indexOf("zip") < 0) { toast("Pilih berkas .zip"); return; }
+    if (!/\.zip$/i.test(f.name) && f.type.indexOf("zip") < 0) { toast("Pilih berkas .zip"); return false; }
     dz.classList.add("busy");
     try {
-      const list = await readZip(await f.arrayBuffer()), map = {}; let bin = 0;
+      const list = await readWorkspaceZip(f, f.name), map = {}; let bin = 0;
       list.forEach((x) => { if (!x.data || x.data.length > 2e6 || x.data.subarray(0, 4096).indexOf(0) >= 0) { bin++; return; } map[x.name.replace(/^\.?\/+/, "")] = new TextDecoder().decode(x.data); });
-      if (!Object.keys(map).length) { logEvt("ERROR", "workspace", "ZIP tidak berisi berkas teks: " + f.name); toast("ZIP tidak berisi berkas teks"); return; }
+      if (!Object.keys(map).length) { logEvt("ERROR", "workspace", "ZIP tidak berisi berkas teks: " + f.name); toast("ZIP tidak berisi berkas teks"); return false; }
       guardReplace(() => { loadMap(map, "ZIP " + f.name); if (bin) logEvt("WARN", "workspace", bin + " berkas biner dilewati (tidak bisa diedit)"); });
-    } catch (err) { logEvt("ERROR", "workspace", "Gagal memuat ZIP " + f.name + ": " + err.message, String(err.stack || err)); toast("Gagal memuat ZIP: " + err.message); }
+      return true;
+    } catch (err) { logEvt("ERROR", "workspace", "Gagal memuat ZIP " + f.name + ": " + err.message, String(err.stack || err)); toast("Gagal memuat ZIP: " + err.message); return false; }
     finally { dz.classList.remove("busy"); }
   }
+  const nativeZipTransfers = new Map();
+  window.__CZIPERR_IMPORT_SAVED_ZIP = async function (message) {
+    const id = String(message && message.id || ""), index = Number(message && message.index);
+    const reply = (error) => { if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === "function") window.ReactNativeWebView.postMessage(JSON.stringify({ type: "load_saved_zip_ack", id, index, error: error || null })); };
+    try {
+      if (!/^[a-zA-Z0-9_-]{6,100}$/.test(id)) throw new Error("ID transfer ZIP tidak valid.");
+      if (message.type === "load_saved_zip_start") {
+        if (nativeZipTransfers.size) throw new Error("Transfer ZIP lain masih berlangsung.");
+        const size = Number(message.size), chunks = Number(message.chunks);
+        if (!Number.isSafeInteger(size) || size <= 0 || !Number.isSafeInteger(chunks) || chunks <= 0) throw new Error("Ukuran ZIP tersimpan tidak valid.");
+        nativeZipTransfers.set(id, { filename: String(message.filename || "hasil-collect.zip"), size, chunks, next: 0, received: 0, parts: [] });
+        reply(null); return;
+      }
+      const transfer = nativeZipTransfers.get(id);
+      if (!transfer) throw new Error("Sesi pemuatan ZIP tidak ditemukan.");
+      if (message.type === "load_saved_zip_chunk") {
+        if (index !== transfer.next || typeof message.base64 !== "string") throw new Error("Urutan potongan ZIP tidak valid.");
+        const raw = atob(message.base64), bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        if (transfer.received + bytes.length > transfer.size) throw new Error("Data ZIP melewati ukuran file.");
+        transfer.parts.push(bytes); transfer.received += bytes.length; transfer.next++;
+        reply(null); return;
+      }
+      if (message.type === "load_saved_zip_complete") {
+        if (transfer.received !== transfer.size || transfer.next !== transfer.chunks || Number(message.chunks) !== transfer.chunks || Number(message.size) !== transfer.size) throw new Error("ZIP tersimpan tidak lengkap.");
+        const file = new File(transfer.parts, transfer.filename, { type: "application/zip" });
+        nativeZipTransfers.delete(id); show("workspace");
+        if (!await zipFile(file)) throw new Error("ZIP tidak dapat dimuat atau tidak berisi berkas teks yang bisa diedit.");
+        reply(null); return;
+      }
+      throw new Error("Jenis pesan pemuatan ZIP tidak dikenal.");
+    } catch (error) {
+      nativeZipTransfers.delete(id); reply(error && error.message || String(error));
+    }
+  };
   dz.addEventListener("click", (e) => { if (e.target !== zin) zin.click(); });
   dz.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); zin.click(); } });
   zin.addEventListener("change", () => { if (zin.files[0]) zipFile(zin.files[0]); zin.value = ""; });
@@ -1845,18 +1890,15 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     } catch (error) { modal("Unduhan gagal", error.message || String(error)); }
   }
   async function toWorkspace() {
-    if (!latestCollectResult.blob) {
-      modal("Workspace tidak memuat artifact besar", "ZIP GitHub besar diunduh langsung ke penyimpanan internal agar tidak dimuat penuh ke memori. Buka file ZIP tersimpan atau muat ZIP berukuran lebih kecil ke Workspace."); return;
+    if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === "function") {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: "open_saved_zip_list" }));
+      toast("Simpan ZIP ke HP dahulu, lalu pilih file tersimpan untuk mengedit."); return;
     }
-    try {
-      const list = await readZip(await latestCollectResult.blob.arrayBuffer()), map = {};
-      list.forEach((entry) => { if (entry.data && entry.data.length <= 2e6 && entry.data.subarray(0, 4096).indexOf(0) < 0) map[entry.name.replace(/^\.?\/+/, "")] = new TextDecoder().decode(entry.data); });
-      if (!Object.keys(map).length) { modal("Tidak ada berkas teks", "ZIP asli berhasil dibaca, tetapi tidak berisi berkas teks yang dapat diedit di Workspace."); return; }
-      guardReplace(() => { show("workspace"); loadMap(map, latestCollectResult.filename || "ZIP collect asli"); });
-    } catch (error) { modal("ZIP tidak dapat dibuka", error.message || String(error)); }
+    show("workspace");
+    toast("Pilih ZIP hasil collect yang sudah disimpan di HP.");
+    zin.click();
   }
   $("#dlZip").addEventListener("click", downloadZip); $("#dlZip2").addEventListener("click", downloadZip); $("#edZip").addEventListener("click", toWorkspace);
-  $("#toWs").addEventListener("click", () => { if (cap.entries.length) toWorkspace(); });
   $("#cpList").addEventListener("click", () => copyText(cap.entries.map((e) => e.st + "\t" + e.k + "\t" + e.n + "\t" + fsz(e.kb)).join("\n") || "(kosong)", "Daftar berkas disalin"));
 
   /* ===== PRO: kartu donut detail aset ===== */

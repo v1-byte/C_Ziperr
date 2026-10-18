@@ -8,7 +8,7 @@ import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
-const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.9';
+const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.3.0';
 const UPDATE_MANIFEST_URL = 'https://github.com/v1-byte/C_Ziperr/releases/latest/download/update.json';
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? 'com.fblabb.zipscope';
 const CURRENT_VERSION = Constants.expoConfig?.version ?? '0.0.0';
@@ -47,6 +47,7 @@ function parseUpdateManifest(value: unknown): UpdateManifest | null {
 }
 
 const DOWNLOAD_CHUNK_BYTES = 192 * 1024;
+const WORKSPACE_IMPORT_CHUNK_BYTES = 192 * 1024;
 const DOWNLOAD_BRIDGE = `
 (function () {
   if (window.__CZIPERR_DOWNLOAD_BRIDGE__) return true;
@@ -174,6 +175,7 @@ type ActiveInternalDownload = {
   handle: FileHandle;
 };
 type SavedZip = { name: string; size: number; uri: string };
+type WorkspaceImportWaiter = { resolve: () => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> };
 function formatFileSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -186,11 +188,14 @@ export default function CollectorApp() {
   const [dismissedVersionCode, setDismissedVersionCode] = useState(0);
   const [updateProgress, setUpdateProgress] = useState<number | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [workspaceImportProgress, setWorkspaceImportProgress] = useState<number | null>(null);
   const [savedFiles, setSavedFiles] = useState<SavedZip[]>([]);
   const [savedFilesVisible, setSavedFilesVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
   const activeDownloadRef = useRef<ActiveInternalDownload | null>(null);
   const directDownloadInProgress = useRef(false);
+  const workspaceImportWaitersRef = useRef(new Map<string, WorkspaceImportWaiter>());
+  const workspaceImportInProgressRef = useRef(false);
   const messageQueueRef = useRef<Promise<void>>(Promise.resolve());
   const updateCheckInFlight = useRef(false);
   const installInProgress = useRef(false);
@@ -226,6 +231,23 @@ export default function CollectorApp() {
     webViewRef.current?.injectJavaScript(`window.__CZIPERR_DOWNLOAD_ACK && window.__CZIPERR_DOWNLOAD_ACK(${payload}); true;`);
   };
 
+  const sendWorkspaceZipMessage = (message: Record<string, string | number>, index: number) => new Promise<void>((resolve, reject) => {
+    const id = String(message.id || ''), key = `${id}:${index}`;
+    if (!webViewRef.current) { reject(new Error('Workspace WebView belum siap.')); return; }
+    const timer = setTimeout(() => {
+      workspaceImportWaitersRef.current.delete(key);
+      reject(new Error('Workspace tidak merespons pemuatan ZIP.'));
+    }, 60_000);
+    workspaceImportWaitersRef.current.set(key, { resolve, reject, timer });
+    try {
+      webViewRef.current.injectJavaScript(`window.__CZIPERR_IMPORT_SAVED_ZIP && window.__CZIPERR_IMPORT_SAVED_ZIP(${JSON.stringify(message)}); true;`);
+    } catch (error) {
+      clearTimeout(timer);
+      workspaceImportWaitersRef.current.delete(key);
+      reject(error instanceof Error ? error : new Error('Gagal mengirim ZIP ke Workspace.'));
+    }
+  });
+
   const discardActiveDownload = (active: ActiveInternalDownload) => {
     try { active.handle.close(); } catch { /* handle may already be closed */ }
     try { if (active.partFile.exists) active.partFile.delete(); } catch { /* best-effort cleanup */ }
@@ -240,6 +262,21 @@ export default function CollectorApp() {
       const active = activeDownloadRef.current;
       if (active && String(message.id || '') === active.id) discardActiveDownload(active);
       Alert.alert('Simpan ZIP gagal', String(message.message || 'Download tidak dapat diproses.'));
+      return;
+    }
+    if (message.type === 'open_saved_zip_list') {
+      refreshSavedFiles();
+      setSavedFilesVisible(true);
+      return;
+    }
+    if (message.type === 'load_saved_zip_ack') {
+      const key = `${String(message.id || '')}:${Number(message.index)}`;
+      const waiter = workspaceImportWaitersRef.current.get(key);
+      if (!waiter) return;
+      clearTimeout(waiter.timer);
+      workspaceImportWaitersRef.current.delete(key);
+      if (message.error) waiter.reject(new Error(String(message.error)));
+      else waiter.resolve();
       return;
     }
     const id = String(message.id || '');
@@ -286,7 +323,7 @@ export default function CollectorApp() {
         partFile = null;
         refreshSavedFiles();
         setDownloadProgress(null);
-        Alert.alert('ZIP tersimpan', `${uniqueName} · ${formatFileSize(expectedSize)}\nTersimpan di memori internal aplikasi C.Ziperr. Buka “File tersimpan” untuk melihat atau membuka hasilnya.`);
+        Alert.alert('ZIP tersimpan', `${uniqueName} · ${formatFileSize(expectedSize)}\nTersimpan di memori internal aplikasi C.Ziperr. Buka “File tersimpan” lalu pilih “Workspace” untuk mengeditnya.`);
       } catch (error) {
         try { if (partFile?.exists) partFile.delete(); } catch { /* best-effort cleanup */ }
         setDownloadProgress(null);
@@ -370,7 +407,7 @@ export default function CollectorApp() {
         setDownloadProgress(null);
         refreshSavedFiles();
         acknowledgeDownload(id, active.nextIndex);
-        Alert.alert('ZIP tersimpan', `${active.filename} · ${formatFileSize(active.expectedSize)}\nTersimpan di memori internal aplikasi C.Ziperr. Buka “File tersimpan” untuk melihat atau membuka hasilnya.`);
+        Alert.alert('ZIP tersimpan', `${active.filename} · ${formatFileSize(active.expectedSize)}\nTersimpan di memori internal aplikasi C.Ziperr. Buka “File tersimpan” lalu pilih “Workspace” untuk mengeditnya.`);
       } catch (error) {
         const reason = error instanceof Error ? error.message : 'Tidak dapat menyelesaikan penyimpanan ZIP.';
         discardActiveDownload(active);
@@ -390,6 +427,40 @@ export default function CollectorApp() {
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'Tidak ada aplikasi yang dapat membuka ZIP ini.';
       Alert.alert('Tidak dapat membuka ZIP', `${reason}\nFile tetap tersimpan di aplikasi.`);
+    }
+  };
+
+  const loadSavedZipToWorkspace = async (file: SavedZip) => {
+    if (workspaceImportInProgressRef.current) return;
+    const id = `workspace-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    const chunks = Math.ceil(file.size / WORKSPACE_IMPORT_CHUNK_BYTES);
+    if (!Number.isSafeInteger(file.size) || file.size <= 0 || chunks <= 0) {
+      Alert.alert('ZIP tidak valid', 'File tersimpan kosong atau ukuran file tidak valid.');
+      return;
+    }
+    workspaceImportInProgressRef.current = true;
+    try {
+      setSavedFilesVisible(false);
+      setWorkspaceImportProgress(0);
+      await sendWorkspaceZipMessage({ type: 'load_saved_zip_start', id, index: -1, filename: file.name, size: file.size, chunks }, -1);
+      for (let index = 0, position = 0; position < file.size; index += 1, position += WORKSPACE_IMPORT_CHUNK_BYTES) {
+        const length = Math.min(WORKSPACE_IMPORT_CHUNK_BYTES, file.size - position);
+        const base64 = await FileSystem.readAsStringAsync(file.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+          position,
+          length,
+        });
+        if (!base64) throw new Error('Potongan ZIP tersimpan tidak dapat dibaca.');
+        await sendWorkspaceZipMessage({ type: 'load_saved_zip_chunk', id, index, base64 }, index);
+        setWorkspaceImportProgress(Math.min(99, Math.floor(((position + length) / file.size) * 100)));
+      }
+      await sendWorkspaceZipMessage({ type: 'load_saved_zip_complete', id, index: chunks, chunks, size: file.size }, chunks);
+      setWorkspaceImportProgress(null);
+    } catch (error) {
+      setWorkspaceImportProgress(null);
+      Alert.alert('Tidak dapat memuat ke Workspace', error instanceof Error ? error.message : 'ZIP tetap tersimpan di memori aplikasi.');
+    } finally {
+      workspaceImportInProgressRef.current = false;
     }
   };
 
@@ -561,10 +632,12 @@ export default function CollectorApp() {
               }}
             />
             {loading && <View style={styles.loading}><ActivityIndicator size="large" color="#5ee1c0" /><Text style={styles.loadingText}>Memuat C.Ziperr…</Text></View>}
-            {downloadProgress !== null && (
+            {(downloadProgress !== null || workspaceImportProgress !== null) && (
               <View style={styles.downloadBanner} accessibilityRole="summary">
                 <ActivityIndicator size="small" color="#5ee1c0" />
-                <Text style={styles.downloadBannerText}>Menyimpan ZIP ke internal · {downloadProgress}%</Text>
+                <Text style={styles.downloadBannerText}>
+                  {workspaceImportProgress !== null ? `Memuat ZIP ke Workspace · ${workspaceImportProgress}%` : `Menyimpan ZIP ke internal · ${downloadProgress}%`}
+                </Text>
               </View>
             )}
             <Pressable accessibilityRole="button" accessibilityLabel={`Lihat ${savedFiles.length} file ZIP tersimpan`} style={styles.savedFilesButton} onPress={() => { refreshSavedFiles(); setSavedFilesVisible(true); }}>
@@ -594,6 +667,9 @@ export default function CollectorApp() {
                       <Text style={styles.savedFileName} numberOfLines={2}>{file.name}</Text>
                       <Text style={styles.savedFileSize}>{formatFileSize(file.size)}</Text>
                     </View>
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${file.name} di Workspace`} disabled={workspaceImportProgress !== null} onPress={() => { void loadSavedZipToWorkspace(file); }} style={[styles.fileActionButton, styles.workspaceActionButton]}>
+                      <Text style={styles.fileActionText}>Workspace</Text>
+                    </Pressable>
                     <Pressable accessibilityRole="button" onPress={() => { void openSavedFile(file); }} style={styles.fileActionButton}>
                       <Text style={styles.fileActionText}>Buka</Text>
                     </Pressable>
@@ -603,7 +679,7 @@ export default function CollectorApp() {
                   </View>
                 ))}
               </ScrollView>
-              <Text style={styles.storageNote}>File ini tersimpan di ruang internal aplikasi dan dapat dihapus bila tidak diperlukan. Ruang HP yang penuh atau file yang gagal diunduh tetap dapat menghalangi penyimpanan.</Text>
+              <Text style={styles.storageNote}>Gunakan Workspace untuk mengedit berkas teks, lalu Ekspor ZIP untuk menyimpan versi baru. File tetap tersimpan di ruang internal aplikasi sampai dihapus.</Text>
             </View>
           </View>
         </Modal>
@@ -637,6 +713,7 @@ const styles = StyleSheet.create({
   savedFileName: { color: '#e6e9ee', fontSize: 12, fontWeight: '700' },
   savedFileSize: { color: '#9eacb4', fontSize: 11, marginTop: 4 },
   fileActionButton: { minWidth: 50, alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8, backgroundColor: '#234a43' },
+  workspaceActionButton: { minWidth: 74, backgroundColor: '#25564d' },
   fileActionText: { color: '#cffff2', fontSize: 11, fontWeight: '700' },
   deleteActionButton: { backgroundColor: '#3c292b' },
   deleteActionText: { color: '#ffc6c6' },
