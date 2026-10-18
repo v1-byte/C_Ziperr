@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm exec expo start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node scripts/web-wrapper-smoke.mjs",
+    "test": "node scripts/web-wrapper-smoke.mjs && node scripts/internal-download-protocol.test.mjs",
     "android": "pnpm exec expo run:android"
   },
   "dependencies": {

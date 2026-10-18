@@ -15,7 +15,7 @@
  *   AUTO_HISTORY     default 1
  *   SPIN_DELAY_MS    default 2200
  *   SEED_ZIP         optional path to seed ZIP
- *   MOCK_OFFLINE     1 to include mock/replay preparation metadata
+ *   MOCK_OFFLINE     1 to explicitly include mock/replay preparation metadata (default off)
  */
 import { chromium } from "playwright";
 import { zipSync, strToU8 } from "fflate";
@@ -48,7 +48,7 @@ const WAIT_SECONDS = COLLECT_OPTIONS.waitSeconds;
 const AUTO_SPINS = COLLECT_OPTIONS.autoSpins;
 const AUTO_HISTORY = COLLECT_OPTIONS.autoHistory;
 const SPIN_DELAY_MS = COLLECT_OPTIONS.spinDelayMs;
-const MOCK_OFFLINE = process.env.MOCK_OFFLINE !== "0";
+const MOCK_OFFLINE = process.env.MOCK_OFFLINE === "1";
 const LARGE_CAPTURE = /^(1|true|yes|on)$/i.test(String(process.env.LARGE_CAPTURE || "0"));
 function availableDiskBytes() {
   try {
@@ -165,7 +165,8 @@ async function captureMissingStaticAssets(page, resources, zipFiles, seen, faile
   // No fixed per-file cap: stop only when the runner's adaptive whole-run
   // resource budget or the workflow time window is reached.
   const maxTotalBytes = captureBudgetBytes;
-  const maxDurationMs = largeCapture ? 45 * 60 * 1000 : 6 * 60 * 1000;
+  // GitHub-hosted jobs are capped at six hours; reserve the final hour for ZIP packaging and upload.
+  const maxDurationMs = largeCapture ? 5 * 60 * 60 * 1000 : 6 * 60 * 1000;
   const deadline = Date.now() + maxDurationMs;
   let totalBytes = Object.values(zipFiles || {}).reduce((sum, data) => sum + (data?.byteLength || data?.length || 0), 0);
   let fetched = 0;
@@ -764,7 +765,11 @@ async function main() {
       fillPerPass,
       fillPasses,
       seedFromHtml,
-      { maxSingleFile: LARGE_CAPTURE ? 40 * 1024 * 1024 : 15 * 1024 * 1024, maxRawTotal: CAPTURE_BUDGET_BYTES }
+      {
+        maxSingleFile: LARGE_CAPTURE ? CAPTURE_BUDGET_BYTES : 15 * 1024 * 1024,
+        maxRawTotal: CAPTURE_BUDGET_BYTES,
+        allowRunnerScale: LARGE_CAPTURE
+      }
     );
     console.log("PROGRESS: fill_missing_done", JSON.stringify({
       fetched: fillReport.fetched,

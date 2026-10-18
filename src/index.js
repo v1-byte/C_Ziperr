@@ -539,12 +539,8 @@ async function handleRequest(request, env) {
             spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2500"),
             request_id: dispatchRequestId,
             seed_zip: String(body.seed_zip ?? body.seedZip ?? ""),
-            large_capture: String(
-              body.large_capture === false || body.large_capture === 0 || body.large_capture === "0"
-                ? "0"
-                : ([body.large_capture, body.unlimited, body.mode, "1"].some((value) => /^(1|true|yes|on|unlimited)$/i.test(String(value))) ? "1" : "1")
-            ),
-            mock_offline: String(body.mock_offline === false ? "0" : "1")
+            large_capture: String([body.large_capture, body.unlimited, body.mode].some((value) => /^(1|true|yes|on|unlimited)$/i.test(String(value))) ? "1" : "0"),
+            mock_offline: String(body.mock_offline === true ? "1" : "0")
           }
         })
       }, sessionToken);
@@ -656,7 +652,40 @@ async function handleRequest(request, env) {
       });
     }
 
-    // --- Download artifact ZIP (proxy) — unwrap nested GitHub Actions zip ---
+    // --- Return a short-lived GitHub-signed download URL without buffering the artifact in Worker memory ---
+    if (request.method === "GET" && url.pathname === "/api/github/artifact-url") {
+      const artifactId = url.searchParams.get("artifact_id");
+      if (!artifactId || !/^\d+$/.test(artifactId)) return Response.json({ error: "artifact_id numerik wajib" }, { status: 400 });
+      const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
+      const token = sessionToken || env.GITHUB_TOKEN || env.GH_TOKEN || "";
+      if (!token) return Response.json({ error: "Token GitHub diperlukan untuk unduh artifact", code: "GITHUB_TOKEN_REQUIRED" }, { status: 401 });
+      if (token.length > 1024) return Response.json({ error: "Token GitHub terlalu panjang", code: "GITHUB_TOKEN_INVALID" }, { status: 400 });
+      const response = await fetch(`https://api.github.com/repos/${ghConfig(env).owner}/${ghConfig(env).repo}/actions/artifacts/${artifactId}/zip`, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${token}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "game-collector-pro"
+        },
+        redirect: "manual"
+      });
+      const location = response.headers.get("location") || "";
+      if ([301, 302, 303, 307, 308].includes(response.status) && location) {
+        let signedUrl;
+        try {
+          signedUrl = new URL(location);
+          if (signedUrl.protocol !== "https:") throw new Error("scheme");
+        } catch {
+          return Response.json({ error: "GitHub mengembalikan URL download yang tidak aman" }, { status: 502, headers: { "Cache-Control": "no-store" } });
+        }
+        return Response.json({ ok: true, download_url: signedUrl.href }, { headers: { "Cache-Control": "no-store" } });
+      }
+      if (response.status === 401) return Response.json({ error: "Token GitHub tidak valid", code: "GITHUB_TOKEN_INVALID" }, { status: 401, headers: { "Cache-Control": "no-store" } });
+      if (response.status === 403) return Response.json({ error: "Token tidak memiliki izin membaca artifact Actions", code: "GITHUB_TOKEN_SCOPE" }, { status: 403, headers: { "Cache-Control": "no-store" } });
+      return Response.json({ error: "GitHub tidak memberikan URL artifact langsung", status: response.status }, { status: 502, headers: { "Cache-Control": "no-store" } });
+    }
+
+    // --- Download artifact ZIP (legacy proxy) — unwrap nested GitHub Actions zip ---
     if (request.method === "GET" && url.pathname === "/api/github/artifact") {
       const artifactId = url.searchParams.get("artifact_id");
       if (!artifactId) return Response.json({ error: "artifact_id wajib" }, { status: 400 });
@@ -1287,7 +1316,7 @@ async function handleRequest(request, env) {
       try { target = new URL(cleaned); } catch (_) {}
     }
 
-    const mockOffline = body.mock_offline !== false;
+    const mockOffline = body.mock_offline === true;
 
     // Selective collect filter (include/exclude by category or subfolder)
     const { allowed: selectAllowed, rawInclude, rawExclude } = buildAllowedSet(

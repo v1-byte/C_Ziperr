@@ -24,6 +24,14 @@ test("GitHub collect forwards large-capture selection to the Actions runner", ()
   assert.match(source, /large_capture: String\(\[body\.large_capture, body\.unlimited, body\.mode\]\.some\(\(value\) => \/\^\(1\|true\|yes\|on\|unlimited\)\$\/i\.test\(String\(value\)\)\) \? "1" : "0"\)/);
 });
 
+test("large GitHub artifacts expose a signed URL without buffering the ZIP in the Worker", () => {
+  const route = source.match(/url\.pathname === "\/api\/github\/artifact-url"[\s\S]{0,2600}?\/\/ --- Download artifact ZIP/);
+  assert.ok(route, "signed artifact URL route should be present before the legacy proxy route");
+  assert.match(route[0], /redirect: "manual"/);
+  assert.match(route[0], /download_url: signedUrl\.href/);
+  assert.doesNotMatch(route[0], /arrayBuffer\(|response\.body/);
+});
+
 test("GitHub status and artifact endpoints use a token without persisting it", () => {
   assert.match(source, /url\.pathname === "\/api\/github\/status"[\s\S]{0,500}const sessionToken = String\(request\.headers\.get\("X-GC-GitHub-Token"\)/);
   assert.match(source, /actions\/runs\/\$\{runId\}[\s\S]{0,400}\}, sessionToken\)/);

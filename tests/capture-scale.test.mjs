@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { resolveLimits } from "../src/collect/limits.js";
+import { resolveFillLimits as resolveRunnerFillLimits } from "../src/collect/fill-missing.js";
 import { fillMissingAssetsV2 } from "../src/collect/fill-missing-enhanced.js";
 import { fetchWithRetry } from "../src/collect/fetch-retry.js";
 
@@ -8,6 +9,17 @@ const standard = resolveLimits({}, {});
 const unlimitedWorker = resolveLimits({}, { unlimited: true });
 const unlimitedR2 = resolveLimits({ COLLECTOR_BUCKET: {} }, { mode: "unlimited" });
 const workerSource = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
+const githubCollectorSource = await readFile(new URL("../scripts/collect.js", import.meta.url), "utf8");
+
+const runnerBudget = resolveRunnerFillLimits({
+  allowRunnerScale: true,
+  maxSingleFile: 512 * 1024 * 1024,
+  maxRawTotal: 1024 * 1024 * 1024
+});
+assert.equal(runnerBudget.maxSingleFile, 512 * 1024 * 1024);
+assert.equal(runnerBudget.maxRawTotal, 1024 * 1024 * 1024);
+assert.match(githubCollectorSource, /largeCapture \? 5 \* 60 \* 60 \* 1000/);
+assert.doesNotMatch(githubCollectorSource, /maxSingleFile:\s*LARGE_CAPTURE\s*\?\s*40\s*\*\s*1024/);
 
 assert.equal(standard.fillPerPass, 250);
 assert.equal(standard.fillPasses, 8);
