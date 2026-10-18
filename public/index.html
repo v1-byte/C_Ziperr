@@ -1,4 +1,29 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+/* Workspace full-bleed: brand disembunyikan, kiri-kanan rata HP */
+html.ws-full body {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html.ws-full main {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  max-width: none;
+}
+html.ws-full .app { max-width: none; margin: 0; }
+html.ws-full #workspace {
+  gap: 0;
+  min-height: calc(100dvh - 72px - env(safe-area-inset-bottom, 0px));
+}
+html.ws-full #workspace .head { display: none; }
+html.ws-full #workspace .vs,
+html.ws-full #vs {
+  border-radius: 0;
+  min-height: calc(100dvh - 72px - env(safe-area-inset-bottom, 0px));
+  border-left: 0;
+  border-right: 0;
+}
+html.ws-full header.brand[hidden] { display: none !important; }
+
+</style></head><body>
 <title>C.Ziperr</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,6 +967,10 @@ html[data-skin=hd] .dll .nm{font-size:12px}
   function show(id) {
     if (tabs.indexOf(id) < 0) id = "collect";
     tabs.forEach((t) => { $("#" + t).hidden = t !== id; $("#t-" + t).setAttribute("aria-selected", t === id ? "true" : "false"); });
+    // Sembunyikan brand header HANYA di Workspace agar area editor full HP
+    const brand = document.querySelector("header.brand");
+    if (brand) brand.hidden = (id === "workspace");
+    document.documentElement.classList.toggle("ws-full", id === "workspace");
     window.scrollTo(0, 0);
     if (id === "workspace") { renderEditor(); }
     if (id === "log") { unseen = 0; updBd(); const b = $("#logbox"); b.scrollTop = b.scrollHeight; }
