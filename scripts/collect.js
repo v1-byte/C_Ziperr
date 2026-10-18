@@ -39,6 +39,8 @@ import { guessTypeFromUrl } from "../src/collect/urls.js";
 import { buildApiMap } from "../src/package/api-map.js";
 import { detectSecurityEvidence } from "../src/analyze/security-evidence.js";
 import { calculateCaptureBudget } from "../src/collect/capture-budget.js";
+import { fillMissingAssets } from "../src/collect/fill-missing.js";
+import { staticAnalyzeHtml } from "../src/collect/static-scan.js";
 
 const TARGET_URL = process.env.TARGET_URL;
 const COLLECT_OPTIONS = normalizeCollectOptions(process.env);
@@ -66,7 +68,8 @@ if (!TARGET_URL) {
 }
 
 const TYPES = new Set([
-  "document", "script", "stylesheet", "image", "media", "font", "xhr", "fetch"
+  "document", "script", "stylesheet", "image", "media", "font", "xhr", "fetch",
+  "manifest", "other", "texttrack", "eventsource"
 ]);
 
 const EXCLUDE = [
@@ -732,6 +735,54 @@ async function main() {
   // ulang dengan referer target, meskipun request tidak muncul sebagai response event.
   console.log("PROGRESS: proactive_static_assets");
   const proactiveAssets = await captureMissingStaticAssets(page, resources, zipFiles, seen, failedRequests, mainDocUrl, CAPTURE_BUDGET_BYTES, LARGE_CAPTURE);
+
+
+  // Multi-pass: fetch URLs referenced in HTML/JS/CSS that network listener missed
+  console.log("PROGRESS: fill_missing_multipass");
+  try {
+    const seedFromHtml = [];
+    try {
+      const htmlNow = await page.content();
+      const analyzed = staticAnalyzeHtml(htmlNow, mainDocUrl || TARGET_URL);
+      for (const u of analyzed.urls || []) seedFromHtml.push(u);
+      for (const u of analyzed.wasm || []) seedFromHtml.push(u);
+      for (const u of analyzed.manifests || []) seedFromHtml.push(u);
+      for (const u of analyzed.swScripts || []) seedFromHtml.push(u);
+    } catch (e) {
+      console.warn("staticAnalyzeHtml", e.message || e);
+    }
+    const fillPasses = LARGE_CAPTURE ? 10 : 6;
+    const fillPerPass = LARGE_CAPTURE ? 300 : 150;
+    const fillReport = await fillMissingAssets(
+      zipFiles,
+      resources,
+      seen,
+      mainDocUrl || TARGET_URL,
+      "github-collect",
+      null,
+      null,
+      fillPerPass,
+      fillPasses,
+      seedFromHtml,
+      { maxSingleFile: LARGE_CAPTURE ? 40 * 1024 * 1024 : 15 * 1024 * 1024, maxRawTotal: CAPTURE_BUDGET_BYTES }
+    );
+    console.log("PROGRESS: fill_missing_done", JSON.stringify({
+      fetched: fillReport.fetched,
+      failed: fillReport.failed,
+      still: (fillReport.stillMissing || []).length,
+      passes: fillReport.passes
+    }));
+    // Re-sync capturedBytes after fill
+    capturedBytes = Object.values(zipFiles).reduce((a, b) => a + (b ? (b.byteLength || b.length || 0) : 0), 0);
+  } catch (fillErr) {
+    console.warn("PROGRESS: fill_missing_error", fillErr.message || fillErr);
+  }
+
+  // Final network settle — late bundles after fill may still stream
+  try {
+    await page.waitForLoadState("networkidle", { timeout: LARGE_CAPTURE ? 15000 : 6000 });
+  } catch {}
+  await page.waitForTimeout(LARGE_CAPTURE ? 3000 : 1500);
   console.log("PROGRESS: proactive_static_assets_done", JSON.stringify(proactiveAssets));
   const atlasRegions = await extractAtlasRegions(page, zipFiles, resources);
   console.log("PROGRESS: atlas_regions_done", JSON.stringify({ atlases: atlasRegions.atlases, regions: atlasRegions.regions }));
