@@ -2162,10 +2162,15 @@ new MutationObserver(function(){if(document.getElementById("phaseTxt").textConte
 draw();})();
 </script>
 <script>
-/* C_Ziperr system bridge — real collect + block old host */
+/* C_Ziperr system bridge — real collect + live progress + block old host */
 (function () {
   var STRIP = ["ot", "__hv", "__sv", "btt", "or"];
+  var pollTimer = null;
+  var activeProgressId = null;
+
   function $(s) { return document.querySelector(s); }
+  function el(id) { return document.getElementById(id); }
+
   function stripUrl(raw) {
     try {
       var u = new URL(raw, location.href);
@@ -2178,16 +2183,21 @@ draw();})();
   function hostOf(raw) {
     try { return new URL(raw, location.href).hostname; } catch (_) { return ""; }
   }
+  function uuid() {
+    try { return crypto.randomUUID().replace(/-/g, "").slice(0, 24); }
+    catch (_) { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+  }
+
   var blockedHosts = new Set();
   window.__cZiperrBlockHost = function (host) { if (host) blockedHosts.add(String(host).toLowerCase()); };
   window.__cZiperrClearBlock = function () { blockedHosts.clear(); };
+
   var origFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
     var url = String((input && input.url) || input || "");
     try {
       var h = new URL(url, location.href).hostname.toLowerCase();
       if (blockedHosts.size && Array.from(blockedHosts).some(function (b) { return h === b || h.endsWith("." + b); })) {
-        console.warn("[C_Ziperr] BLOCKED old host:", url);
         return Promise.reject(new Error("Blocked old host (offline): " + h));
       }
     } catch (_) {}
@@ -2203,6 +2213,155 @@ draw();})();
     } catch (_) {}
     return XO.apply(this, [method, url].concat(Array.prototype.slice.call(arguments, 2)));
   };
+
+  function showLive() {
+    var live = el("live");
+    if (live) { live.hidden = false; live.style.display = "grid"; }
+    var start = el("startBtn");
+    if (start) start.disabled = true;
+    var reset = el("resetBtn");
+    if (reset) reset.hidden = true;
+    var done = el("doneCard");
+    if (done) done.hidden = true;
+    var dot = el("runDot");
+    if (dot) dot.classList.add("run");
+    var bar = el("barWrap");
+    if (bar) bar.classList.add("run");
+  }
+
+  function setProgUI(pct, phase, extra) {
+    pct = Math.max(0, Math.min(100, Number(pct) || 0));
+    extra = extra || {};
+    var p = el("pct");
+    if (p) p.textContent = Math.round(pct) + "%";
+    var bar = el("bar");
+    if (bar) bar.style.width = pct + "%";
+    var bw = el("barWrap");
+    if (bw) bw.setAttribute("aria-valuenow", String(Math.round(pct)));
+    var ph = el("phaseTxt");
+    if (ph && phase) ph.textContent = phase;
+    var note = el("collectNote");
+    if (note && phase) note.textContent = phase + (extra.label && extra.label !== phase ? " — " + extra.label : "");
+
+    // download card (HD Max Pro)
+    var dp = el("dlPct");
+    if (dp) dp.textContent = Math.round(pct) + "%";
+    var db = el("dlBar");
+    if (db) db.style.width = pct + "%";
+    var dbw = el("dlBarW");
+    if (dbw) dbw.setAttribute("aria-valuenow", String(Math.round(pct)));
+    var dph = el("dlPh");
+    if (dph && phase) dph.textContent = phase;
+
+    if (extra.files != null && el("stOk")) el("stOk").textContent = String(extra.files);
+    if (extra.failed != null && el("stFail")) el("stFail").textContent = String(extra.failed);
+    if (extra.sizeLabel && el("stSize")) el("stSize").textContent = extra.sizeLabel;
+    if (extra.speed && el("stSpeed")) el("stSpeed").textContent = extra.speed;
+    if (extra.elapsed && el("stTime")) el("stTime").textContent = extra.elapsed;
+
+    if (typeof window.__dl === "function" && extra.fileEvent) {
+      try { window.__dl(extra.fileEvent, extra.fileStatus || "ok"); } catch (_) {}
+    }
+  }
+
+  function finishUI(ok, message) {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    setProgUI(ok ? 100 : 0, message || (ok ? "Selesai" : "Gagal"));
+    var dot = el("runDot");
+    if (dot) dot.classList.remove("run");
+    var bar = el("barWrap");
+    if (bar) bar.classList.remove("run");
+    var dlDot = el("dlDot");
+    if (dlDot) dlDot.classList.remove("run");
+    var dlBarW = el("dlBarW");
+    if (dlBarW) dlBarW.classList.remove("run");
+    var start = el("startBtn");
+    if (start) start.disabled = false;
+    var reset = el("resetBtn");
+    if (reset) reset.hidden = false;
+    var done = el("doneCard");
+    if (done) {
+      done.hidden = false;
+      var txt = el("doneTxt");
+      if (txt) txt.textContent = message || (ok ? "Collect selesai." : "Collect gagal.");
+    }
+    var note = el("collectNote");
+    if (note) note.textContent = message || (ok ? "Collect selesai." : "Collect gagal.");
+  }
+
+  function startProgressPoll(progressId) {
+    activeProgressId = progressId;
+    if (pollTimer) clearInterval(pollTimer);
+    var t0 = Date.now();
+    pollTimer = setInterval(async function () {
+      try {
+        var res = await origFetch("/api/progress?id=" + encodeURIComponent(progressId));
+        var data = await res.json().catch(function () { return {}; });
+        if (!data || data.ok === false && data.error === "NO_KV") {
+          setProgUI(5, "Progress KV belum tersedia — collect tetap jalan…");
+          return;
+        }
+        var pct = data.pct != null ? data.pct : 0;
+        var phase = data.label || data.phase || "Collect…";
+        var elapsed = ((Date.now() - t0) / 1000).toFixed(1).replace(".", ",") + " s";
+        setProgUI(pct, phase, {
+          label: data.label,
+          files: data.files,
+          failed: data.failed,
+          sizeLabel: data.sizeLabel || data.size,
+          elapsed: elapsed,
+          speed: data.speed
+        });
+        if (data.done || data.phase === "done" || data.phase === "complete" || pct >= 100) {
+          // wait for main fetch to finish for final status
+        }
+      } catch (e) {
+        setProgUI(0, "Poll progress: " + (e.message || e));
+      }
+    }, 900);
+  }
+
+  function startGithubPoll(runId) {
+    if (pollTimer) clearInterval(pollTimer);
+    var t0 = Date.now();
+    var ticks = 0;
+    pollTimer = setInterval(async function () {
+      ticks++;
+      try {
+        var res = await origFetch("/api/github/status?run_id=" + encodeURIComponent(runId));
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          setProgUI(Math.min(95, 10 + ticks), data.error || ("Status HTTP " + res.status));
+          return;
+        }
+        var status = data.status || "queued";
+        var phase = data.phase || data.current_step || status;
+        var pct = 15;
+        if (status === "queued") pct = 10;
+        else if (status === "in_progress") pct = Math.min(90, 25 + ticks * 2);
+        else if (status === "completed") pct = data.conclusion === "success" ? 100 : 0;
+        var elapsed = ((Date.now() - t0) / 1000).toFixed(1).replace(".", ",") + " s";
+        setProgUI(pct, phase, { elapsed: elapsed });
+        if (status === "completed") {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          if (data.conclusion === "success") {
+            var msg = "Selesai di GitHub Actions";
+            if (data.artifact && data.artifact.id) {
+              msg += " · artifact #" + data.artifact.id + " (" + Math.round((data.artifact.size || 0) / 1024) + " KB)";
+            }
+            if (data.html_url) msg += " · " + data.html_url;
+            finishUI(true, msg);
+          } else {
+            finishUI(false, "GitHub Actions gagal: " + (data.conclusion || "unknown") + (data.html_url ? " · " + data.html_url : ""));
+          }
+        }
+      } catch (e) {
+        setProgUI(Math.min(90, 10 + ticks), "Poll GitHub: " + (e.message || e));
+      }
+    }, 2500);
+  }
+
   async function realCollect(useGithub) {
     var input = $("#url");
     var raw = ((input && input.value) || "").trim();
@@ -2213,39 +2372,122 @@ draw();})();
     var host = hostOf(clean);
     var big = document.querySelector('#capMode button[aria-pressed="true"]');
     var modeBig = big && big.getAttribute("data-v") === "big";
+    var progressId = uuid();
     var body = {
-      url: clean, strip_tokens: strip, wait_seconds: 22, auto_spins: 6, auto_history: 1,
-      unlimited: !!(useGithub || modeBig), large_capture: !!(useGithub || modeBig), mock_offline: true
+      url: clean,
+      strip_tokens: strip,
+      wait_seconds: 22,
+      auto_spins: 6,
+      auto_history: 1,
+      unlimited: !!(useGithub || modeBig),
+      large_capture: !!(useGithub || modeBig),
+      mock_offline: true,
+      progressId: progressId,
+      progress_id: progressId
     };
-    var note = $("#collectNote");
-    if (note) note.textContent = (useGithub || modeBig) ? "Collect via GitHub runner…" : "Collect via Worker…";
+
     window.__cZiperrClearBlock();
+    showLive();
+    setProgUI(2, useGithub || modeBig ? "Memicu GitHub Actions…" : "Memulai collect Worker…");
+    if (typeof window.__dlStart === "function") {
+      try { window.__dlStart([{ n: clean, kb: 1, k: "html" }]); } catch (_) {}
+    }
+
     var endpoint = (useGithub || modeBig) ? "/api/github/collect" : "/api/collect";
+
+    if (!(useGithub || modeBig)) {
+      startProgressPoll(progressId);
+    }
+
     try {
-      var res = await origFetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      var data = await res.json().catch(function () { return {}; });
-      if (!res.ok) {
-        if (note) note.textContent = "Collect gagal: " + (data.message || data.error || res.status);
-        alert("Collect gagal: " + (data.message || data.error || res.status));
+      var res = await origFetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      // Worker collect may return ZIP binary or JSON
+      var ct = (res.headers.get("content-type") || "").toLowerCase();
+      var progressHeader = res.headers.get("X-GC-Progress-Id") || progressId;
+      var filesH = res.headers.get("X-GC-Files");
+      var stillH = res.headers.get("X-GC-Still-Missing");
+      var zipSizeH = res.headers.get("X-GC-Zip-Size");
+
+      if (useGithub || modeBig) {
+        var data = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          finishUI(false, "Collect gagal: " + (data.message || data.error || res.status));
+          return data;
+        }
+        var runId = data.run_id;
+        if (!runId) {
+          finishUI(false, data.message || "Run GitHub belum muncul — cek Actions lalu coba status manual.");
+          return data;
+        }
+        setProgUI(12, "GitHub run #" + runId + " — " + (data.status || "queued"));
+        startGithubPoll(runId);
+        if ($("#optBlockHost") && $("#optBlockHost").checked && host) {
+          window.__cZiperrBlockHost(host);
+          var parts = host.split(".");
+          if (parts.length >= 2) window.__cZiperrBlockHost(parts.slice(-2).join("."));
+        }
         return data;
       }
-      if (note) note.textContent = "Collect diterima. Host lama akan diblok: " + host;
+
+      // Worker path
+      if (ct.indexOf("application/json") >= 0) {
+        var j = await res.json().catch(function () { return {}; });
+        if (!res.ok) {
+          finishUI(false, "Collect gagal: " + (j.message || j.error || res.status));
+          return j;
+        }
+        // R2 path
+        if (j.via === "r2" && j.downloadUrl) {
+          setProgUI(100, "ZIP di R2 (" + Math.round((j.zipSize || 0) / 1024) + " KB)", { files: j.files });
+          finishUI(true, "Collect OK via R2 · " + j.files + " berkas · " + j.downloadUrl);
+          return j;
+        }
+        finishUI(res.ok, j.message || j.error || "Collect selesai (JSON)");
+        return j;
+      }
+
+      if (!res.ok) {
+        var errText = await res.text().catch(function () { return ""; });
+        finishUI(false, "Collect gagal HTTP " + res.status + " " + errText.slice(0, 120));
+        return;
+      }
+
+      // ZIP body — trigger download
+      var blob = await res.blob();
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "c-ziperr-collect.zip";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+
+      var filesN = filesH || "?";
+      var stillN = stillH || "0";
+      var zipKb = zipSizeH ? Math.round(Number(zipSizeH) / 1024) : Math.round(blob.size / 1024);
+      finishUI(true, "Collect OK · " + filesN + " berkas · ZIP " + zipKb + " KB · still-missing " + stillN);
+      setProgUI(100, "Selesai", { files: filesN, sizeLabel: zipKb + " KB" });
+
       if ($("#optBlockHost") && $("#optBlockHost").checked && host) {
         window.__cZiperrBlockHost(host);
-        var parts = host.split(".");
-        if (parts.length >= 2) window.__cZiperrBlockHost(parts.slice(-2).join("."));
+        var parts2 = host.split(".");
+        if (parts2.length >= 2) window.__cZiperrBlockHost(parts2.slice(-2).join("."));
       }
-      return data;
     } catch (e) {
-      if (note) note.textContent = "Collect error: " + e.message;
+      finishUI(false, "Collect error: " + (e.message || e));
       throw e;
     }
   }
+
   function wire() {
     var real = $("#optReal"), start = $("#startBtn"), gh = $("#ghBtn"), verify = $("#verifyBtn");
     if (start) {
       start.addEventListener("click", function (ev) {
-        if (real && !real.checked) return;
+        if (real && !real.checked) return; // allow local simulasi UI
         ev.preventDefault();
         ev.stopImmediatePropagation();
         realCollect(false);
@@ -2258,7 +2500,7 @@ draw();})();
         try {
           var res = await origFetch("/api/health");
           if (note) note.textContent = res.ok
-            ? ("Worker OK. Host diblok: " + Array.from(blockedHosts).join(", "))
+            ? ("Worker OK. Host diblok: " + Array.from(blockedHosts).join(", ") + (activeProgressId ? " · progress " + activeProgressId : ""))
             : ("Worker health gagal (" + res.status + ")");
         } catch (e) {
           if (note) note.textContent = "Verifikasi: " + e.message;
