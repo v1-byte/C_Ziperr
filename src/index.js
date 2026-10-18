@@ -1324,11 +1324,16 @@ async function handleRequest(request, env) {
       const shot = extra.screenshot !== undefined
         ? extra.screenshot
         : (prev && prev.screenshot) || null;
+      // Keep last known files/bytes so UI never drops to 0 between phases
+      const files = extra.files != null ? extra.files : (prev && prev.files);
+      const capturedBytes = extra.capturedBytes != null ? extra.capturedBytes : (prev && prev.capturedBytes);
       return setProgress(env, progressId, {
         pct,
         phase,
         label,
         ...extra,
+        files,
+        capturedBytes,
         screenshot: shot,
         stopRequested: extra.stopRequested || (prev && prev.stopRequested) || false
       });

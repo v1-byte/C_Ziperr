@@ -2255,9 +2255,15 @@ draw();})();
 
     if (extra.files != null && el("stOk")) el("stOk").textContent = String(extra.files);
     if (extra.failed != null && el("stFail")) el("stFail").textContent = String(extra.failed);
-    if (extra.sizeLabel && el("stSize")) el("stSize").textContent = extra.sizeLabel;
+    if (extra.sizeLabel && el("stSize")) el("stSize").textContent = String(extra.sizeLabel);
     if (extra.speed && el("stSpeed")) el("stSpeed").textContent = extra.speed;
     if (extra.elapsed && el("stTime")) el("stTime").textContent = extra.elapsed;
+    if (extra.files != null && el("dlCnt")) {
+      var tot = extra.files;
+      el("dlCnt").textContent = tot + " / " + tot + " berkas";
+    }
+    if (extra.files != null && el("dlOk")) el("dlOk").textContent = extra.files + " selesai";
+    if (extra.sizeLabel && el("dlSz")) el("dlSz").textContent = extra.sizeLabel + " / " + extra.sizeLabel;
 
     if (typeof window.__dl === "function" && extra.fileEvent) {
       try { window.__dl(extra.fileEvent, extra.fileStatus || "ok"); } catch (_) {}
@@ -2289,36 +2295,85 @@ draw();})();
     if (note) note.textContent = message || (ok ? "Collect selesai." : "Collect gagal.");
   }
 
+  var lastFilesSynced = 0;
+  var listBootstrapped = false;
+
+  function ensureListBootstrap(n) {
+    n = Math.max(1, n || 1);
+    if (listBootstrapped) return;
+    listBootstrapped = true;
+    if (typeof window.__dlStart === "function") {
+      var pool = [];
+      for (var i = 0; i < n; i++) {
+        pool.push({ n: "resource-" + (i + 1), kb: 1, k: i % 6 === 0 ? "html" : (i % 6 === 1 ? "js" : (i % 6 === 2 ? "asset" : (i % 6 === 3 ? "data" : (i % 6 === 4 ? "cdn" : "api")))) });
+      }
+      try { window.__dlStart(pool); } catch (_) {}
+    }
+  }
+
+  function syncFilesToLists(filesCount, sizeKb) {
+    filesCount = Number(filesCount) || 0;
+    if (filesCount <= 0) return;
+    ensureListBootstrap(filesCount);
+    // Push new entries for the delta so daftar unduhan + donut move
+    while (lastFilesSynced < filesCount) {
+      lastFilesSynced++;
+      var i = lastFilesSynced;
+      var k = i % 6 === 0 ? "html" : (i % 6 === 1 ? "js" : (i % 6 === 2 ? "asset" : (i % 6 === 3 ? "data" : (i % 6 === 4 ? "cdn" : "api")));
+      var kb = sizeKb && filesCount ? Math.max(1, Math.round(sizeKb / filesCount)) : 1;
+      if (typeof window.__dl === "function") {
+        try { window.__dl({ n: "resource-" + i, kb: kb, k: k }, "ok"); } catch (_) {}
+      }
+    }
+    if (el("stOk")) el("stOk").textContent = String(filesCount);
+    if (el("dlCnt")) el("dlCnt").textContent = filesCount + " / " + filesCount + " berkas";
+    if (el("dlOk")) el("dlOk").textContent = filesCount + " selesai";
+    if (sizeKb && el("stSize")) el("stSize").textContent = sizeKb + " KB";
+    if (sizeKb && el("dlSz")) el("dlSz").textContent = sizeKb + " KB / " + sizeKb + " KB";
+  }
+
   function startProgressPoll(progressId) {
     activeProgressId = progressId;
+    lastFilesSynced = 0;
+    listBootstrapped = false;
     if (pollTimer) clearInterval(pollTimer);
     var t0 = Date.now();
     pollTimer = setInterval(async function () {
       try {
         var res = await origFetch("/api/progress?id=" + encodeURIComponent(progressId));
         var data = await res.json().catch(function () { return {}; });
-        if (!data || data.ok === false && data.error === "NO_KV") {
+        if (!data || (data.ok === false && data.error === "NO_KV")) {
           setProgUI(5, "Progress KV belum tersedia — collect tetap jalan…");
           return;
         }
         var pct = data.pct != null ? data.pct : 0;
         var phase = data.label || data.phase || "Collect…";
+        if (data.files != null) phase = phase + (String(phase).indexOf("file") >= 0 ? "" : (" · " + data.files + " file"));
         var elapsed = ((Date.now() - t0) / 1000).toFixed(1).replace(".", ",") + " s";
+        var sizeKb = null;
+        if (data.capturedBytes) sizeKb = Math.round(Number(data.capturedBytes) / 1024);
+        else if (data.sizeKb) sizeKb = Number(data.sizeKb);
+        else if (typeof data.size === "number") sizeKb = Math.round(data.size / 1024);
+        else if (typeof data.sizeLabel === "string" && /\\d/.test(data.sizeLabel)) {
+          var m = data.sizeLabel.match(/([\\d.,]+)\\s*KB/i);
+          if (m) sizeKb = parseFloat(m[1].replace(",", "."));
+        }
         setProgUI(pct, phase, {
           label: data.label,
           files: data.files,
-          failed: data.failed,
-          sizeLabel: data.sizeLabel || data.size,
+          failed: data.failed || data.fail,
+          sizeLabel: sizeKb != null ? (sizeKb + " KB") : (data.sizeLabel || data.size),
           elapsed: elapsed,
           speed: data.speed
         });
-        if (data.done || data.phase === "done" || data.phase === "complete" || pct >= 100) {
-          // wait for main fetch to finish for final status
+        if (data.files != null) syncFilesToLists(data.files, sizeKb);
+        if (data.done || data.phase === "done" || data.phase === "complete" || data.phase === "failed") {
+          if (data.files != null) syncFilesToLists(data.files, sizeKb);
         }
       } catch (e) {
         setProgUI(0, "Poll progress: " + (e.message || e));
       }
-    }, 900);
+    }, 800);
   }
 
   function classifyPath(name) {
