@@ -25,6 +25,8 @@ test("workspace does not expose simulated terminal, canned AI chat, or old reel 
   assert.match(html, /data-p="prob"/);
   assert.match(html, /data-p="out"/);
   assert.match(html, /Custom API/);
+  assert.match(html, /<h1>Workspace<\/h1>/);
+  assert.doesNotMatch(html, /Editor kode di browser dengan Explorer, pencarian, analisis masalah, dan Custom API\. Perubahan disimpan di memori halaman ini\./);
 });
 
 test("system log starts empty instead of showing fabricated startup activity", () => {
