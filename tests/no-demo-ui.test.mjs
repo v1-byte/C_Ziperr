@@ -26,3 +26,7 @@ test("workspace does not expose simulated terminal, canned AI chat, or old reel 
   assert.match(html, /data-p="out"/);
   assert.match(html, /Custom API/);
 });
+
+test("system log starts empty instead of showing fabricated startup activity", () => {
+  assert.doesNotMatch(html, /C\.Ziperr UI siap|Siap collect — Worker \/ GitHub runner dari tab Collect|Editor, lint, dan workspace siap/);
+});
