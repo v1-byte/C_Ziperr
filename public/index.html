@@ -14,6 +14,70 @@ html[data-skin="hd"] body {
     var(--bg);
 }
 
+/* Workspace polish: editor chrome, navigation, and mobile labels */
+#workspace .ws-heading { display: flex; align-items: center; gap: 11px; }
+#workspace .ws-heading-mark { display: grid; place-items: center; width: 44px; height: 44px; flex: none; color: var(--accent); background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 18%, #151515), #111); border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent); border-radius: 13px; box-shadow: 0 8px 24px -14px var(--accent); }
+#workspace .ws-heading-mark svg { width: 23px; height: 23px; }
+#workspace .ws-heading-name { letter-spacing: -.02em; }
+#workspace .ws-heading-tag { margin-left: 3px; padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font: 600 9px/1.2 var(--f-mono); letter-spacing: .13em; white-space: nowrap; }
+#workspace .vs { overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--vs-line)); border-radius: 16px; box-shadow: 0 22px 58px -38px #000c, 0 0 0 1px #ffffff08; }
+#workspace .mbar { min-height: 46px; gap: 3px; padding: 5px 10px; border-bottom: 1px solid var(--vs-line); background: linear-gradient(180deg, color-mix(in srgb, var(--vs-side) 70%, #1d1d1d), var(--vs-act)); }
+#workspace .mbar .mbb { padding: 7px 10px; border-radius: 7px; color: color-mix(in srgb, var(--vs-fg) 72%, var(--vs-dim)); font-size: 12px; transition: background .16s, color .16s; }
+#workspace .mbar .mbb:hover, #workspace .mbar .mbb[aria-expanded="true"] { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--vs-fg); }
+#workspace .mbar .ttl { display: flex; align-items: center; gap: 8px; padding-left: 12px; border-left: 1px solid var(--vs-line); font-size: 11px; font-weight: 600; letter-spacing: .035em; }
+#workspace .mbar .ttl::before { content: "</>"; display: inline-grid; place-items: center; width: 26px; height: 24px; border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent); border-radius: 7px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font: 700 10px var(--f-mono); }
+#workspace .act { gap: 6px; padding: 8px 4px; border-right: 1px solid var(--vs-line); background: color-mix(in srgb, var(--vs-act) 86%, #000); }
+#workspace .act button { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 10px; color: var(--vs-dim); transition: color .16s, background .16s, transform .16s; }
+#workspace .act button svg { width: 21px; height: 21px; stroke-width: 1.8; }
+#workspace .act button:hover { background: #ffffff0d; color: var(--vs-fg); transform: translateY(-1px); }
+#workspace .act button[aria-pressed="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent); }
+#workspace .act button[aria-pressed="true"]::before { left: 0; width: 2px; border-radius: 0 2px 2px 0; background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
+#workspace .act-label { display: none; }
+#workspace .side { background: color-mix(in srgb, var(--vs-side) 92%, #000); }
+#workspace .side h4 { min-height: 42px; padding: 8px 12px; border-bottom: 1px solid color-mix(in srgb, var(--vs-line) 72%, transparent); color: color-mix(in srgb, var(--vs-fg) 72%, var(--vs-dim)); font-size: 10px; font-weight: 600; letter-spacing: .12em; }
+#workspace .side h4 .side-title { display: inline-flex; align-items: center; gap: 8px; }
+#workspace .side h4 .side-title svg { width: 15px; height: 15px; color: var(--accent); }
+#workspace .side h4 .side-actions { display: flex; align-items: center; gap: 4px; }
+#workspace .dzr .ib { display: inline-flex; align-items: center; gap: 7px; }
+#workspace .dzr .ib svg { width: 15px; height: 15px; flex: none; color: var(--accent); }
+#workspace .dz { margin: 8px 10px 10px; border: 1px dashed color-mix(in srgb, var(--accent) 38%, var(--vs-line)); border-radius: 10px; background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent); }
+#workspace .dz:hover, #workspace .dz.drag { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+#workspace .tr button { min-height: 28px; margin: 1px 4px; width: calc(100% - 8px); padding: 4px 9px; border-radius: 7px; transition: background .14s, color .14s; }
+#workspace .tr button[aria-current="true"] { background: color-mix(in srgb, var(--accent) 16%, var(--vs-hl)); box-shadow: inset 2px 0 0 var(--accent); }
+#workspace .main { background: var(--vs-bg); }
+#workspace .tbar { gap: 3px; padding: 4px 5px 0; border-bottom: 1px solid var(--vs-line); }
+#workspace .tb { min-height: 36px; padding: 7px 11px; border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; }
+#workspace .tb.on { border-color: var(--vs-line); border-top-color: var(--accent); background: var(--vs-bg); color: var(--vs-fg); box-shadow: inset 0 1px 0 var(--accent); }
+#workspace .crumb { padding: 5px 13px; border-bottom-color: color-mix(in srgb, var(--vs-line) 72%, transparent); font: 11px var(--f-mono); }
+#workspace .panel { border-top-color: color-mix(in srgb, var(--vs-line) 78%, transparent); }
+#workspace .ptabs { min-height: 34px; border-bottom: 1px solid color-mix(in srgb, var(--vs-line) 70%, transparent); }
+#workspace .ptabs button.pt[aria-selected="true"] { color: var(--accent); border-bottom: 2px solid var(--accent); }
+#workspace .status { min-height: 32px; gap: 5px 13px; padding: 5px 12px; font-size: 11px; letter-spacing: .015em; }
+#workspace .status #stProb, #workspace .status #stSave { display: inline-flex; align-items: center; gap: 5px; }
+#workspace .ib:focus-visible, #workspace .act button:focus-visible, #workspace .mbar button:focus-visible, #workspace .tb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 760px) {
+  #workspace .vs { border-radius: 14px; }
+  #workspace .mbar { gap: 1px; padding: 4px 6px; }
+  #workspace .mbar .ttl { display: none; }
+  #workspace .mbar .mbb { padding: 6px 7px; font-size: 11px; }
+  #workspace .act { min-width: 0; gap: 7px; padding: 7px 9px; overflow-x: auto; scrollbar-width: none; border-right: 0; border-bottom: 1px solid var(--vs-line); }
+  #workspace .act::-webkit-scrollbar { display: none; }
+  #workspace .act button { flex: 0 0 68px; width: 68px; height: 54px; flex-direction: column; gap: 4px; }
+  #workspace .act button svg { width: 20px; height: 20px; }
+  #workspace .act-label { display: block; color: inherit; font: 500 9px/1 var(--f-body); letter-spacing: .02em; }
+  #workspace .act button[aria-pressed="true"]::before { left: 14px; right: 14px; top: auto; bottom: 0; width: auto; height: 2px; }
+  #workspace .side h4 { flex-wrap: nowrap; padding: 7px 6px; font-size: 9px; }
+  #workspace .side h4 .side-title { gap: 5px; }
+  #workspace .side h4 .side-actions { gap: 2px; }
+  #workspace .dz { margin: 6px; padding: 7px 5px; }
+}
+@media (max-width: 420px) {
+  #workspace .ws-heading-mark { width: 38px; height: 38px; border-radius: 11px; }
+  #workspace .ws-heading-mark svg { width: 20px; height: 20px; }
+  #workspace .ws-heading-tag { padding: 4px 6px; font-size: 8px; }
+  #workspace .act { gap: 4px; padding-inline: 6px; }
+  #workspace .act button { flex-basis: 62px; width: 62px; }
+}
 </style></head><body>
 <title>C.Ziperr</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -904,20 +968,20 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 
     <!-- WORKSPACE -->
     <section class="pane" id="workspace" role="tabpanel" aria-labelledby="t-workspace" hidden>
-      <div class="head"><h1>Workspace</h1></div>
+      <div class="head"><h1 class="ws-heading"><span class="ws-heading-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5-5 7 5 7M16 5l5 7-5 7M14 4l-4 16"/></svg></span><span class="ws-heading-name">Workspace</span><span class="ws-heading-tag">EDITOR KODE</span></h1></div>
       <div class="vs" id="vs">
         <div class="mbar" id="mbar"><span class="ttl" id="vsTitle">C.Ziperr Workspace</span></div>
         <div class="act" id="act">
-          <button type="button" data-view="explorer" aria-pressed="true" title="Explorer (Ctrl+Shift+E)" aria-label="Explorer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg></button>
-          <button type="button" data-view="search" aria-pressed="false" title="Cari (Ctrl+Shift+F)" aria-label="Cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></button>
-          <button type="button" data-view="api" aria-pressed="false" title="Custom API" aria-label="Custom API"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0zM12 17v4"/></svg></button>
+          <button type="button" data-view="explorer" aria-pressed="true" title="Explorer (Ctrl+Shift+E)" aria-label="Explorer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2h6.5a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M3.5 10h17"/></svg><span class="act-label" aria-hidden="true">Explorer</span></button>
+          <button type="button" data-view="search" aria-pressed="false" title="Cari (Ctrl+Shift+F)" aria-label="Cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg><span class="act-label" aria-hidden="true">Cari</span></button>
+          <button type="button" data-view="api" aria-pressed="false" title="Custom API" aria-label="Custom API"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 5-4.5 7L8 19M16 5l4.5 7-4.5 7M13.8 4.5l-3.6 15"/></svg><span class="act-label" aria-hidden="true">API</span></button>
           <span class="sp"></span>
-          <button type="button" data-go="setelan" title="Setelan" aria-label="Setelan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></button>
+          <button type="button" data-go="setelan" title="Setelan" aria-label="Setelan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.7 2.9-.2-.1a1.7 1.7 0 0 0-1.8.3l-.1.1h-3.4l-.1-.2a1.7 1.7 0 0 0-1.6-1l-.2.1-2.9-1.7.1-.2a1.7 1.7 0 0 0-.3-1.8l-.1-.1v-3.4l.2-.1a1.7 1.7 0 0 0 1-1.6l-.1-.2 1.7-2.9.2.1a1.7 1.7 0 0 0 1.8-.3l.1-.1h3.4l.1.2a1.7 1.7 0 0 0 1.6 1l.2-.1 2.9 1.7-.1.2a1.7 1.7 0 0 0 .3 1.8l.1.1v3.4z"/></svg><span class="act-label" aria-hidden="true">Setelan</span></button>
         </div>
         <aside class="side" id="side">
-          <div class="sv on" id="v-explorer"><h4>Explorer <span><button class="ib" type="button" id="exNew" title="Berkas baru">+ Berkas</button><button class="ib" type="button" id="exCol" title="Ciutkan">Ciutkan</button></span></h4><div class="dz" id="dz" role="button" tabindex="0"><b>Muat ZIP → edit kode</b>klik atau seret berkas .zip ke sini<input type="file" id="zipIn" accept=".zip,application/zip" hidden></div><div class="dzr"><button class="ib" type="button" id="exExp">Ekspor ZIP</button></div><ul class="tr" id="tree"></ul></div>
-          <div class="sv" id="v-search"><h4>Cari</h4><div class="pad"><input class="vin" id="sq" type="search" placeholder="Cari di semua berkas" aria-label="Cari di semua berkas"><div class="res" id="sres"></div></div></div>
-          <div class="sv" id="v-api"><h4>Custom API</h4><div class="pad"><p style="font-size:12.5px;color:var(--vs-dim)">Editor endpoint, uji, konfigurasi hosting, dan checklist kesiapan dibuka sebagai tab di editor.</p><button class="btn sm" id="apiOpen" type="button">Buka Custom API</button><button class="btn ghost sm" id="apiDetect" type="button">Deteksi dari berkas</button></div></div>
+          <div class="sv on" id="v-explorer"><h4><span class="side-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2h6.5a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M3.5 10h17"/></svg>Explorer</span><span class="side-actions"><button class="ib" type="button" id="exNew" title="Berkas baru">+ Berkas</button><button class="ib" type="button" id="exCol" title="Ciutkan">Ciutkan</button></span></h4><div class="dz" id="dz" role="button" tabindex="0"><b>Muat ZIP → edit kode</b>klik atau seret berkas .zip ke sini<input type="file" id="zipIn" accept=".zip,application/zip" hidden></div><div class="dzr"><button class="ib" type="button" id="exExp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 17v3h14v-3"/></svg>Ekspor ZIP</button></div><ul class="tr" id="tree"></ul></div>
+          <div class="sv" id="v-search"><h4><span class="side-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>Cari</span></h4><div class="pad"><input class="vin" id="sq" type="search" placeholder="Cari di semua berkas" aria-label="Cari di semua berkas"><div class="res" id="sres"></div></div></div>
+          <div class="sv" id="v-api"><h4><span class="side-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="6" rx="1.5"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01M11 7.5h6M11 16.5h6"/></svg>Custom API</span></h4><div class="pad"><p style="font-size:12.5px;color:var(--vs-dim)">Editor endpoint, uji, konfigurasi hosting, dan checklist kesiapan dibuka sebagai tab di editor.</p><button class="btn sm" id="apiOpen" type="button">Buka Custom API</button><button class="btn ghost sm" id="apiDetect" type="button">Deteksi dari berkas</button></div></div>
         </aside>
         <div class="main">
           <div class="tbar" id="tbar" role="tablist" aria-label="Berkas terbuka"></div>

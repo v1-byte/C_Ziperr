@@ -25,7 +25,14 @@ test("workspace does not expose simulated terminal, canned AI chat, or old reel 
   assert.match(html, /data-p="prob"/);
   assert.match(html, /data-p="out"/);
   assert.match(html, /Custom API/);
-  assert.match(html, /<h1>Workspace<\/h1>/);
+  assert.match(html, /<h1 class="ws-heading">/);
+  assert.match(html, /class="ws-heading-name">Workspace<\/span>/);
+  assert.match(html, /class="ws-heading-tag">EDITOR KODE<\/span>/);
+  for (const label of ["Explorer", "Cari", "API", "Setelan"]) {
+    assert.match(html, new RegExp(`<span class="act-label" aria-hidden="true">${label}<\\/span>`));
+  }
+  assert.match(html, /class="side-title"[^>]*>[\s\S]*?Explorer/);
+  assert.match(html, /id="exExp"><svg/);
   assert.doesNotMatch(html, /Editor kode di browser dengan Explorer, pencarian, analisis masalah, dan Custom API\. Perubahan disimpan di memori halaman ini\./);
 });
 
