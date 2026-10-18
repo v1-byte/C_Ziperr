@@ -41,6 +41,15 @@ test("system log starts empty instead of showing fabricated startup activity", (
   assert.doesNotMatch(html, /C\.Ziperr UI siap|Siap collect — Worker \/ GitHub runner dari tab Collect|Editor, lint, dan workspace siap/);
 });
 
+test("HD Max Pro is the first-render skin and still uses the real collector", () => {
+  assert.match(html, /<html data-skin="hd">/);
+  assert.match(html, /id="skinBtn"[^>]*>Mode: HD Max Pro<\/button>/);
+  assert.match(html, /async function realCollect\(useGithub\)/);
+  assert.match(html, /var endpoint = \(useGithub \|\| modeBig\) \? "\/api\/github\/collect" : "\/api\/collect";/);
+  assert.match(html, /origFetch\("\/api\/progress\?id="/);
+  assert.doesNotMatch(html, /function buildPool\(/);
+});
+
 test("the real asset donut summary remains visible", () => {
   assert.match(html, /\.asx\{display:grid;gap:14px\}/);
   assert.doesNotMatch(html, /#asx\{display:none!important\}/);
