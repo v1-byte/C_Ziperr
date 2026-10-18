@@ -4,20 +4,15 @@ import { readFile } from 'node:fs/promises';
 
 const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
 
-test('preview and live log use a responsive side-by-side workspace', () => {
-  assert.match(html, /preview-workspace\.pv-main-split\{display:grid/);
-  assert.match(html, /grid-template-columns:minmax\(0,1\.55fr\) minmax\(280px,\.75fr\)/);
-  assert.match(html, /overflow:hidden!important/);
-  assert.match(html, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\); gap: 8px; overflow-x: hidden/);
-  assert.match(html, /Selalu dua kolom/);
-  assert.match(html, /\.gc-cockpit-preview \{ min-height: 300px; \}/);
-  assert.match(html, /\.gc-capture-actions \.btn\[hidden\] \{ display: none !important; \}/);
+test('preview analyses only a real ZIP loaded by the user', () => {
+  assert.match(html, /Analisis ZIP Workspace/);
+  assert.match(html, /Analisis hanya berkas yang benar-benar dimuat/);
+  assert.doesNotMatch(html, /Jalankan ZIP contoh|game-contoh\.zip|function stub\(/i);
 });
 
-test('preview controls explain capture and offline audit behavior', () => {
-  assert.match(html, /Preview · Mulai Capture/);
-  assert.match(html, /Capture · Audit Offline/);
-  assert.match(html, /A Core Raa · Audit Offline/);
-  assert.match(html, /mode capture berjalan/);
-  assert.match(html, /kesiapan offline/);
+test('collect results show genuine output and do not expose synthetic resource entries', () => {
+  assert.match(html, /Hasil collect asli/);
+  assert.match(html, /function recordZipResult/);
+  assert.match(html, /mock_offline: false/);
+  assert.doesNotMatch(html, /resource-\d+|demo-001|respons contoh/i);
 });

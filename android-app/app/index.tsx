@@ -8,7 +8,7 @@ import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Cache-buster memastikan APK tidak menampilkan HTML Worker lama setelah UI dirilis.
-const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.8';
+const MAIN_WEB_URL = 'https://c-zipper.corelink-ai.workers.dev/?app_release=1.2.9';
 const UPDATE_MANIFEST_URL = 'https://github.com/v1-byte/C_Ziperr/releases/latest/download/update.json';
 const ANDROID_PACKAGE = Constants.expoConfig?.android?.package ?? 'com.fblabb.zipscope';
 const CURRENT_VERSION = Constants.expoConfig?.version ?? '0.0.0';
@@ -16,6 +16,7 @@ const CURRENT_VERSION_CODE = Number(Constants.expoConfig?.android?.versionCode ?
 const APK_MIME_TYPE = 'application/vnd.android.package-archive';
 const MIN_UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
 const UPDATE_POLL_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const INTERNAL_DOWNLOAD_HOST = 'c-zipper.corelink-ai.workers.dev';
 
 type UpdateManifest = {
   appId: string;
@@ -132,6 +133,18 @@ function safeDownloadName(value: string) {
   const cleaned = String(value || 'game-resources.zip').replace(/[^a-zA-Z0-9._-]/g, '_');
   return cleaned.toLowerCase().endsWith('.zip') ? cleaned : `${cleaned}.zip`;
 }
+function isTrustedInternalDownloadUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password) return false;
+    const host = url.hostname.toLowerCase();
+    return host === INTERNAL_DOWNLOAD_HOST || host === 'github.com' || host.endsWith('.github.com') ||
+      host.endsWith('.githubusercontent.com') || host.endsWith('.actions.githubusercontent.com') ||
+      host.endsWith('.blob.core.windows.net');
+  } catch {
+    return false;
+  }
+}
 function decodeBase64Chunk(value: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   const bytes = new Uint8Array(Math.floor((value.length * 3) / 4));
@@ -177,6 +190,7 @@ export default function CollectorApp() {
   const [savedFilesVisible, setSavedFilesVisible] = useState(false);
   const webViewRef = useRef<WebView>(null);
   const activeDownloadRef = useRef<ActiveInternalDownload | null>(null);
+  const directDownloadInProgress = useRef(false);
   const messageQueueRef = useRef<Promise<void>>(Promise.resolve());
   const updateCheckInFlight = useRef(false);
   const installInProgress = useRef(false);
@@ -230,10 +244,62 @@ export default function CollectorApp() {
     }
     const id = String(message.id || '');
     if (!/^[a-zA-Z0-9_-]{6,100}$/.test(id)) return;
+    if (message.type === 'save_internal_download_url') {
+      let partFile: NativeFile | null = null;
+      directDownloadInProgress.current = true;
+      try {
+        if (activeDownloadRef.current) throw new Error('Masih ada ZIP lain yang sedang disimpan.');
+        const url = String(message.url || '');
+        if (!isTrustedInternalDownloadUrl(url)) throw new Error('Host URL unduhan tidak termasuk allowlist aman.');
+        const expectedSize = Number(message.size);
+        if (!Number.isSafeInteger(expectedSize) || expectedSize <= 0) throw new Error('Ukuran ZIP tidak valid.');
+        const availableBytes = Paths.availableDiskSpace;
+        if (Number.isFinite(availableBytes) && expectedSize > Math.max(0, availableBytes - 1024 * 1024)) {
+          throw new Error(`Ruang internal tidak cukup. ZIP ${formatFileSize(expectedSize)}; ruang kosong sekitar ${formatFileSize(availableBytes)}.`);
+        }
+        const filename = safeDownloadName(String(message.filename || 'game-resources.zip'));
+        const usedNames = new Set(Paths.document.list().map((entry) => entry.name.toLowerCase()));
+        const stem = filename.slice(0, filename.toLowerCase().lastIndexOf('.zip'));
+        let uniqueName = filename;
+        let suffix = 2;
+        while (usedNames.has(uniqueName.toLowerCase())) uniqueName = `${stem}-${suffix++}.zip`;
+        partFile = new NativeFile(Paths.document, `.cziperr-${id}.part`);
+        if (partFile.exists) partFile.delete();
+        partFile.create({ intermediates: true, overwrite: true });
+        setDownloadProgress(0);
+        const download = FileSystem.createDownloadResumable(
+          url,
+          partFile.uri,
+          { headers: { Accept: 'application/zip' } },
+          (progress) => {
+            if (progress.totalBytesExpectedToWrite > 0) {
+              setDownloadProgress(Math.min(99, Math.floor((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100)));
+            }
+          },
+        );
+        const result = await download.downloadAsync();
+        if (!result || result.status < 200 || result.status >= 300) throw new Error(`Unduhan ZIP gagal dengan HTTP ${result?.status ?? 'tidak diketahui'}.`);
+        if (partFile.size !== expectedSize) throw new Error(`Ukuran ZIP tidak cocok (${formatFileSize(partFile.size)} dari ${formatFileSize(expectedSize)}).`);
+        const finalFile = new NativeFile(Paths.document, uniqueName);
+        if (finalFile.exists) finalFile.delete();
+        partFile.move(finalFile);
+        partFile = null;
+        refreshSavedFiles();
+        setDownloadProgress(null);
+        Alert.alert('ZIP tersimpan', `${uniqueName} · ${formatFileSize(expectedSize)}\nTersimpan di memori internal aplikasi C.Ziperr. Buka “File tersimpan” untuk melihat atau membuka hasilnya.`);
+      } catch (error) {
+        try { if (partFile?.exists) partFile.delete(); } catch { /* best-effort cleanup */ }
+        setDownloadProgress(null);
+        throw error;
+      } finally {
+        directDownloadInProgress.current = false;
+      }
+      return;
+    }
     if (message.type === 'save_internal_download_start') {
       let pendingFile: NativeFile | null = null;
       try {
-        if (activeDownloadRef.current) throw new Error('Masih ada ZIP lain yang sedang disimpan.');
+        if (activeDownloadRef.current || directDownloadInProgress.current) throw new Error('Masih ada ZIP lain yang sedang disimpan.');
         const expectedSize = Number(message.size);
         if (!Number.isSafeInteger(expectedSize) || expectedSize <= 0) throw new Error('Ukuran ZIP tidak valid.');
         const availableBytes = Paths.availableDiskSpace;

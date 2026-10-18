@@ -785,6 +785,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 .asx .dt ul{list-style:none;margin:0;padding:0;max-height:220px;overflow:auto}
 .asx .dt li{display:flex;justify-content:space-between;gap:12px;padding:6px 12px;font:12.5px var(--f-mono);border-bottom:1px solid #1d1d1d;animation:dlin .2s steps(4) both}.asx .dt li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.asx .dt li span:last-child{color:var(--muted);flex:none}
 .asx .dt .e{display:block;padding:14px 12px;color:var(--muted);font:13px var(--f-body)}
+#live>.grid2,#live>#detCard,#asx{display:none!important}
 </style>
 
 <div id="hdSplash" role="status" aria-label="Memuat C.Ziperr"><div class="bg"></div><div class="scan"></div><i class="cr a"></i><i class="cr b"></i><i class="cr c"></i><i class="cr d"></i><div class="top"><span>C.ZIPERR // BOOT</span><b>● LIVE</b><span>HD MAX PRO v2</span></div><div class="ct"><div class="rd"><div class="sw"></div><u style="top:34%;left:66%"></u><u style="top:68%;left:30%;animation-delay:.4s"></u><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M50 14A26 26 0 1 0 50 50"/><circle cx="32" cy="32" r="11"/><path d="M21 32h22M32 21c-6 6-6 16 0 22M32 21c6 6 6 16 0 22" stroke-width="2"/></svg></div><h1>C.ZIPERR</h1><p>Sistem kumpul, edit, dan kemas resource game web</p><div class="log"></div><div class="seg"></div><div class="pc"><span>INISIALISASI</span><span id="hdPc">000%</span></div></div><div class="sk">[ KETUK UNTUK LEWATI ]</div></div>
@@ -801,7 +802,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 
   <nav class="tabs" role="tablist" aria-label="Menu utama">
     <button role="tab" id="t-collect" aria-selected="true" data-tab="collect"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>Collect</button>
-    <button role="tab" id="t-preview" aria-selected="false" data-tab="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
+    <button role="tab" id="t-preview" aria-selected="false" data-tab="preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Analisis ZIP</button>
     <button role="tab" id="t-workspace" aria-selected="false" data-tab="workspace"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>Workspace</button>
     <button role="tab" id="t-log" aria-selected="false" data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Log<span class="bd" id="logBd" hidden>0</span></button>
     <button role="tab" id="t-setelan" aria-selected="false" data-tab="setelan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9m-3 3l3 3m-6 0l2 2"/></svg>Setelan</button>
@@ -813,7 +814,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
       <div class="head"><h1>Collect</h1><p>Masukkan alamat game. C.Ziperr menangkap resource yang dikirim ke browser, memilahnya ke enam lapisan, lalu mengemas semuanya menjadi ZIP.</p></div>
       <div class="card">
         <label class="f" for="url">URL game
-          <input class="in mono" id="url" type="url" inputmode="url" placeholder="https://contoh-game.com/play" autocomplete="off">
+          <input class="in mono" id="url" type="url" inputmode="url" placeholder="Tempel URL game yang ingin dikumpulkan" autocomplete="off">
         </label>
         <div style="height:12px"></div>
         <div class="seg" id="capMode" role="group" aria-label="Mode capture">
@@ -821,14 +822,12 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
           <button type="button" aria-pressed="false" data-v="big">File besar · GitHub runner</button>
         </div>
         <div style="height:12px"></div>
-        <label class="chk"><input type="checkbox" id="optClick" checked><span>Klik otomatis tombol Play / Start / Mulai</span></label>
-        <label class="chk"><input type="checkbox" id="optFill" checked><span>Auto-lengkapi referensi yang belum terunduh (multi-pass)</span></label>
         <label class="chk"><input type="checkbox" id="optStrip" checked><span><b>Strip token di paket offline</b> (ot / __hv / __sv / btt / or) — token tetap dipakai saat mengunduh</span></label>
         <label class="chk"><input type="checkbox" id="optBlockHost" checked><span><b>Blok host lama</b> setelah package / offline</span></label>
-        <label class="chk"><input type="checkbox" id="optReal" checked><span>Collect nyata ke Worker / GitHub</span></label>
+        <p class="note">Collect selalu memakai server sungguhan; tidak ada mode simulasi. Mode GitHub memakai budget RAM/disk runner dan waktu maksimal Actions, tetapi tetap dibatasi kuota GitHub, kapasitas runner, dan ruang penyimpanan HP.</p>
         <div style="height:14px"></div>
         <div class="row">
-          <button class="btn" id="startBtn" type="button">Mulai Collect</button>
+          <button class="btn" id="startBtn" type="button">Mulai Collect (Worker)</button>
           <button class="btn ghost" id="ghBtn" type="button">Collect via GitHub runner</button>
           <button class="btn ghost" id="verifyBtn" type="button">Verifikasi offline</button>
           <button class="btn ghost" id="resetBtn" type="button" hidden>Ulangi</button>
@@ -874,7 +873,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
         </div>
         <div class="card" id="detCard">
           <h2>Detail aset game <span class="pill info">klik kartu untuk rincian</span></h2>
-          <div class="sumbar"><button class="btn" id="dlZip" type="button" disabled>Ambil ZIP</button><button class="btn ghost" id="edZip" type="button" disabled>Edit kode di Workspace</button><button class="btn ghost sm" id="cpList" type="button">Salin daftar</button></div>
+          <div class="sumbar"><button class="btn" id="dlZip" type="button" disabled>Ambil ZIP asli</button><button class="btn ghost" id="edZip" type="button" disabled>Buka ZIP di Workspace</button><button class="btn ghost sm" id="cpList" type="button">Salin daftar</button></div>
           <div class="det" id="det"></div>
         </div>
         <div class="card">
@@ -885,7 +884,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
           <h2>Collect selesai <span class="pill ok">live</span></h2>
           <p class="muted" id="doneTxt"></p>
           <div style="height:12px"></div>
-          <div class="row"><button class="btn" id="dlZip2" type="button" disabled>Ambil ZIP</button><button class="btn" id="toPrev" type="button">Buka di Preview</button><button class="btn ghost" id="toWs" type="button">Buka di Workspace</button><button class="btn ghost" id="toErr" type="button">Lihat log error</button></div>
+          <div class="row"><button class="btn" id="dlZip2" type="button" disabled>Unduh ZIP asli</button><button class="btn" id="toPrev" type="button">Analisis ZIP di Workspace</button><button class="btn ghost" id="toWs" type="button">Buka di Workspace</button><button class="btn ghost" id="toErr" type="button">Lihat log error</button></div>
           <p class="note" style="margin-top:10px">Folder <span class="mono">server/</span> hanya snapshot respons API, bukan backend yang hidup.</p>
         </div>
       </div>
@@ -893,25 +892,17 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 
     <!-- PREVIEW -->
     <section class="pane" id="preview" role="tabpanel" aria-labelledby="t-preview" hidden>
-      <div class="head"><h1>Preview</h1><p>Jalankan ZIP, lihat kode aset dan log error, lalu perbaiki otomatis. Hasil repair mengubah berkas di Workspace.</p></div>
+      <div class="head"><h1>Analisis ZIP</h1><p>Analisis hanya berkas yang benar-benar dimuat ke Workspace. Tidak ada game contoh atau hasil simulasi.</p></div>
       <div class="card">
-        <div class="seg" id="pvMode" role="group" aria-label="Mode preview">
-          <button type="button" aria-pressed="true" data-v="Sandbox (offline)">Sandbox</button>
-          <button type="button" aria-pressed="false" data-v="Protected">Protected</button>
-          <button type="button" aria-pressed="false" data-v="Online Hybrid">Online Hybrid</button>
-          <button type="button" aria-pressed="false" data-v="Isolated Window">Isolated Window</button>
-        </div>
-        <div style="height:12px"></div>
         <div class="stage" id="stage"></div>
         <div style="height:12px"></div>
         <div class="row">
-          <button class="btn" id="runBtn" type="button">Jalankan ZIP contoh</button>
+          <button class="btn" id="runBtn" type="button">Analisis ZIP Workspace</button>
           <button class="btn ghost" id="repairBtn" type="button">Auto Repair (Deep)</button>
-          <button class="btn ghost" id="aiBtn" type="button">Perbaiki dengan AI</button>
         </div>
       </div>
       <div class="grid2">
-        <div class="card"><h2>Log preview</h2><div class="mini" id="pvLog" aria-live="polite"><div><span class="tt">--:--:--</span>Siap. Jalankan ZIP untuk melihat log.</div></div></div>
+        <div class="card"><h2>Log analisis</h2><div class="mini" id="pvLog" aria-live="polite"><div><span class="tt">--:--:--</span>Muat ZIP asli ke Workspace untuk memulai.</div></div></div>
         <div class="card"><h2>Kode aset</h2>
           <label class="f" for="assetSel">Pilih aset<select class="in mono" id="assetSel"></select></label>
           <div style="height:10px"></div>
@@ -943,7 +934,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
           <div class="sv on" id="v-explorer"><h4>Explorer <span><button class="ib" type="button" id="exNew" title="Berkas baru">+ Berkas</button><button class="ib" type="button" id="exCol" title="Ciutkan">Ciutkan</button></span></h4><div class="dz" id="dz" role="button" tabindex="0"><b>Muat ZIP → edit kode</b>klik atau seret berkas .zip ke sini<input type="file" id="zipIn" accept=".zip,application/zip" hidden></div><div class="dzr"><button class="ib" type="button" id="exExp">Ekspor ZIP</button></div><ul class="tr" id="tree"></ul></div>
           <div class="sv" id="v-search"><h4>Cari</h4><div class="pad"><input class="vin" id="sq" type="search" placeholder="Cari di semua berkas" aria-label="Cari di semua berkas"><div class="res" id="sres"></div></div></div>
           <div class="sv" id="v-api"><h4>Custom API</h4><div class="pad"><p style="font-size:12.5px;color:var(--vs-dim)">Editor endpoint, uji, konfigurasi hosting, dan checklist kesiapan dibuka sebagai tab di editor.</p><button class="btn sm" id="apiOpen" type="button">Buka Custom API</button><button class="btn ghost sm" id="apiDetect" type="button">Deteksi dari berkas</button></div></div>
-          <div class="sv" id="v-ai"><h4>Asisten AI</h4><div class="chat" id="chat" aria-live="polite"><div class="msg a">Saya menganalisis berkas yang terbuka di sini secara lokal. Coba: "cari spin", "endpoint apa saja", atau "masalah di kode".</div></div><form class="chatf" id="chatForm"><input class="vin" id="chatIn" type="text" placeholder="Tulis pesan" aria-label="Pesan untuk AI"><button class="btn sm" type="submit">Kirim</button></form></div>
+          <div class="sv" id="v-ai"><h4>Asisten AI</h4><div class="chat" id="chat" aria-live="polite"><div class="msg a">Saya menganalisis berkas yang terbuka di sini secara lokal. Kirim pertanyaan tentang kode atau endpoint yang ada di ZIP.</div></div><form class="chatf" id="chatForm"><input class="vin" id="chatIn" type="text" placeholder="Tulis pesan" aria-label="Pesan untuk AI"><button class="btn sm" type="submit">Kirim</button></form></div>
         </aside>
         <div class="main">
           <div class="tbar" id="tbar" role="tablist" aria-label="Berkas terbuka"></div>
@@ -1140,22 +1131,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     { k: "html", n: "HTML", c: "--c1" }, { k: "js", n: "JS", c: "--c2" }, { k: "asset", n: "Asset", c: "--c3" },
     { k: "data", n: "Data", c: "--c4" }, { k: "cdn", n: "CDN", c: "--c5" }, { k: "api", n: "Server/API", c: "--c6" }
   ];
-  function buildPool() {
-    const P = [], add = (k, n, kb, fail) => P.push({ k, n, kb, fail: fail || "" });
-    [["index.html", 3.2], ["game.html", 4.4], ["loading.html", 2.1], ["offline.html", 1.8]].forEach((a) => add("html", a[0], a[1]));
-    [["js/main.bundle.js", 1820], ["js/loader.js", 42], ["js/phaser.min.js", 1140], ["js/engine.js", 310], ["js/audio.js", 64], ["js/ui.js", 128], ["js/spin.js", 96], ["js/vendor/howler.js", 36], ["js/config.js", 9]].forEach((a) => add("js", a[0], a[1]));
-    for (let i = 1; i <= 12; i++) add("asset", "img/symbol_" + pad(i) + ".png", 38 + i * 7, i === 9 ? "retry" : "");
-    [["img/bg.webp", 420], ["img/sprites.png", 640], ["img/atlas.png", 2410], ["img/logo.webp", 54], ["audio/bgm_main.mp3", 3900], ["audio/spin.ogg", 88], ["audio/win_01.mp3", 210], ["fonts/game.woff2", 24]].forEach((a) => add("asset", a[0], a[1]));
-    add("asset", "audio/win_big.mp3", 380, "404");
-    [["data/config.json", 6], ["data/paytable.json", 3], ["data/symbols.atlas", 11], ["data/lang_id.json", 8], ["data/reels.json", 5], ["data/spine/hero.json", 31]].forEach((a) => add("data", a[0], a[1]));
-    add("cdn", "cdn.jsdelivr.net/npm/howler@2.2.4/howler.min.js", 36); add("cdn", "cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.2/pixi.min.js", 480, "retry"); add("cdn", "fonts.gstatic.com/s/rubik/v28/game.woff2", 24);
-    ["session", "spin", "balance", "history", "result", "collect"].forEach((n) => add("api", "server/api/game/" + n + ".json", 1 + (n.length % 3)));
-    add("api", "server/api/game/bonus.json", 2, "timeout");
-    const first = P.filter((x) => x.k === "html"), rest = P.filter((x) => x.k !== "html"); let s = 7;
-    rest.sort((a, b) => { s = (s * 9301 + 49297) % 233280; return s / 233280 - 0.5; });
-    return first.concat(rest);
-  }
-  let cap = { mode: "standard", pool: [], idx: 0, timer: null, t0: 0, entries: [], stat: null, filter: "all", dmode: "count", running: false, failed: [] };
+  let cap = { mode: "standard", entries: [], stat: null, filter: "all", dmode: "count", running: false, failed: [] };
   const R = 48, CIRC = 2 * Math.PI * R;
   function initDonut() {
     $("#segs").innerHTML = CATS.map((c) => '<circle class="seg" data-k="' + c.k + '" cx="60" cy="60" r="' + R + '" style="stroke:var(' + c.c + ');stroke-dasharray:0 ' + CIRC + ';stroke-dashoffset:0"/>').join("");
@@ -1197,73 +1173,8 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     list.forEach((e) => f.appendChild(entryLi(e)));
   }
   function setProg(p) { $("#bar").style.width = p + "%"; $("#pct").textContent = Math.round(p) + "%"; $("#barWrap").setAttribute("aria-valuenow", Math.round(p)); }
-  let lastPhase = "";
-  function phaseFor(p) {
-    if (p < 0.08) return "Membuka halaman dengan browser rendering";
-    if (p < 0.14) return $("#optClick").checked ? "Klik otomatis Play / Start" : "Menunggu halaman siap";
-    if (p < 0.6) return "Menangkap request jaringan";
-    if (p < 0.75) return "Klasifikasi game, API, dan server";
-    if (p < 1) return $("#optFill").checked ? "Auto-lengkapi referensi (multi-pass)" : "Memeriksa referensi";
-    return "Mengemas ZIP dan KETERANGAN.md";
-  }
-  function process(f) {
-    const st = cap.stat; let status = "ok";
-    if (f.fail === "retry") {
-      logEvt("WARN", "collect", "Timeout 8000 ms: " + f.n + " (percobaan 1/3)", "GET " + f.n + "\nstatus: timeout\nketerangan: server lambat, dijadwalkan ulang");
-      logEvt("INFO", "collect", "Mengulang unduhan: " + f.n); cnt($("#stRetry"), ++st.retry); status = "retry";
-    }
-    if (f.fail === "404" || f.fail === "timeout") {
-      const why = f.fail === "404" ? "HTTP 404 Not Found" : "Timeout setelah 3 percobaan";
-      logEvt("ERROR", "collect", why + ": " + f.n, "GET " + f.n + "\nhasil: " + why + "\nstatus: dicatat di daftar resume, tidak masuk ZIP");
-      st.fail++; cnt($("#stFail"), st.fail); cap.failed.push(f.n); cap.entries.push({ k: f.k, n: f.n, kb: 0, st: "gagal" }); window.__dl&&window.__dl(f,"gagal");
-      if (cap.filter === "all" || cap.filter === f.k) { const feed = $("#feed"); if (feed.querySelector(".empty")) feed.innerHTML = ""; feed.insertBefore(entryLi(cap.entries[cap.entries.length - 1]), feed.firstChild); }
-      return;
-    }
-    st[f.k].n++; st[f.k].kb += f.kb; st.totalKb += f.kb;
-    logEvt("OK", "collect", "Terunduh " + f.n + " (" + fsz(f.kb) + ") → " + (CATS.find((c) => c.k === f.k).n));
-    const e = { k: f.k, n: f.n, kb: f.kb, st: status }; cap.entries.push(e); window.__dl&&window.__dl(f,status);
-    if (cap.filter === "all" || cap.filter === f.k) { const feed = $("#feed"); if (feed.querySelector(".empty")) feed.innerHTML = ""; feed.insertBefore(entryLi(e), feed.firstChild); }
-  }
-  function tick() {
-    let n = 1 + Math.floor(Math.random() * 3);
-    while (n-- && cap.idx < cap.pool.length) process(cap.pool[cap.idx++]);
-    const p = cap.idx / cap.pool.length, el = (Date.now() - cap.t0) / 1000;
-    setProg(Math.min(99, p * 100)); const ph = phaseFor(p);
-    if (ph !== lastPhase) { lastPhase = ph; $("#phaseTxt").textContent = ph; logEvt("INFO", "collect", ph); }
-    renderDonut(); drawChips();
-    $("#stTime").textContent = el.toFixed(1).replace(".", ",") + " s"; $("#stSpeed").textContent = fsz(cap.stat.totalKb / Math.max(el, 0.1)) + "/s";
-    if (cap.idx >= cap.pool.length) { clearInterval(cap.timer); finish(); }
-  }
-  async function finish() {
-    lastPhase = phaseFor(1); $("#phaseTxt").textContent = lastPhase; logEvt("INFO", "collect", lastPhase);
-    await sleep(900);
-    const st = cap.stat, nTot = CATS.reduce((a, c) => a + st[c.k].n, 0), total = cap.pool.length;
-    logEvt("OK", "collect", "KETERANGAN.md dan keterangan.json ditulis"); logEvt("OK", "collect", "kelengkapan.json ditulis (skor " + Math.round(nTot / total * 100) + "/100)");
-    if (cap.failed.length) logEvt("WARN", "collect", cap.failed.length + " resource gagal, tercatat untuk resume", cap.failed.join("\n"));
-    logEvt("OK", "collect", "ZIP siap: " + nTot + " berkas, " + fsz(st.totalKb));
-    setProg(100); $("#barWrap").classList.remove("run"); $("#runDot").classList.remove("run"); $("#phaseTxt").textContent = "Selesai";
-    $("#doneTxt").textContent = nTot + " dari " + total + " berkas masuk ZIP (" + fsz(st.totalKb) + "). " + cap.failed.length + " gagal dan tercatat untuk resume.";
-    $("#doneCard").hidden = false; $("#resetBtn").hidden = false; $("#startBtn").disabled = false; cap.running = false; renderDetail(); toast("Collect selesai");
-  }
-  function startCollect() {
-    const u = $("#url").value.trim();
-    if (!u) { modal("URL kosong", "Isi alamat game terlebih dahulu, misalnya https://contoh-game.com/play."); return; }
-    let host = ""; try { host = new URL(u).hostname; } catch (e) { host = ""; }
-    if (!/^https?:\/\//i.test(u) || !host || host.indexOf(".") < 0) { logEvt("ERROR", "collect", "URL ditolak: " + u); modal("URL tidak valid", "Alamat harus diawali http:// atau https:// dan memuat nama domain."); return; }
-    $("#startBtn").disabled = true; $("#resetBtn").hidden = true; $("#doneCard").hidden = true; $("#live").hidden = false; $("#live").style.display = "grid";
-    $("#miniLog").innerHTML = ""; $("#barWrap").classList.add("run"); $("#runDot").classList.add("run");
-    cap.pool = buildPool(); window.__dlStart&&window.__dlStart(cap.pool); cap.idx = 0; cap.entries = []; cap.failed = []; cap.filter = "all"; lastPhase = "";
-    cap.stat = { ok: 0, fail: 0, retry: 0, totalKb: 0 }; CATS.forEach((c) => { cap.stat[c.k] = { n: 0, kb: 0 }; });
-    ["#stOk", "#stFail", "#stRetry"].forEach((s) => { $(s).dataset.v = 0; $(s).textContent = 0; }); $("#dcMain").dataset.v = 0;
-    cap.running = true; setProg(0); renderDonut(); drawChips(); renderFeed(); $("#phaseTxt").textContent = phaseFor(0);
-    logEvt("INFO", "collect", "Capture dimulai: host " + host + ", mode " + (cap.mode === "big" ? "file besar (GitHub runner)" : "standar"));
-    logEvt("INFO", "collect", "Opsi: auto-klik " + ($("#optClick").checked ? "aktif" : "mati") + ", auto-lengkapi " + ($("#optFill").checked ? "aktif" : "mati"));
-    cap.t0 = Date.now(); setTimeout(() => { if (cap.running) cap.timer = setInterval(tick, cap.mode === "big" ? 340 : 230); }, 900);
-    $("#live").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-  }
   seg("#capMode", (v) => { cap.mode = v; });
-  $("#startBtn").addEventListener("click", startCollect);
-  $("#resetBtn").addEventListener("click", () => { clearInterval(cap.timer); cap.running = false; $("#live").hidden = true; $("#live").style.display = "none"; $("#resetBtn").hidden = true; $("#startBtn").disabled = false; $("#url").focus(); });
+  $("#resetBtn").addEventListener("click", () => { if (window.__cZiperrStopPoll) window.__cZiperrStopPoll(); cap.running = false; $("#live").hidden = true; $("#live").style.display = "none"; $("#resetBtn").hidden = true; $("#startBtn").disabled = false; $("#url").focus(); });
   $("#toPrev").addEventListener("click", () => show("preview"));
   $("#toWs").addEventListener("click", () => show("workspace"));
   $("#toErr").addEventListener("click", () => { lf.lvl = "ERROR"; $$("#logStats .stat").forEach((x) => x.setAttribute("aria-pressed", x.dataset.lvl === "ERROR" ? "true" : "false")); renderLog(); show("log"); });
@@ -1629,13 +1540,8 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   });
 
   /* ===== Custom API ===== */
-  const apis = [
-    { id: 1, m: "GET", p: "/api/game/session", st: 200, lat: 80, auth: "Bearer", req: "", res: '{"sessionId":"demo-001","currency":"IDR","balance":100000}' },
-    { id: 2, m: "POST", p: "/api/game/spin", st: 200, lat: 140, auth: "Bearer", req: '{"bet":10,"idempotencyKey":"k-001"}', res: '{"spinId":"s-001","reels":[[3,5,1],[2,2,7],[4,1,6]],"win":0,"balance":99990}' },
-    { id: 3, m: "GET", p: "/api/game/balance", st: 200, lat: 60, auth: "Bearer", req: "", res: '{"balance":99990}' },
-    { id: 4, m: "GET", p: "/api/game/history", st: 200, lat: 90, auth: "Bearer", req: "", res: '{"items":[{"spinId":"s-001","bet":10,"win":0}]}' }
-  ];
-  let apiSel = 1, apiSeq = 5; const cfg = { mode: "mock", base: "http://localhost:8787", origin: "http://localhost:4173", timeout: 8000, rate: 60, idem: true, writeOk: false };
+  const apis = [];
+  let apiSel = 0, apiSeq = 1; const cfg = { mode: "direct", base: "", origin: "", timeout: 8000, rate: 60, idem: true, writeOk: false };
   const curApi = () => apis.find((a) => a.id === apiSel) || apis[0];
   const validJson = (s) => { if (!s.trim()) return true; try { JSON.parse(s); return true; } catch (e) { return false; } };
   function renderApi() {
@@ -1644,17 +1550,17 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
       '<div class="g2"><div class="pn"><h3>Endpoint <span><button class="btn sm" id="aAdd" type="button">+ Endpoint</button> <button class="btn ghost sm" id="aDet" type="button">Deteksi dari ZIP</button></span></h3><div id="aList"></div></div>' +
       '<div class="pn"><h3>Kesiapan <span id="aScoreTxt"></span></h3><div class="score"><i id="aScore"></i></div><div class="chk2" id="aCheck"></div></div></div>' +
       '<div class="pn" id="aForm"></div>' +
-      '<div class="g2"><div class="pn"><h3>Konfigurasi hosting</h3><div class="fg">' +
-      '<label class="fl">Mode<select class="vin" id="cMode"><option value="mock">Mock lokal</option><option value="proxy">Proxy ke server sendiri</option><option value="self">Self-host backend</option></select></label>' +
+      '<div class="g2"><div class="pn"><h3>Konfigurasi request nyata</h3><div class="fg">' +
+      '<label class="fl">Mode<select class="vin" id="cMode"><option value="direct">Uji langsung via browser</option></select></label>' +
       '<label class="fl">Base URL<input class="vin" id="cBase" type="text"></label><label class="fl">Origin CORS<input class="vin" id="cOrigin" type="text"></label>' +
       '<label class="fl">Timeout (ms)<input class="vin" id="cTimeout" type="number" min="500"></label><label class="fl">Batas request/menit<input class="vin" id="cRate" type="number" min="1"></label></div>' +
       '<label style="display:flex;gap:8px;margin-top:10px;font-size:12.5px"><input type="checkbox" id="cIdem"> Wajib idempotency key untuk request tulis</label>' +
       '<label style="display:flex;gap:8px;margin-top:6px;font-size:12.5px"><input type="checkbox" id="cWrite"> Izinkan uji request tulis (POST/PUT/DELETE)</label>' +
       '<div class="row" style="margin-top:12px"><button class="btn sm" id="aApply" type="button">Terapkan ke ZIP</button><button class="btn ghost sm" id="aScaf" type="button">Buat scaffold backend</button></div></div>' +
-      '<div class="pn"><h3>Hasil uji</h3><div class="tres" id="aRes">Pilih endpoint lalu tekan Uji. Uji berjalan di halaman ini memakai respons contoh; tidak ada request keluar.</div></div></div>';
+      '<div class="pn"><h3>Hasil request nyata</h3><div class="tres" id="aRes">Belum ada request. Tambahkan endpoint dan masukkan Base URL server Anda.</div></div></div>';
     $("#cMode").value = cfg.mode; $("#cBase").value = cfg.base; $("#cOrigin").value = cfg.origin; $("#cTimeout").value = cfg.timeout; $("#cRate").value = cfg.rate; $("#cIdem").checked = cfg.idem; $("#cWrite").checked = cfg.writeOk;
     drawApiList(); drawApiForm(); drawApiCheck();
-    $("#aAdd").addEventListener("click", () => { const a = { id: apiSeq++, m: "GET", p: "/api/game/baru", st: 200, lat: 100, auth: "Bearer", req: "", res: "{}" }; apis.push(a); apiSel = a.id; drawApiList(); drawApiForm(); drawApiCheck(); logEvt("INFO", "api", "Endpoint ditambah: GET /api/game/baru"); });
+    $("#aAdd").addEventListener("click", () => { const a = { id: apiSeq++, m: "GET", p: "/", auth: "none", req: "" }; apis.push(a); apiSel = a.id; drawApiList(); drawApiForm(); drawApiCheck(); logEvt("INFO", "api", "Endpoint ditambah: GET /"); });
     $("#aDet").addEventListener("click", detectApis);
     $("#cMode").addEventListener("change", (e) => { cfg.mode = e.target.value; drawApiCheck(); });
     $("#cBase").addEventListener("input", (e) => { cfg.base = e.target.value; drawApiCheck(); });
@@ -1666,27 +1572,26 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     $("#aApply").addEventListener("click", applyApi); $("#aScaf").addEventListener("click", scaffold);
   }
   function drawApiList() {
-    $("#aList").innerHTML = apis.map((a) => '<button class="ep" type="button" data-id="' + a.id + '" aria-current="' + (a.id === apiSel) + '"><b class="m-' + a.m + '">' + a.m + "</b><span>" + esc(a.p) + '</span><span style="color:var(--vs-dim)">' + a.st + "</span></button>").join("") || '<div style="color:var(--vs-dim)">Belum ada endpoint.</div>';
+    $("#aList").innerHTML = apis.map((a) => '<button class="ep" type="button" data-id="' + a.id + '" aria-current="' + (a.id === apiSel) + '"><b class="m-' + a.m + '">' + a.m + "</b><span>" + esc(a.p) + "</span></button>").join("") || '<div style="color:var(--vs-dim)">Belum ada endpoint. Tambahkan endpoint atau deteksi dari berkas ZIP.</div>';
     $$("#aList .ep").forEach((b) => b.addEventListener("click", () => { apiSel = +b.dataset.id; drawApiList(); drawApiForm(); }));
   }
   function drawApiForm() {
     const a = curApi(), f = $("#aForm"); if (!a) { f.innerHTML = ""; return; }
-    f.innerHTML = '<h3>Kontrak endpoint <span><button class="btn sm" id="aTest" type="button">Uji endpoint</button> <button class="btn ghost sm" id="aDel" type="button">Hapus</button></span></h3>' +
+    f.innerHTML = '<h3>Kontrak endpoint <span><button class="btn sm" id="aTest" type="button">Kirim request nyata</button> <button class="btn ghost sm" id="aDel" type="button">Hapus</button></span></h3>' +
       '<div class="fg"><label class="fl">Metode<select class="vin" id="fM">' + ["GET", "POST", "PUT", "DELETE"].map((m) => "<option" + (m === a.m ? " selected" : "") + ">" + m + "</option>").join("") + '</select></label>' +
-      '<label class="fl">Path<input class="vin" id="fP" type="text" value="' + esc(a.p) + '"></label><label class="fl">Status<input class="vin" id="fS" type="number" value="' + a.st + '"></label>' +
-      '<label class="fl">Latensi (ms)<input class="vin" id="fL" type="number" value="' + a.lat + '"></label><label class="fl">Auth<select class="vin" id="fA">' + ["none", "Bearer", "X-Session"].map((m) => "<option" + (m === a.auth ? " selected" : "") + ">" + m + "</option>").join("") + "</select></label></div>" +
-      '<div class="g2" style="margin-top:10px"><label class="fl">Body request (JSON)<textarea class="vin ta2" id="fRq" spellcheck="false">' + esc(a.req) + '</textarea></label><label class="fl">Body respons (JSON) <span id="fRsOk"></span><textarea class="vin ta2" id="fRs" spellcheck="false">' + esc(a.res) + "</textarea></label></div>";
-    const upd = () => { const c = curApi(); c.m = $("#fM").value; c.p = $("#fP").value; c.st = +$("#fS").value || 200; c.lat = +$("#fL").value || 0; c.auth = $("#fA").value; c.req = $("#fRq").value; c.res = $("#fRs").value; $("#fRsOk").textContent = validJson(c.res) ? "✓ JSON valid" : "✗ JSON tidak valid"; $("#fRsOk").style.color = validJson(c.res) ? "#4cc77a" : "#f2776c"; drawApiList(); drawApiCheck(); };
-    ["fM", "fP", "fS", "fL", "fA", "fRq", "fRs"].forEach((id) => { $("#" + id).addEventListener("input", upd); $("#" + id).addEventListener("change", upd); });
-    $("#fRsOk").textContent = validJson(a.res) ? "✓ JSON valid" : "✗ JSON tidak valid"; $("#fRsOk").style.color = validJson(a.res) ? "#4cc77a" : "#f2776c";
+      '<label class="fl">Path<input class="vin" id="fP" type="text" value="' + esc(a.p) + '"></label>' +
+      '<label class="fl">Auth<select class="vin" id="fA">' + ["none", "Bearer", "X-Session"].map((m) => "<option" + (m === a.auth ? " selected" : "") + ">" + m + "</option>").join("") + '</select></label></div>' +
+      '<label class="fl" style="margin-top:10px">Body request (JSON)<textarea class="vin ta2" id="fRq" spellcheck="false">' + esc(a.req) + '</textarea></label>';
+    const upd = () => { const c = curApi(); c.m = $("#fM").value; c.p = $("#fP").value; c.auth = $("#fA").value; c.req = $("#fRq").value; drawApiList(); drawApiCheck(); };
+    ["fM", "fP", "fA", "fRq"].forEach((id) => { $("#" + id).addEventListener("input", upd); $("#" + id).addEventListener("change", upd); });
     $("#aTest").addEventListener("click", testApi);
     $("#aDel").addEventListener("click", () => { const i = apis.findIndex((x) => x.id === apiSel); logEvt("WARN", "api", "Endpoint dihapus: " + apis[i].m + " " + apis[i].p); apis.splice(i, 1); apiSel = apis[0] ? apis[0].id : 0; drawApiList(); drawApiForm(); drawApiCheck(); });
   }
   function checks() {
     const secret = problems.filter((x) => x.kind === "secret").length, writes = apis.filter((a) => a.m !== "GET");
     return [
-      ["Endpoint session dan spin tersedia", apis.some((a) => /session/.test(a.p)) && apis.some((a) => /spin/.test(a.p)), true],
-      ["Semua respons berupa JSON valid", apis.every((a) => validJson(a.res)), true],
+      ["Endpoint sudah ditambahkan", apis.length > 0, false],
+      ["Semua body request berupa JSON valid", apis.every((a) => validJson(a.req)), true],
       ["Base URL diisi dengan http(s)://", /^https?:\/\/\S+/.test(cfg.base), false],
       ["Request tulis memakai idempotency key", !writes.length || cfg.idem, false],
       ["Request tulis memakai autentikasi", writes.every((a) => a.auth !== "none"), false],
@@ -1703,12 +1608,20 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   async function testApi() {
     const a = curApi(), out = $("#aRes"); if (!a) return;
     if (a.m !== "GET" && !cfg.writeOk) { out.textContent = "Diblokir: request " + a.m + " butuh izin uji tulis. Centang \"Izinkan uji request tulis\" di konfigurasi."; logEvt("WARN", "api", "Uji diblokir: " + a.m + " " + a.p); return; }
-    if (a.auth !== "none" && cfg.mode !== "mock") { /* tetap proses */ }
-    out.textContent = "Mengirim " + a.m + " " + a.p + " …"; const t0 = performance.now(); await sleep(Math.min(a.lat, 1200));
-    const ok = validJson(a.res); let body = a.res; if (ok && a.res.trim()) body = JSON.stringify(JSON.parse(a.res), null, 2);
-    const ms = Math.round(performance.now() - t0), st = ok ? a.st : 500;
-    out.textContent = "HTTP " + st + "  ·  " + ms + " ms  ·  mode " + cfg.mode + "\nauth: " + a.auth + "\n\n" + (ok ? body : "Respons bukan JSON valid. Perbaiki body respons.");
-    logEvt(st < 400 ? "OK" : "ERROR", "api", "Uji " + a.m + " " + a.p + " → " + st + " (" + ms + " ms)", ok ? "" : "body respons bukan JSON valid");
+    if (a.auth !== "none") { out.textContent = "Request tidak dikirim: kredensial " + a.auth + " belum dikonfigurasi. Pilih Auth=none atau implementasikan header kredensial di server Anda."; return; }
+    if (!/^https?:\/\/\S+/i.test(cfg.base)) { out.textContent = "Request tidak dikirim: masukkan Base URL http(s):// server Anda."; return; }
+    if (a.req.trim() && !validJson(a.req)) { out.textContent = "Request tidak dikirim: body bukan JSON valid."; return; }
+    let target; try { target = new URL(a.p, cfg.base.replace(/\/?$/, "/")); } catch (_) { out.textContent = "Request tidak dikirim: Base URL atau path tidak valid."; return; }
+    out.textContent = "Mengirim request nyata ke " + target.href + " …"; const t0 = performance.now(); const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), Math.max(500, Number(cfg.timeout) || 8000));
+    try {
+      const response = await fetch(target.href, { method: a.m, headers: a.req.trim() ? { "Content-Type": "application/json", Accept: "application/json" } : { Accept: "application/json" }, body: a.m === "GET" || a.m === "DELETE" || !a.req.trim() ? undefined : a.req, signal: controller.signal });
+      const raw = await response.text(); let body = raw; try { body = JSON.stringify(JSON.parse(raw), null, 2); } catch (_) {}
+      const ms = Math.round(performance.now() - t0); out.textContent = "HTTP " + response.status + "  ·  " + ms + " ms  ·  " + target.href + "\n\n" + (body || "(body kosong)");
+      logEvt(response.ok ? "OK" : "ERROR", "api", "Request nyata " + a.m + " " + target.pathname + " → " + response.status + " (" + ms + " ms)");
+    } catch (error) {
+      const ms = Math.round(performance.now() - t0); out.textContent = "Request nyata gagal setelah " + ms + " ms: " + (error.message || error) + "\nPeriksa Base URL, CORS, koneksi, dan endpoint.";
+      logEvt("ERROR", "api", "Request nyata gagal " + a.m + " " + target.pathname, error.message || String(error));
+    } finally { clearTimeout(timeout); }
   }
   function detectApis() {
     let added = 0; const seen = new Set(apis.map((a) => a.m + " " + a.p));
@@ -1716,23 +1629,22 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
       if (langOf(p) === "md" || p.indexOf("server/") === 0) return;
       const src = files[p], re = /fetch\(\s*["'`](\/[^"'`]*api[^"'`]*)["'`](?:\s*,\s*\{([^}]*)\})?/g; let m;
       while ((m = re.exec(src))) { const meth = /method\s*:\s*["'](\w+)["']/i.exec(m[2] || ""), M = meth ? meth[1].toUpperCase() : "GET", key = M + " " + m[1];
-        if (!seen.has(key)) { seen.add(key); apis.push({ id: apiSeq++, m: M, p: m[1], st: 200, lat: 100, auth: "Bearer", req: "", res: "{}" }); added++; logEvt("INFO", "api", "Terdeteksi dari " + p + ": " + key); } }
+        if (!seen.has(key)) { seen.add(key); apis.push({ id: apiSeq++, m: M, p: m[1], auth: "none", req: "" }); added++; logEvt("INFO", "api", "Terdeteksi dari " + p + ": " + key); } }
     });
     logEvt(added ? "OK" : "INFO", "api", "Deteksi selesai: " + added + " endpoint baru"); toast(added ? added + " endpoint baru terdeteksi" : "Tidak ada endpoint baru");
     if ($("#aList")) { drawApiList(); drawApiForm(); drawApiCheck(); }
   }
   function applyApi() {
-    const obj = { mode: cfg.mode, baseUrl: cfg.base, cors: cfg.origin, timeoutMs: cfg.timeout, ratePerMinute: cfg.rate, idempotency: cfg.idem, endpoints: apis.map((a) => ({ method: a.m, path: a.p, status: a.st, auth: a.auth })) };
+    const obj = { mode: cfg.mode, baseUrl: cfg.base, cors: cfg.origin, timeoutMs: cfg.timeout, ratePerMinute: cfg.rate, idempotency: cfg.idem, endpoints: apis.map((a) => ({ method: a.m, path: a.p, auth: a.auth })) };
     files["data/api.config.json"] = JSON.stringify(obj, null, 2); if (!(("data/api.config.json") in saved)) saved["data/api.config.json"] = "";
     drawTree(); drawTabs(); lint(); logEvt("OK", "api", "Konfigurasi API ditulis ke data/api.config.json (" + apis.length + " endpoint)"); toast("Ditulis ke data/api.config.json");
   }
   function scaffold() {
-    const routes = {}; apis.forEach((a) => { let b; try { b = a.res.trim() ? JSON.parse(a.res) : {}; } catch (e) { b = {}; } routes[a.m + " " + a.p] = { status: a.st, body: b }; });
-    const code = ["// Server mock yang dibuat C.Ziperr. Jalankan: node server/mock-server.js", "const http = require(\"http\");", "const ROUTES = " + JSON.stringify(routes, null, 2) + ";", "const ORIGIN = " + JSON.stringify(cfg.origin) + ";", "",
-      "http.createServer((req, res) => {", "  const r = ROUTES[req.method + \" \" + req.url.split(\"?\")[0]];", "  res.setHeader(\"Access-Control-Allow-Origin\", ORIGIN);", "  res.setHeader(\"Content-Type\", \"application/json\");",
-      "  if (!r) { res.statusCode = 404; return res.end(JSON.stringify({ error: \"not found\" })); }", "  res.statusCode = r.status;", "  res.end(JSON.stringify(r.body));", "}).listen(" + (parseInt((cfg.base.match(/:(\d+)/) || [])[1], 10) || 8787) + ");", ""].join("\n");
-    files["server/mock-server.js"] = code; saved["server/mock-server.js"] = saved["server/mock-server.js"] || ""; expanded.server = true; drawTree(); drawTabs(); lint();
-    logEvt("OK", "api", "Scaffold backend dibuat: server/mock-server.js"); toast("Dibuat server/mock-server.js"); openTab("server/mock-server.js");
+    const routes = apis.map((a) => ({ method: a.m, path: a.p }));
+    const code = ["// Scaffold route backend; implementasikan logika bisnis sebelum deploy.", "const http = require(\"http\");", "const ROUTES = " + JSON.stringify(routes, null, 2) + ";", "const ORIGIN = " + JSON.stringify(cfg.origin || "null") + ";", "",
+      "http.createServer((req, res) => {", "  res.setHeader(\"Access-Control-Allow-Origin\", ORIGIN);", "  res.setHeader(\"Content-Type\", \"application/json\");", "  const route = ROUTES.find((item) => item.method === req.method && item.path === req.url.split(\"?\")[0]);", "  res.statusCode = route ? 501 : 404;", "  res.end(JSON.stringify({ error: route ? \"Implementasikan endpoint ini sebelum deploy\" : \"not found\" }));", "}).listen(" + (parseInt((cfg.base.match(/:(\d+)/) || [])[1], 10) || 8787) + ");", ""].join("\n");
+    files["server/api-scaffold.js"] = code; saved["server/api-scaffold.js"] = saved["server/api-scaffold.js"] || ""; expanded.server = true; drawTree(); drawTabs(); lint();
+    logEvt("OK", "api", "Scaffold endpoint 501 dibuat: server/api-scaffold.js"); toast("Scaffold endpoint dibuat; implementasikan sebelum deploy"); openTab("server/api-scaffold.js");
   }
   $("#apiOpen").addEventListener("click", () => openTab("::api"));
   $("#apiDetect").addEventListener("click", detectApis);
@@ -1753,19 +1665,26 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     await sleep(600); a.className = "msg a"; a.textContent = aiReply(t); c.scrollTop = c.scrollHeight; logEvt("INFO", "workspace", "Chat AI lokal: " + t.slice(0, 60));
   });
 
-  /* ===== Preview ===== */
-  let pvMode = "Sandbox (offline)", loaded = false, snap = null;
+  /* ===== Analisis ZIP nyata ===== */
+  let loaded = false;
   function drawStage() {
-    $("#stage").innerHTML = loaded
-      ? '<div><div class="reels"><div class="reel"><b>★<br>♦<br>♣<br>♥<br>★<br>♦</b></div><div class="reel"><b>♥<br>★<br>♦<br>♣<br>♥<br>★</b></div><div class="reel"><b>♣<br>♥<br>★<br>♦<br>♣<br>♥</b></div></div>game-contoh.zip berjalan · Mode: ' + esc(pvMode) + "</div>"
-      : '<div class="idle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5l5 2.5-5 2.5z"/></svg>Belum ada ZIP dimuat · Mode: ' + esc(pvMode) + "</div>";
+    const names = Object.keys(files).sort();
+    const entry = names.find((name) => /(^|\/)index\.html?$/i.test(name));
+    $("#stage").innerHTML = names.length
+      ? '<div class="idle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5z"/><path d="M14 3v5h5M8 13h8M8 17h8"/></svg>Workspace berisi ' + names.length + ' berkas teks' + (entry ? ' · entry point: ' + esc(entry) : ' · index.html tidak ditemukan') + '</div>'
+      : '<div class="idle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Belum ada ZIP asli di Workspace. Buka tab Workspace lalu muat berkas ZIP hasil collect.</div>';
   }
-  seg("#pvMode", (v) => { pvMode = v; drawStage(); if (loaded) logEvt("INFO", "preview", "Mode preview: " + v); }); drawStage();
+  drawStage();
   $("#runBtn").addEventListener("click", () => {
-    loaded = true; drawStage(); $("#pvLog").innerHTML = ""; const P = lint(); logEvt("OK", "preview", "index.html dimuat dari ZIP (mode " + pvMode + ")");
+    const names = Object.keys(files);
+    if (!names.length) { modal("ZIP belum dimuat", "Muat ZIP hasil collect ke Workspace terlebih dahulu. Tidak ada ZIP contoh di aplikasi."); return; }
+    loaded = true; drawStage(); $("#pvLog").innerHTML = "";
+    const entry = names.find((name) => /(^|\/)index\.html?$/i.test(name));
+    const P = lint();
+    logEvt("OK", "preview", names.length + " berkas Workspace dianalisis" + (entry ? " · entry point " + entry : " · index.html tidak ditemukan"));
     P.forEach((x) => logEvt(x.sev === "error" ? "ERROR" : "WARN", "preview", x.p + ":" + x.line + " " + x.msg));
-    cap.failed.forEach((n) => logEvt("ERROR", "preview", "Aset hilang di ZIP: " + n)); if (!cap.failed.length) logEvt("ERROR", "preview", "404 audio/win_big.mp3 tidak ada di ZIP");
-    logEvt("WARN", "preview", "/api/game/session memakai snapshot server/");
+    if (!P.length) logEvt("OK", "preview", "Tidak ada temuan lint pada berkas teks yang dimuat.");
+    fillAssets();
   });
   $("#repairBtn").addEventListener("click", () => {
     if (!loaded) { modal("ZIP belum dimuat", "Jalankan ZIP terlebih dahulu agar repair punya bahan untuk diperiksa."); return; }
@@ -1774,7 +1693,6 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
       .map((x) => "<tr><td>" + x[0] + "</td><td>" + x[1] + '</td><td class="' + (x[2] < x[1] ? "dn" : "") + '">' + x[2] + "</td></tr>").join("");
     fillAssets();
   });
-  $("#aiBtn").addEventListener("click", () => { if (!$("#key").value) { modal("API AI belum diatur", "Buka menu Setelan, isi API key, lalu coba lagi."); return; } logEvt("INFO", "preview", "Mode AI aktif (proses, belum ada panggilan jaringan)"); });
   function fillAssets() { const s = $("#assetSel"), cur = s.value; s.innerHTML = Object.keys(files).sort().map((p) => "<option" + (p === cur ? " selected" : "") + ">" + esc(p) + "</option>").join(""); showAsset(); }
   function showAsset() { const p = $("#assetSel").value; $("#assetCode").innerHTML = hl(files[p] || "", langOf(p || "x.md")); }
   $("#assetSel").addEventListener("change", showAsset);
@@ -1838,22 +1756,46 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   }
   function saveBlob(b, n) { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = n; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
   const zname = () => { try { return new URL($("#url").value.trim()).hostname.replace(/[^\w.-]/g, "_"); } catch (e) { return "game"; } };
-  function stub(e) {
-    const n = e.n, x = extKey(n);
-    if (e.k === "html") return "<!doctype html>\n<html lang=\"id\"><head><meta charset=\"utf-8\"><title>" + n + "</title></head><body></body></html>\n";
-    if (x === "js") return "// " + n + "\n";
-    if (x === "json" || x === "atlas" || e.k === "api" || e.k === "data") return "{}\n";
-    if (x === "css") return "/* " + n + " */\n";
-    return "";
+  let latestCollectResult = { blob: null, artifactId: null, r2Url: null, filename: "", sizeBytes: 0 };
+  function setResultButtons(enabled, workspaceEnabled) {
+    ["dlZip", "dlZip2"].forEach((id) => { const button = $("#" + id); if (button) button.disabled = !enabled; });
+    const editButton = $("#edZip"); if (editButton) editButton.disabled = !workspaceEnabled;
   }
-  function collectedFiles() {
-    const m = {}, ok = cap.entries.filter((e) => e.st !== "gagal"), st = cap.stat || {};
-    ok.forEach((e) => { m[e.k === "cdn" ? "cdn/" + e.n.replace(/[^\w.\-\/]/g, "_") : e.n] = stub(e); });
-    m["KETERANGAN.md"] = "# Keterangan paket\n\nTotal " + ok.length + " berkas (" + fsz(st.totalKb || 0) + ").\n\n" + CATS.map((c) => "- " + c.n + ": " + (st[c.k] ? st[c.k].n : 0) + " berkas").join("\n") + "\n";
-    m["resume.json"] = JSON.stringify({ gagal: cap.failed }, null, 2);
-    m["scripts/pack_assets.py"] = SAMPLES["scripts/pack_assets.py"]; m["css/theme.css"] = SAMPLES["css/theme.css"];
-    return m;
+  function downloadRemoteUrl(url, filename, sizeBytes) {
+    const absoluteUrl = new URL(url, location.href).href;
+    if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === "function") {
+      const id = "github-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: "save_internal_download_url", id: id, filename: filename, url: absoluteUrl, size: Number(sizeBytes) || 0
+      }));
+      return;
+    }
+    const anchor = document.createElement("a"); anchor.href = absoluteUrl; anchor.download = filename;
+    document.body.appendChild(anchor); anchor.click(); setTimeout(() => anchor.remove(), 2000);
   }
+  async function downloadGithubArtifact(artifactId, sizeBytes) {
+    const response = await window.fetch("/api/github/artifact-url?artifact_id=" + encodeURIComponent(artifactId));
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.download_url) throw new Error(data.error || "URL unduhan GitHub tidak tersedia.");
+    const filename = "c-ziperr-github-artifact-" + artifactId + ".zip";
+    downloadRemoteUrl(data.download_url, filename, sizeBytes);
+    return filename;
+  }
+  function recordZipResult(filename, sizeBytes, blob, artifactId, r2Url) {
+    latestCollectResult = { blob: blob || null, artifactId: artifactId || null, r2Url: r2Url || null, filename: filename, sizeBytes: Number(sizeBytes) || 0 };
+    cap.entries = [{ k: "data", n: filename, kb: Math.max(1, Math.round((Number(sizeBytes) || 1) / 1024)), st: "ok" }];
+    setResultButtons(true, !!blob);
+    if (typeof window.__dlStart === "function") window.__dlStart([{ n: filename, kb: Math.max(1, Math.round((Number(sizeBytes) || 1) / 1024)), k: "data" }]);
+    if (typeof window.__dl === "function") window.__dl({ n: filename, kb: Math.max(1, Math.round((Number(sizeBytes) || 1) / 1024)), k: "data" }, "ok");
+  }
+  window.__cZiperrRecordZipResult = recordZipResult;
+  window.__cZiperrDownloadGithubArtifact = downloadGithubArtifact;
+  window.__cZiperrDownloadResult = downloadZip;
+  window.__cZiperrResetCollectResult = function () {
+    latestCollectResult = { blob: null, artifactId: null, r2Url: null, filename: "", sizeBytes: 0 };
+    cap.entries = []; cap.running = true; setResultButtons(false, false);
+  };
+  window.__cZiperrCollectFinished = function () { cap.running = false; renderDetail(); };
   function loadMap(map, label) {
     const names = Object.keys(map).sort(); if (!names.length) return;
     Object.keys(files).forEach((k) => delete files[k]); Object.keys(saved).forEach((k) => delete saved[k]); Object.keys(folds).forEach((k) => delete folds[k]); Object.keys(expanded).forEach((k) => delete expanded[k]);
@@ -1882,8 +1824,34 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   $("#vs").addEventListener("drop", (e) => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) zipFile(f); });
   function exportZip() { saveBlob(makeZip(files), "c-ziperr-workspace.zip"); logEvt("OK", "workspace", "Workspace diekspor: " + Object.keys(files).length + " berkas"); toast("ZIP workspace diunduh"); }
   $("#exExp").addEventListener("click", exportZip);
-  function downloadZip() { const m = collectedFiles(); saveBlob(makeZip(m), "c-ziperr-" + zname() + ".zip"); logEvt("OK", "collect", "ZIP diambil: " + Object.keys(m).length + " berkas"); toast("ZIP diunduh"); }
-  function toWorkspace() { const m = collectedFiles(); guardReplace(() => { show("workspace"); loadMap(m, "Hasil collect"); }); }
+  async function downloadZip() {
+    try {
+      if (latestCollectResult.artifactId) {
+        await downloadGithubArtifact(latestCollectResult.artifactId, latestCollectResult.sizeBytes);
+        toast("Unduhan artifact GitHub dimulai"); return;
+      }
+      if (latestCollectResult.r2Url) {
+        downloadRemoteUrl(latestCollectResult.r2Url, latestCollectResult.filename || "game-resources.zip", latestCollectResult.sizeBytes);
+        toast("Unduhan ZIP dari penyimpanan dimulai"); return;
+      }
+      if (latestCollectResult.blob) {
+        saveBlob(latestCollectResult.blob, latestCollectResult.filename || "game-resources.zip");
+        toast("ZIP collect asli diunduh"); return;
+      }
+      modal("ZIP belum tersedia", "Jalankan collect nyata sampai selesai. Aplikasi tidak membuat ZIP contoh atau file placeholder.");
+    } catch (error) { modal("Unduhan gagal", error.message || String(error)); }
+  }
+  async function toWorkspace() {
+    if (!latestCollectResult.blob) {
+      modal("Workspace tidak memuat artifact besar", "ZIP GitHub besar diunduh langsung ke penyimpanan internal agar tidak dimuat penuh ke memori. Buka file ZIP tersimpan atau muat ZIP berukuran lebih kecil ke Workspace."); return;
+    }
+    try {
+      const list = await readZip(await latestCollectResult.blob.arrayBuffer()), map = {};
+      list.forEach((entry) => { if (entry.data && entry.data.length <= 2e6 && entry.data.subarray(0, 4096).indexOf(0) < 0) map[entry.name.replace(/^\.?\/+/, "")] = new TextDecoder().decode(entry.data); });
+      if (!Object.keys(map).length) { modal("Tidak ada berkas teks", "ZIP asli berhasil dibaca, tetapi tidak berisi berkas teks yang dapat diedit di Workspace."); return; }
+      guardReplace(() => { show("workspace"); loadMap(map, latestCollectResult.filename || "ZIP collect asli"); });
+    } catch (error) { modal("ZIP tidak dapat dibuka", error.message || String(error)); }
+  }
   $("#dlZip").addEventListener("click", downloadZip); $("#dlZip2").addEventListener("click", downloadZip); $("#edZip").addEventListener("click", toWorkspace);
   $("#toWs").addEventListener("click", () => { if (cap.entries.length) toWorkspace(); });
   $("#cpList").addEventListener("click", () => copyText(cap.entries.map((e) => e.st + "\t" + e.k + "\t" + e.n + "\t" + fsz(e.kb)).join("\n") || "(kosong)", "Daftar berkas disalin"));
@@ -2114,7 +2082,7 @@ try{
 
 (function(){
 var live=document.getElementById("live");if(!live)return;
-live.insertAdjacentHTML("afterbegin",'<div class="card dlc" id="dlCard"><div class="dlh"><div><h2><span class="dot run" id="dlDot"></span>Daftar unduhan <span class="pill ok">live</span></h2><div class="dlph" id="dlPh">Menyiapkan…</div></div><div class="dlbig"><b id="dlPct">0%</b><small id="dlSz">0 KB / 0 KB</small></div></div><div class="bar dlb run" id="dlBarW" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="dlBar"></i></div><div class="dlm"><span id="dlCnt">0 / 0 berkas</span><span class="g" id="dlOk">0 selesai</span><span class="r" id="dlBad">0 gagal</span><span id="dlSp">0 KB/s</span><button class="btn ghost sm" id="dlCopy" type="button">Salin daftar</button></div><ul class="dll" id="dlList" aria-live="polite"></ul></div>');
+live.insertAdjacentHTML("afterbegin",'<div class="card dlc" id="dlCard"><div class="dlh"><div><h2><span class="dot run" id="dlDot"></span>Hasil collect asli <span class="pill ok">live</span></h2><div class="dlph" id="dlPh">Menyiapkan…</div></div><div class="dlbig"><b id="dlPct">0%</b><small id="dlSz">0 KB / 0 KB</small></div></div><div class="bar dlb run" id="dlBarW" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="dlBar"></i></div><div class="dlm"><span id="dlCnt">0 / 0 berkas</span><span class="g" id="dlOk">0 selesai</span><span class="r" id="dlBad">0 gagal</span><span id="dlSp">0 KB/s</span><button class="btn ghost sm" id="dlCopy" type="button">Salin nama ZIP</button></div><ul class="dll" id="dlList" aria-live="polite"></ul></div>');
 var old=document.getElementById("bar");if(old&&old.closest(".card"))old.closest(".card").style.display="none";
 var $=function(i){return document.getElementById(i)},L=$("dlList"),card=$("dlCard"),T={n:0,kb:0},D={n:0,ok:0,bad:0,kb:0},names=[];
 function fm(k){return k>=1024?(k/1024).toFixed(1).replace(".",",")+" MB":Math.round(k)+" KB";}
@@ -2167,6 +2135,7 @@ draw();})();
   var STRIP = ["ot", "__hv", "__sv", "btt", "or"];
   var pollTimer = null;
   var activeProgressId = null;
+  window.__cZiperrStopPoll = function () { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
 
   function $(s) { return document.querySelector(s); }
   function el(id) { return document.getElementById(id); }
@@ -2291,51 +2260,28 @@ draw();})();
       var txt = el("doneTxt");
       if (txt) txt.textContent = message || (ok ? "Collect selesai." : "Collect gagal.");
     }
+    if (typeof window.__cZiperrCollectFinished === "function") window.__cZiperrCollectFinished();
     var note = el("collectNote");
     if (note) note.textContent = message || (ok ? "Collect selesai." : "Collect gagal.");
   }
 
   var lastFilesSynced = 0;
-  var listBootstrapped = false;
-
-  function ensureListBootstrap(n) {
-    n = Math.max(1, n || 1);
-    if (listBootstrapped) return;
-    listBootstrapped = true;
-    if (typeof window.__dlStart === "function") {
-      var pool = [];
-      for (var i = 0; i < n; i++) {
-        pool.push({ n: "resource-" + (i + 1), kb: 1, k: i % 6 === 0 ? "html" : (i % 6 === 1 ? "js" : (i % 6 === 2 ? "asset" : (i % 6 === 3 ? "data" : (i % 6 === 4 ? "cdn" : "api")))) });
-      }
-      try { window.__dlStart(pool); } catch (_) {}
-    }
-  }
 
   function syncFilesToLists(filesCount, sizeKb) {
     filesCount = Number(filesCount) || 0;
     if (filesCount <= 0) return;
-    ensureListBootstrap(filesCount);
-    // Push new entries for the delta so daftar unduhan + donut move
-    while (lastFilesSynced < filesCount) {
-      lastFilesSynced++;
-      var i = lastFilesSynced;
-      var k = ["html", "js", "asset", "data", "cdn", "api"][i % 6];
-      var kb = sizeKb && filesCount ? Math.max(1, Math.round(sizeKb / filesCount)) : 1;
-      if (typeof window.__dl === "function") {
-        try { window.__dl({ n: "resource-" + i, kb: kb, k: k }, "ok"); } catch (_) {}
-      }
-    }
+    lastFilesSynced = filesCount;
     if (el("stOk")) el("stOk").textContent = String(filesCount);
-    if (el("dlCnt")) el("dlCnt").textContent = filesCount + " / " + filesCount + " berkas";
-    if (el("dlOk")) el("dlOk").textContent = filesCount + " selesai";
+    if (el("dlCnt")) el("dlCnt").textContent = filesCount + " berkas terdeteksi";
+    if (el("dlOk")) el("dlOk").textContent = "Menunggu ZIP asli";
+    if (el("dlList")) el("dlList").innerHTML = '<li class="empty">Nama file satu per satu tersedia di ZIP hasil asli setelah collect selesai.</li>';
     if (sizeKb && el("stSize")) el("stSize").textContent = sizeKb + " KB";
-    if (sizeKb && el("dlSz")) el("dlSz").textContent = sizeKb + " KB / " + sizeKb + " KB";
+    if (sizeKb && el("dlSz")) el("dlSz").textContent = sizeKb + " KB terdeteksi";
   }
 
   function startProgressPoll(progressId) {
     activeProgressId = progressId;
     lastFilesSynced = 0;
-    listBootstrapped = false;
     if (pollTimer) clearInterval(pollTimer);
     var t0 = Date.now();
     pollTimer = setInterval(async function () {
@@ -2425,72 +2371,24 @@ draw();})();
   async function ingestArtifactToUI(artifact, meta) {
     meta = meta || {};
     if (!artifact || !artifact.id) {
-      finishUI(true, meta.message || "Selesai (tanpa artifact id)");
+      finishUI(false, meta.message || "GitHub run selesai tetapi artifact ZIP tidak ditemukan.");
       return;
     }
-    setProgUI(92, "Mengunduh artifact #" + artifact.id + "…");
-    try {
-      var res = await origFetch("/api/github/artifact?artifact_id=" + encodeURIComponent(artifact.id));
-      if (!res.ok) {
-        var err = await res.json().catch(function () { return {}; });
-        // still show size from metadata
-        var kbMeta = Math.round((artifact.size || 0) / 1024);
-        if (typeof window.__dlStart === "function") {
-          window.__dlStart([{ n: "artifact-" + artifact.id + ".zip", kb: kbMeta || 1, k: "data" }]);
-        }
-        if (typeof window.__dl === "function") {
-          window.__dl({ n: "artifact-" + artifact.id + ".zip", kb: kbMeta || 1, k: "data" }, "ok");
-        }
-        setProgUI(100, "Artifact tersedia (" + kbMeta + " KB) — unduh manual jika gagal proxy", {
-          files: 1,
-          sizeLabel: kbMeta + " KB"
-        });
-        finishUI(true, (meta.message || "Selesai") + " · proxy artifact: " + (err.error || res.status));
-        return;
-      }
-      var buf = await res.arrayBuffer();
-      var entries = listZipEntries(buf);
-      // GitHub artifact is often a nested zip — if single .zip inside, try deeper one level via names only
-      if (entries.length === 1 && /\.zip$/i.test(entries[0].n)) {
-        // can't inflate without library — treat outer listing
-      }
-      if (!entries.length) {
-        entries = [{ n: "game-resources.zip", kb: Math.max(1, Math.round(buf.byteLength / 1024)), k: "data" }];
-      }
-      if (typeof window.__dlStart === "function") {
-        window.__dlStart(entries.map(function (e) { return { n: e.n, kb: e.kb, k: e.k }; }));
-      }
-      var totalKb = 0;
-      entries.forEach(function (e) {
-        totalKb += e.kb;
-        if (typeof window.__dl === "function") {
-          try { window.__dl({ n: e.n, kb: e.kb, k: e.k }, "ok"); } catch (_) {}
-        }
-      });
-      // auto-download full artifact for user
-      try {
-        var blob = new Blob([buf], { type: "application/zip" });
-        var a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "c-ziperr-github-" + artifact.id + ".zip";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-      } catch (_) {}
-
-      setProgUI(100, "Selesai · " + entries.length + " berkas · " + totalKb + " KB", {
-        files: entries.length,
-        sizeLabel: totalKb + " KB"
-      });
-      if (el("stOk")) el("stOk").textContent = String(entries.length);
-      if (el("stSize")) el("stSize").textContent = totalKb + " KB";
-      var asS = el("asS");
-      if (asS) asS.textContent = "Selesai";
-      var asx = el("asx");
-      if (asx) { asx.classList.remove("run"); asx.classList.add("fin"); }
-      finishUI(true, (meta.message || "Selesai di GitHub Actions") + " · " + entries.length + " berkas di ZIP");
-    } catch (e) {
-      finishUI(true, (meta.message || "Selesai") + " · gagal baca ZIP: " + (e.message || e));
+    const sizeBytes = Number(artifact.size) || 0;
+    const sizeKb = Math.max(1, Math.round(sizeBytes / 1024));
+    const filename = "c-ziperr-github-artifact-" + artifact.id + ".zip";
+    window.__cZiperrRecordZipResult(filename, sizeBytes, null, artifact.id, null);
+    setProgUI(100, "Artifact siap · " + sizeKb + " KB · siap diunduh langsung", {
+      files: 1,
+      sizeLabel: sizeKb + " KB"
+    });
+    if (el("asS")) el("asS").textContent = "Artifact siap";
+    if (el("asx")) { el("asx").classList.remove("run"); el("asx").classList.add("fin"); }
+    const note = "GitHub membungkus hasil collect di dalam ZIP artifact; ekstrak satu kali untuk mendapatkan ZIP hasil collect.";
+    finishUI(true, (meta.message || "Selesai di GitHub Actions") + " · " + note + " Gunakan tombol Unduh ZIP asli.");
+    if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === "function") {
+      try { await window.__cZiperrDownloadGithubArtifact(artifact.id, sizeBytes); }
+      catch (error) { finishUI(true, "Artifact siap di GitHub. Unduhan otomatis gagal: " + (error.message || error) + " Gunakan tombol Unduh ZIP asli."); }
     }
   }
 
@@ -2558,7 +2456,7 @@ draw();})();
       spin_delay_ms: 2500,
       unlimited: true,
       large_capture: true,
-      mock_offline: true,
+      mock_offline: false,
       progressId: progressId,
       progress_id: progressId
     };
@@ -2568,11 +2466,9 @@ draw();})();
     }
 
     window.__cZiperrClearBlock();
+    if (typeof window.__cZiperrResetCollectResult === "function") window.__cZiperrResetCollectResult();
     showLive();
     setProgUI(2, useGithub || modeBig ? "Memicu GitHub Actions…" : "Memulai collect Worker…");
-    if (typeof window.__dlStart === "function") {
-      try { window.__dlStart([{ n: clean, kb: 1, k: "html" }]); } catch (_) {}
-    }
 
     var endpoint = (useGithub || modeBig) ? "/api/github/collect" : "/api/collect";
 
@@ -2602,7 +2498,10 @@ draw();})();
         }
         var runId = data.run_id;
         if (!runId) {
-          finishUI(false, data.message || "Run GitHub belum muncul — cek Actions lalu coba status manual.");
+          var pendingMessage = data.run_lookup_pending
+            ? "GitHub sedang mengindeks run yang baru dikirim. Jangan kirim ulang dulu; buka Actions dan periksa apakah run sudah muncul."
+            : (data.message || "Run GitHub belum muncul — cek Actions lalu coba status manual.");
+          finishUI(false, pendingMessage);
           return data;
         }
         setProgUI(12, "GitHub run #" + runId + " — " + (data.status || "queued"));
@@ -2624,8 +2523,11 @@ draw();})();
         }
         // R2 path
         if (j.via === "r2" && j.downloadUrl) {
+          var r2Name = "c-ziperr-" + host + ".zip";
+          window.__cZiperrRecordZipResult(r2Name, j.zipSize || 0, null, null, j.downloadUrl);
           setProgUI(100, "ZIP di R2 (" + Math.round((j.zipSize || 0) / 1024) + " KB)", { files: j.files });
-          finishUI(true, "Collect OK via R2 · " + j.files + " berkas · " + j.downloadUrl);
+          finishUI(true, "Collect OK via R2 · " + j.files + " berkas · ZIP asli siap diunduh.");
+          if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === "function") window.__cZiperrDownloadResult();
           return j;
         }
         finishUI(res.ok, j.message || j.error || "Collect selesai (JSON)");
@@ -2638,11 +2540,13 @@ draw();})();
         return;
       }
 
-      // ZIP body — trigger download
+      // ZIP body — simpan object ZIP asli; tidak pernah direkonstruksi dari daftar statistik.
       var blob = await res.blob();
+      var zipName = "c-ziperr-" + host + ".zip";
+      window.__cZiperrRecordZipResult(zipName, blob.size, blob);
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "c-ziperr-collect.zip";
+      a.download = zipName;
       document.body.appendChild(a);
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
@@ -2650,7 +2554,7 @@ draw();})();
       var filesN = filesH || "?";
       var stillN = stillH || "0";
       var zipKb = zipSizeH ? Math.round(Number(zipSizeH) / 1024) : Math.round(blob.size / 1024);
-      finishUI(true, "Collect OK · " + filesN + " berkas · ZIP " + zipKb + " KB · still-missing " + stillN);
+      finishUI(true, "Collect OK · " + filesN + " berkas · ZIP asli " + zipKb + " KB · still-missing " + stillN);
       setProgUI(100, "Selesai", { files: filesN, sizeLabel: zipKb + " KB" });
 
       if ($("#optBlockHost") && $("#optBlockHost").checked && host) {
@@ -2665,10 +2569,9 @@ draw();})();
   }
 
   function wire() {
-    var real = $("#optReal"), start = $("#startBtn"), gh = $("#ghBtn"), verify = $("#verifyBtn");
+    var start = $("#startBtn"), gh = $("#ghBtn"), verify = $("#verifyBtn");
     if (start) {
       start.addEventListener("click", function (ev) {
-        if (real && !real.checked) return; // allow local simulasi UI
         ev.preventDefault();
         ev.stopImmediatePropagation();
         realCollect(false);

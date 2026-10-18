@@ -5,21 +5,22 @@ import { readFile } from "node:fs/promises";
 const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
 const worker = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
 const workflow = await readFile(new URL("../.github/workflows/collect.yml", import.meta.url), "utf8");
+const collector = await readFile(new URL("../scripts/collect.js", import.meta.url), "utf8");
 
-test("large GitHub collect continues polling beyond the workflow runtime", () => {
-  assert.match(html, /const pollIntervalMs = 10_000/);
-  assert.match(html, /const maxWaitMs = 65 \* 60 \* 1000/);
-  assert.match(html, /\}, pollIntervalMs\);/);
-  assert.doesNotMatch(html, /const maxTries = 60; \/\/~5 menit/);
-  assert.match(workflow, /timeout-minutes: 60/);
+test("large GitHub collect keeps polling through the six-hour Actions window", () => {
+  assert.match(html, /function startGithubPoll\(runId\)/);
+  assert.match(html, /pollTimer = setInterval\(async function \(\)/);
+  assert.match(html, /\}, 2500\);/);
+  assert.doesNotMatch(html, /maxWaitMs|const maxTries = 60/);
+  assert.match(workflow, /timeout-minutes: 360/);
+  assert.match(collector, /largeCapture \? 5 \* 60 \* 60 \* 1000/);
 });
 
-test("collect UI exposes the exact run log and reports the failed workflow step", () => {
-  assert.match(html, /function gcSetCollectRunLink\(value\)/);
-  assert.match(html, /url\.hostname !== 'github\.com'/);
-  assert.match(html, /Buka log GitHub Actions/);
-  assert.match(html, /const failedStep = failedJob/);
-  assert.match(html, /data\.conclusion === 'success'/);
+test("collect UI reports the GitHub run URL, artifact, and failure conclusion", () => {
+  assert.match(html, /function startGithubPoll\(runId\)/);
+  assert.match(html, /data\.artifact && data\.artifact\.id/);
+  assert.match(html, /data\.conclusion === "success"/);
+  assert.match(html, /GitHub Actions gagal:/);
   assert.match(html, /data\.html_url/);
 });
 

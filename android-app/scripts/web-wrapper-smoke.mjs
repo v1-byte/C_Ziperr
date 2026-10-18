@@ -16,6 +16,10 @@ assert.match(source, /getContentUriAsync/);
 assert.match(source, /save_internal_download_start/);
 assert.match(source, /save_internal_download_chunk/);
 assert.match(source, /save_internal_download_complete/);
+assert.match(source, /save_internal_download_url/);
+assert.match(source, /FileSystem\.createDownloadResumable/);
+assert.match(source, /isTrustedInternalDownloadUrl/);
+assert.match(source, /blob\.core\.windows\.net/);
 assert.match(source, /handle\.writeBytes\(bytes\)/);
 assert.match(source, /Paths\.document/);
 assert.match(source, /downloadProgress/);
@@ -27,8 +31,8 @@ assert.match(workflow, /Verify APK signing certificate continuity/);
 assert.match(workflow, /release\/update\.json/);
 assert.doesNotMatch(source, /ZipPreviewScreen|DocumentPicker|expo-av|JSZip|KeyboardProvider/);
 
-assert.equal(appConfig.version, '1.2.8');
-assert.equal(appConfig.android.versionCode, 15);
+assert.equal(appConfig.version, '1.2.9');
+assert.equal(appConfig.android.versionCode, 16);
 assert.ok(appConfig.android.permissions.includes('REQUEST_INSTALL_PACKAGES'));
 
 const manifest = createUpdateManifest({
@@ -38,8 +42,8 @@ const manifest = createUpdateManifest({
   apkSizeBytes: 64_000_000,
 });
 assert.equal(manifest.appId, 'com.fblabb.zipscope');
-assert.equal(manifest.versionName, '1.2.8');
-assert.equal(manifest.versionCode, 15);
+assert.equal(manifest.versionName, '1.2.9');
+assert.equal(manifest.versionCode, 16);
 assert.equal(manifest.releaseTag, 'apk-42');
 assert.equal(manifest.apkSizeBytes, 64_000_000);
 assert.equal(manifest.apkUrl, 'https://github.com/v1-byte/C_Ziperr/releases/download/apk-42/app-release.apk');

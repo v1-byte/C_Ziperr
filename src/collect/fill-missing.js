@@ -17,6 +17,28 @@ import {
 import { verifyDownload, normalizeUrl, sha256 } from "../offline/strict-collector.js";
 import { fetchWithRetry } from "./fetch-retry.js";
 
+export function resolveFillLimits(limits = {}, caps = {}) {
+  const allowRunnerScale = limits.allowRunnerScale === true;
+  const singleFileCap = Number.isFinite(Number(caps.maxSingleFile))
+    ? Math.max(1, Math.floor(Number(caps.maxSingleFile)))
+    : MAX_CONFIGURED_SINGLE_FILE;
+  const rawTotalCap = Number.isFinite(Number(caps.maxRawTotal))
+    ? Math.max(1, Math.floor(Number(caps.maxRawTotal)))
+    : MAX_CONFIGURED_RAW_TOTAL;
+  const requestedSingleFile = Number(limits.maxSingleFile);
+  const requestedRawTotal = Number(limits.maxRawTotal);
+  const singleFile = Number.isFinite(requestedSingleFile) && requestedSingleFile > 0
+    ? Math.floor(requestedSingleFile)
+    : MAX_SINGLE_FILE;
+  const rawTotal = Number.isFinite(requestedRawTotal) && requestedRawTotal > 0
+    ? Math.floor(requestedRawTotal)
+    : MAX_RAW_TOTAL;
+  return {
+    maxSingleFile: allowRunnerScale ? singleFile : Math.min(singleFileCap, singleFile),
+    maxRawTotal: allowRunnerScale ? rawTotal : Math.min(rawTotalCap, rawTotal)
+  };
+}
+
 /**
  * Multi-pass auto-fill: scan HTML/JS/CSS → fetch missing → scan newly fetched → pass 2.
  * @param {number} [maxPerPass=80]
@@ -48,12 +70,7 @@ export async function fillMissingAssets(
 
   const MAX_FILL = Math.min(MAX_FILL_PER_PASS_CAP, Math.max(20, Number(maxPerPass) || MAX_FILL_PER_PASS));
   const PASSES = Math.min(MAX_FILL_PASSES_CAP, Math.max(1, Number(maxPasses) || MAX_FILL_PASSES));
-  const maxSingleFile = Number.isFinite(Number(limits.maxSingleFile)) && Number(limits.maxSingleFile) > 0
-    ? Math.min(MAX_CONFIGURED_SINGLE_FILE, Math.floor(Number(limits.maxSingleFile)))
-    : MAX_SINGLE_FILE;
-  const maxRawTotal = Number.isFinite(Number(limits.maxRawTotal)) && Number(limits.maxRawTotal) > 0
-    ? Math.min(MAX_CONFIGURED_RAW_TOTAL, Math.floor(Number(limits.maxRawTotal)))
-    : MAX_RAW_TOTAL;
+  const { maxSingleFile, maxRawTotal } = resolveFillLimits(limits);
   let rawBytes = sumZipFilesBytes(zipFiles);
 
   // Content-hash index for dedup (signed URL variants → one local file)
