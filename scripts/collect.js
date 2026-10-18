@@ -718,8 +718,15 @@ async function main() {
   console.log("PROGRESS: wait_resources", WAIT_SECONDS, "s");
   await page.waitForTimeout(WAIT_SECONDS * 1000);
 
+  // Extra settle for late XHR/fetch bundles (CDN / session assets)
+  try {
+    await page.waitForLoadState("networkidle", { timeout: LARGE_CAPTURE ? 20000 : 8000 });
+  } catch {}
   await scrollPage(page);
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(LARGE_CAPTURE ? 4000 : 2000);
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 10000 });
+  } catch {}
 
   // Proactive fallback: asset static signed yang tetap tertulis di HTML diambil
   // ulang dengan referer target, meskipun request tidak muncul sebagai response event.

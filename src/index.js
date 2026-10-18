@@ -509,14 +509,17 @@ async function handleRequest(request, env) {
         return Response.json({ error: "JSON tidak valid" }, { status: 400 });
       }
       let gameUrl = String(body.url || "").trim();
-      const waitSeconds = String(body.wait_seconds || "22");
+      const waitSeconds = String(body.wait_seconds || body.waitSeconds || "45");
       try {
         const u = new URL(gameUrl);
         if (!["http:", "https:"].includes(u.protocol)) throw 0;
       } catch {
         return Response.json({ error: "URL http/https tidak valid" }, { status: 400 });
       }
-      if (body.strip_tokens !== false) {
+      // KEEP session tokens during live capture so CDN/session assets can load.
+      // Token stripping is applied later when packaging offline HTML/JS (plugin rewrite).
+      // Only strip pre-nav if explicitly requested.
+      if (body.strip_tokens_before_nav === true || body.strip_before_nav === true) {
         gameUrl = cleanCollectUrl(gameUrl);
       }
       const sessionToken = String(request.headers.get("X-GC-GitHub-Token") || "").trim();
@@ -531,12 +534,16 @@ async function handleRequest(request, env) {
           inputs: {
             url: gameUrl,
             wait_seconds: waitSeconds,
-            auto_spins: String(body.auto_spins ?? body.autoSpins ?? "6"),
+            auto_spins: String(body.auto_spins ?? body.autoSpins ?? "12"),
             auto_history: String(body.auto_history ?? body.autoHistory ?? "1"),
-            spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2200"),
+            spin_delay_ms: String(body.spin_delay_ms ?? body.spinDelayMs ?? "2500"),
             request_id: dispatchRequestId,
             seed_zip: String(body.seed_zip ?? body.seedZip ?? ""),
-            large_capture: String([body.large_capture, body.unlimited, body.mode].some((value) => /^(1|true|yes|on|unlimited)$/i.test(String(value))) ? "1" : "0"),
+            large_capture: String(
+              body.large_capture === false || body.large_capture === 0 || body.large_capture === "0"
+                ? "0"
+                : ([body.large_capture, body.unlimited, body.mode, "1"].some((value) => /^(1|true|yes|on|unlimited)$/i.test(String(value))) ? "1" : "1")
+            ),
             mock_offline: String(body.mock_offline === false ? "0" : "1")
           }
         })
@@ -1272,8 +1279,10 @@ async function handleRequest(request, env) {
     }
 
     // Strip short-lived session tokens (ot/__hv/__sv/...) when requested or site plugin matches
+    // strip_tokens = strip when packaging offline files (default true).
+    // Do NOT strip query tokens before navigation — session CDN assets need them.
     const stripTokens = body.strip_tokens !== false;
-    if (stripTokens) {
+    if (body.strip_tokens_before_nav === true || body.strip_before_nav === true) {
       const cleaned = cleanCollectUrl(target.toString());
       try { target = new URL(cleaned); } catch (_) {}
     }

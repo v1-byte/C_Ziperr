@@ -823,7 +823,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
         <div style="height:12px"></div>
         <label class="chk"><input type="checkbox" id="optClick" checked><span>Klik otomatis tombol Play / Start / Mulai</span></label>
         <label class="chk"><input type="checkbox" id="optFill" checked><span>Auto-lengkapi referensi yang belum terunduh (multi-pass)</span></label>
-        <label class="chk"><input type="checkbox" id="optStrip" checked><span><b>Strip token sesi</b> (ot / __hv / __sv / btt / or)</span></label>
+        <label class="chk"><input type="checkbox" id="optStrip" checked><span><b>Strip token di paket offline</b> (ot / __hv / __sv / btt / or) — token tetap dipakai saat mengunduh</span></label>
         <label class="chk"><input type="checkbox" id="optBlockHost" checked><span><b>Blok host lama</b> setelah package / offline</span></label>
         <label class="chk"><input type="checkbox" id="optReal" checked><span>Collect nyata ke Worker / GitHub</span></label>
         <div style="height:14px"></div>
@@ -2486,24 +2486,31 @@ draw();})();
     var raw = ((input && input.value) || "").trim();
     if (!raw) { alert("Isi URL game dulu"); return; }
     var strip = !$("#optStrip") || $("#optStrip").checked;
-    var clean = strip ? stripUrl(raw) : raw;
-    if (input) input.value = clean;
-    var host = hostOf(clean);
+    // Capture with FULL url (tokens) so session assets load; strip only in offline package
+    var clean = stripUrl(raw);
+    var host = hostOf(raw);
+    if (input) input.value = raw;
     var big = document.querySelector('#capMode button[aria-pressed="true"]');
     var modeBig = big && big.getAttribute("data-v") === "big";
     var progressId = uuid();
     var body = {
-      url: clean,
+      url: raw.trim(),
       strip_tokens: strip,
-      wait_seconds: 22,
-      auto_spins: 6,
+      strip_tokens_before_nav: false,
+      wait_seconds: 48,
+      auto_spins: 12,
       auto_history: 1,
-      unlimited: !!(useGithub || modeBig),
-      large_capture: !!(useGithub || modeBig),
+      spin_delay_ms: 2500,
+      unlimited: true,
+      large_capture: true,
       mock_offline: true,
       progressId: progressId,
       progress_id: progressId
     };
+    // Keep full URL (with tokens) for capture depth; only display cleaned if user wants
+    if (input && strip) {
+      /* show cleaned in input after start, but send original for capture */
+    }
 
     window.__cZiperrClearBlock();
     showLive();
