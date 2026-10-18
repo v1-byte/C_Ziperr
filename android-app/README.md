@@ -1,6 +1,6 @@
 # C.Ziperr Android APK
 
-APK Android adalah produk utama. APK menampilkan UI C.Ziperr melalui WebView; Worker hanya menjadi alamat backend/tampilan yang dibuka APK. Setelah APK migrasi dipasang sekali, update UI pada Worker dapat diterima tanpa mengunduh APK lagi.
+APK Android adalah produk utama. APK menampilkan UI C.Ziperr melalui WebView; Worker menyediakan UI dan backend. Perubahan UI Worker biasanya tampil setelah WebView memuat ulang tanpa APK baru. Perubahan wrapper/cache-buster Android memerlukan rilis APK dengan versionCode lebih tinggi; updater kemudian menawarkan pemasangan kepada pengguna.
 
 ## URL web utama
 
@@ -14,7 +14,7 @@ APK membutuhkan koneksi internet untuk memuat aplikasi web utama dan API capture
 
 ## Pembaruan APK
 
-Mulai versi 1.2.8 (versionCode 15), APK memeriksa manifest rilis GitHub saat aplikasi dibuka, kembali ke foreground, dan berkala ketika tetap aktif. Versi 1.2.9 (versionCode 16) juga mengunduh artifact GitHub/R2 dari HTTPS langsung ke file sementara internal dengan `downloadAsync`, tanpa memuat keseluruhan artifact ke memori WebView. Versi 1.3.0 (versionCode 17) menambahkan aksi **Workspace** pada daftar ZIP tersimpan; berkas dikirim bertahap ke editor WebView untuk mengedit file teks dan diekspor kembali sebagai ZIP baru. Jika versionCode terbaru lebih tinggi, banner update menawarkan unduhan APK secara resumable; setelah ukuran file cocok dengan manifest, APK membuka Android Package Installer.
+Mulai versi 1.2.8 (versionCode 15), APK memeriksa manifest rilis GitHub saat aplikasi dibuka, kembali ke foreground, dan berkala ketika tetap aktif. Versi 1.2.9 (versionCode 16) juga mengunduh artifact GitHub/R2 dari HTTPS langsung ke file sementara internal dengan `downloadAsync`, tanpa memuat keseluruhan artifact ke memori WebView. Versi 1.3.0 (versionCode 17) menambahkan aksi **Workspace** pada daftar ZIP tersimpan; berkas dikirim bertahap ke editor WebView untuk mengedit file teks dan diekspor kembali sebagai ZIP baru. Versi 1.3.1 (versionCode 18) memperbarui cache-buster WebView dan menyediakan rilis baru yang terdeteksi updater untuk instalasi lama. Jika versionCode terbaru lebih tinggi, banner update menawarkan unduhan APK secara resumable; setelah ukuran file cocok dengan manifest, APK membuka Android Package Installer.
 
 Android tetap mewajibkan pengguna menyetujui pemasangan dan mungkin meminta izin **Izinkan pemasangan dari sumber ini** untuk C.Ziperr. Aplikasi tidak memasang APK diam-diam. Workflow rilis menerbitkan `update.json` bersama APK dan memverifikasi fingerprint sertifikat signing historis sebelum rilis, agar pembaruan tidak terbit jika tanda tangan berubah dan ditolak Android.
 

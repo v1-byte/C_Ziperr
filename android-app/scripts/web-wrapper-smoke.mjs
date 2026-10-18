@@ -6,6 +6,9 @@ const source = await readFile(new URL('../app/index.tsx', import.meta.url), 'utf
 const appConfig = JSON.parse(await readFile(new URL('../app.json', import.meta.url), 'utf8')).expo;
 const workflow = await readFile(new URL('../../.github/workflows/android-apk.yml', import.meta.url), 'utf8');
 assert.match(source, /c-zipper\.corelink-ai\.workers\.dev/);
+assert.match(source, /app_release=1\.3\.1/);
+assert.match(source, /cacheEnabled=\{false\}/);
+assert.match(source, /cacheMode="LOAD_NO_CACHE"/);
 assert.match(source, /<WebView/);
 assert.match(source, /javaScriptEnabled/);
 assert.match(source, /domStorageEnabled/);
@@ -40,8 +43,8 @@ assert.match(workflow, /Verify APK signing certificate continuity/);
 assert.match(workflow, /release\/update\.json/);
 assert.doesNotMatch(source, /ZipPreviewScreen|DocumentPicker|expo-av|JSZip|KeyboardProvider/);
 
-assert.equal(appConfig.version, '1.3.0');
-assert.equal(appConfig.android.versionCode, 17);
+assert.equal(appConfig.version, '1.3.1');
+assert.equal(appConfig.android.versionCode, 18);
 assert.ok(appConfig.android.permissions.includes('REQUEST_INSTALL_PACKAGES'));
 
 const manifest = createUpdateManifest({
@@ -51,8 +54,8 @@ const manifest = createUpdateManifest({
   apkSizeBytes: 64_000_000,
 });
 assert.equal(manifest.appId, 'com.fblabb.zipscope');
-assert.equal(manifest.versionName, '1.3.0');
-assert.equal(manifest.versionCode, 17);
+assert.equal(manifest.versionName, '1.3.1');
+assert.equal(manifest.versionCode, 18);
 assert.equal(manifest.releaseTag, 'apk-42');
 assert.equal(manifest.apkSizeBytes, 64_000_000);
 assert.equal(manifest.apkUrl, 'https://github.com/v1-byte/C_Ziperr/releases/download/apk-42/app-release.apk');
