@@ -190,11 +190,6 @@ button.stat[aria-pressed="true"] { border-color: var(--accent); background: var(
 @media (max-width: 560px) { .lr { grid-template-columns: auto auto minmax(0, 1fr); } .lr .s { display: none; } }
 
 .stage { aspect-ratio: 16 / 9; max-width: 100%; border-radius: 10px; border: 1px solid var(--line); background: linear-gradient(160deg, #1a2e3a, #0d1a22); display: grid; place-items: center; color: #cfe4ea; text-align: center; padding: 16px; font-size: 13px; overflow: hidden; }
-.stage .reels { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
-.stage .reel { width: 46px; height: 70px; border-radius: 8px; background: #0b161d; border: 1px solid #28424f; overflow: hidden; position: relative; }
-.stage .reel b { position: absolute; left: 0; right: 0; top: 0; display: grid; font-size: 22px; line-height: 70px; text-align: center; color: #3cc7bd; animation: spin 1.1s linear infinite; }
-.stage .reel:nth-child(2) b { animation-duration: 1.4s; } .stage .reel:nth-child(3) b { animation-duration: 1.7s; }
-@keyframes spin { from { transform: translateY(0); } to { transform: translateY(-280px); } }
 .stage .idle svg { width: 56px; height: 56px; color: #3cc7bd; margin: 0 auto 8px; display: block; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.cmp th, table.cmp td { text-align: left; padding: 7px 8px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
@@ -253,14 +248,6 @@ pre.code { margin: 0; background: var(--code-bg); color: var(--code-fg); border-
 .res button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 2px 6px; font: 12px var(--f-mono); color: var(--vs-dim); overflow-wrap: anywhere; }
 .res button:hover { background: var(--vs-hl); color: #fff; }
 .res mark { background: #613214; color: #f0b86e; }
-.chat { display: grid; gap: 8px; padding: 4px 10px; align-content: start; flex: 1; overflow: auto; min-height: 120px; }
-.msg { padding: 7px 10px; border-radius: 8px; font-size: 13px; max-width: 94%; overflow-wrap: anywhere; white-space: pre-wrap; animation: rise .25s ease both; }
-.msg.u { background: #0e6f6a; color: #fff; justify-self: end; }
-.msg.a { background: #333337; justify-self: start; }
-.typing span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #aaa; margin-right: 3px; animation: bounce 1s infinite; }
-.typing span:nth-child(2) { animation-delay: .15s; } .typing span:nth-child(3) { animation-delay: .3s; }
-@keyframes bounce { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-4px); } }
-.chatf { display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--vs-line); }
 
 .main { grid-area: main; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--vs-bg); }
 .tbar { display: flex; overflow-x: auto; background: var(--vs-side); flex: none; scrollbar-width: thin; }
@@ -313,8 +300,6 @@ pre.code { margin: 0; background: var(--code-bg); color: var(--code-fg); border-
 .pb .er { color: #f2776c; } .pb .wr { color: #e5a13a; } .pb .okk { color: #4cc77a; } .pb .dm { color: var(--vs-dim); }
 .pb .pr { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 2px 4px; font: inherit; border-radius: 4px; overflow-wrap: anywhere; }
 .pb .pr:hover { background: var(--vs-hl); }
-.tline { display: flex; gap: 8px; align-items: center; }
-.tline input { flex: 1; background: none; border: 0; outline: none; font: inherit; color: #fff; min-width: 0; }
 .status { grid-area: status; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; background: var(--vs-status); color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 0 0 10px 10px; }
 .status button { background: none; border: 0; color: #fff; font-size: 12px; padding: 0 2px; }
 .status .sp { flex: 1; }
@@ -919,14 +904,13 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 
     <!-- WORKSPACE -->
     <section class="pane" id="workspace" role="tabpanel" aria-labelledby="t-workspace" hidden>
-      <div class="head"><h1>Workspace</h1><p>Editor kode ala VS Code: menu lengkap, pencarian, terminal, masalah kode, chat AI lokal, dan Custom API. Perubahan disimpan di memori halaman ini.</p></div>
+      <div class="head"><h1>Workspace</h1><p>Editor kode di browser dengan Explorer, pencarian, analisis masalah, dan Custom API. Perubahan disimpan di memori halaman ini.</p></div>
       <div class="vs" id="vs">
         <div class="mbar" id="mbar"><span class="ttl" id="vsTitle">C.Ziperr Workspace</span></div>
         <div class="act" id="act">
           <button type="button" data-view="explorer" aria-pressed="true" title="Explorer (Ctrl+Shift+E)" aria-label="Explorer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg></button>
           <button type="button" data-view="search" aria-pressed="false" title="Cari (Ctrl+Shift+F)" aria-label="Cari"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg></button>
           <button type="button" data-view="api" aria-pressed="false" title="Custom API" aria-label="Custom API"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0zM12 17v4"/></svg></button>
-          <button type="button" data-view="ai" aria-pressed="false" title="Asisten AI" aria-label="Asisten AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg></button>
           <span class="sp"></span>
           <button type="button" data-go="setelan" title="Setelan" aria-label="Setelan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg></button>
         </div>
@@ -934,7 +918,6 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
           <div class="sv on" id="v-explorer"><h4>Explorer <span><button class="ib" type="button" id="exNew" title="Berkas baru">+ Berkas</button><button class="ib" type="button" id="exCol" title="Ciutkan">Ciutkan</button></span></h4><div class="dz" id="dz" role="button" tabindex="0"><b>Muat ZIP → edit kode</b>klik atau seret berkas .zip ke sini<input type="file" id="zipIn" accept=".zip,application/zip" hidden></div><div class="dzr"><button class="ib" type="button" id="exExp">Ekspor ZIP</button></div><ul class="tr" id="tree"></ul></div>
           <div class="sv" id="v-search"><h4>Cari</h4><div class="pad"><input class="vin" id="sq" type="search" placeholder="Cari di semua berkas" aria-label="Cari di semua berkas"><div class="res" id="sres"></div></div></div>
           <div class="sv" id="v-api"><h4>Custom API</h4><div class="pad"><p style="font-size:12.5px;color:var(--vs-dim)">Editor endpoint, uji, konfigurasi hosting, dan checklist kesiapan dibuka sebagai tab di editor.</p><button class="btn sm" id="apiOpen" type="button">Buka Custom API</button><button class="btn ghost sm" id="apiDetect" type="button">Deteksi dari berkas</button></div></div>
-          <div class="sv" id="v-ai"><h4>Asisten AI</h4><div class="chat" id="chat" aria-live="polite"><div class="msg a">Saya menganalisis berkas yang terbuka di sini secara lokal. Kirim pertanyaan tentang kode atau endpoint yang ada di ZIP.</div></div><form class="chatf" id="chatForm"><input class="vin" id="chatIn" type="text" placeholder="Tulis pesan" aria-label="Pesan untuk AI"><button class="btn sm" type="submit">Kirim</button></form></div>
         </aside>
         <div class="main">
           <div class="tbar" id="tbar" role="tablist" aria-label="Berkas terbuka"></div>
@@ -953,13 +936,11 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
         </div>
         <div class="panel" id="panel">
           <div class="ptabs" role="tablist" aria-label="Panel bawah">
-            <button class="pt" type="button" role="tab" data-p="term" aria-selected="true">Terminal</button>
-            <button class="pt" type="button" role="tab" data-p="prob" aria-selected="false">Masalah<span class="cnt" id="pcnt">0</span></button>
+            <button class="pt" type="button" role="tab" data-p="prob" aria-selected="true">Masalah<span class="cnt" id="pcnt">0</span></button>
             <button class="pt" type="button" role="tab" data-p="out" aria-selected="false">Output</button>
             <span class="sp"></span><button class="ib" type="button" id="pClose" aria-label="Tutup panel">Tutup</button>
           </div>
-          <div class="pb on" id="pTerm"><div id="termOut"></div><form class="tline" id="termForm"><span style="color:#3cc7bd">$</span><input id="termIn" type="text" autocomplete="off" spellcheck="false" aria-label="Perintah terminal" placeholder="ketik help"></form></div>
-          <div class="pb" id="pProb"></div>
+          <div class="pb on" id="pProb"></div>
           <div class="pb" id="pOut"></div>
         </div>
         <aside class="rside" id="rside"><div class="rh"><b>Berkas &amp; Outline</b><button class="ib" id="rClose" type="button" title="Lipat panel kanan">Lipat ›</button></div><div class="rsec"><h5>Berkas terbuka <span id="rOpenN"></span></h5><ul class="rl" id="rOpen"></ul></div><div class="rsec grow"><h5>Outline <span id="rOutN"></span></h5><ul class="rl" id="rOut"></ul></div></aside>
@@ -992,7 +973,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
 
     <!-- SETELAN -->
     <section class="pane" id="setelan" role="tabpanel" aria-labelledby="t-setelan" hidden>
-      <div class="head"><h1>Setelan</h1><p>Atur API AI yang dipakai untuk analisis, perbaikan, dan chat. Kunci hanya disimpan selama halaman terbuka.</p></div>
+      <div class="head"><h1>Setelan</h1><p>Atur API AI yang dipakai untuk analisis dan perbaikan. Kunci hanya disimpan selama halaman terbuka.</p></div>
       <div class="card">
         <div class="grid2">
           <label class="f" for="prov">Penyedia
@@ -1183,8 +1164,6 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   /* ===== File & highlight ===== */
   const files = {};
   const saved = Object.assign({}, files);
-  const SAMPLES = {};
-  /* no demo samples */
   const langOf = (p) => { const e = (p.split(".").pop() || "").toLowerCase(); return { js: "js", mjs: "js", cjs: "js", jsx: "ts", ts: "ts", tsx: "ts", json: "json", html: "html", htm: "html", css: "css", scss: "css", md: "md", txt: "md", py: "py", sh: "sh", bash: "sh", yml: "sh", yaml: "sh", toml: "sh" }[e] || "md"; };
   const LANGN = { js: "JavaScript", ts: "TypeScript", py: "Python 3", json: "JSON", html: "HTML", css: "CSS", md: "Teks / Markdown", sh: "Shell / Config" };
   const mk = (kw, tag) => new RegExp(String.raw`(\/\/[^\n]*|\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->)|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|\x60(?:\\.|[^\x60\\])*\x60)|\b(${kw})\b|\b(\d+(?:\.\d+)?)\b|${tag}`, "g");
@@ -1414,10 +1393,9 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     File: [["file.new", "Berkas Baru…", "Ctrl+N"], ["file.save", "Simpan", "Ctrl+S"], ["file.saveall", "Simpan Semua"], "-", ["file.rename", "Ubah Nama…"], ["file.delete", "Hapus Berkas…"], ["file.copy", "Salin Isi Berkas"], ["file.loadzip", "Muat ZIP…"], ["file.exportzip", "Ekspor ZIP"], ["file.revert", "Kembalikan ke Tersimpan"], "-", ["file.close", "Tutup Editor", "Ctrl+W"]],
     Edit: [["edit.undo", "Urungkan", "Ctrl+Z"], ["edit.redo", "Ulangi", "Ctrl+Y"], "-", ["edit.cut", "Potong", "Ctrl+X"], ["edit.copy", "Salin", "Ctrl+C"], "-", ["edit.find", "Cari", "Ctrl+F"], ["edit.replace", "Ganti", "Ctrl+H"], ["edit.format", "Format Dokumen", "Shift+Alt+F"]],
     Pilih: [["sel.all", "Pilih Semua", "Ctrl+A"], ["sel.dup", "Gandakan Baris", "Shift+Alt+↓"], ["sel.up", "Pindah Baris ke Atas", "Alt+↑"], ["sel.down", "Pindah Baris ke Bawah", "Alt+↓"], ["sel.comment", "Alihkan Komentar", "Ctrl+/"]],
-    Tampilan: [["view.palette", "Command Palette…", "Ctrl+Shift+P"], "-", ["view.explorer", "Explorer", "Ctrl+Shift+E"], ["view.search", "Cari di Berkas", "Ctrl+Shift+F"], ["view.api", "Custom API"], ["view.ai", "Asisten AI"], "-", ["view.focus", "Mode Fokus (lipat semua panel)"], ["view.rside", "Alihkan Panel Kanan"], ["view.foldall", "Lipat Semua Blok"], ["view.unfold", "Buka Semua Lipatan"], ["view.side", "Alihkan Sidebar", "Ctrl+B"], ["view.panel", "Alihkan Panel", "Ctrl+J"], ["view.zin", "Perbesar Font", "Ctrl+="], ["view.zout", "Perkecil Font", "Ctrl+-"], ["view.zreset", "Reset Ukuran Font"]],
+    Tampilan: [["view.palette", "Command Palette…", "Ctrl+Shift+P"], "-", ["view.explorer", "Explorer", "Ctrl+Shift+E"], ["view.search", "Cari di Berkas", "Ctrl+Shift+F"], ["view.api", "Custom API"], "-", ["view.focus", "Mode Fokus (lipat semua panel)"], ["view.rside", "Alihkan Panel Kanan"], ["view.foldall", "Lipat Semua Blok"], ["view.unfold", "Buka Semua Lipatan"], ["view.side", "Alihkan Sidebar", "Ctrl+B"], ["view.panel", "Alihkan Panel", "Ctrl+J"], ["view.zin", "Perbesar Font", "Ctrl+="], ["view.zout", "Perkecil Font", "Ctrl+-"], ["view.zreset", "Reset Ukuran Font"]],
     Buka: [["go.line", "Ke Baris…", "Ctrl+G"], ["go.next", "Tab Berikutnya"], ["go.prev", "Tab Sebelumnya"], ["go.prob", "Ke Masalah"]],
     Jalankan: [["run.preview", "Jalankan di Preview"], ["run.repair", "Auto Repair (Deep)"], ["run.lint", "Periksa Kode"], ["run.api", "Buka Custom API"]],
-    Terminal: [["term.new", "Terminal Baru"], ["term.clear", "Bersihkan Terminal"]],
     Bantuan: [["help.keys", "Pintasan Keyboard"], ["help.about", "Tentang Workspace"]]
   };
   const LABEL = {}; Object.keys(MENUS).forEach((m) => MENUS[m].forEach((it) => { if (it !== "-") LABEL[it[0]] = { l: it[1].replace("…", ""), k: it[2] || "" }; }));
@@ -1438,7 +1416,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     "sel.dup": () => { const [ls, le] = lineRange(); const t = ta.value.slice(ls, le); selRange(le, le); ins("\n" + t); },
     "sel.up": () => moveLine(-1), "sel.down": () => moveLine(1), "sel.comment": commentToggle,
     "view.palette": () => openPal(),
-    "view.explorer": () => setView("explorer"), "view.search": () => { setView("search"); $("#sq").focus(); }, "view.api": () => { setView("api"); openTab("::api"); }, "view.ai": () => { setView("ai"); $("#chatIn").focus(); },
+    "view.explorer": () => setView("explorer"), "view.search": () => { setView("search"); $("#sq").focus(); }, "view.api": () => { setView("api"); openTab("::api"); },
     "view.side": () => { $("#vs").classList.toggle("noside"); }, "view.panel": () => { const p = $("#panel"); p.hidden = !p.hidden; },
     "view.zin": () => { fs = Math.min(22, fs + 1); applyFs(); syncScroll(); }, "view.zout": () => { fs = Math.max(10, fs - 1); applyFs(); syncScroll(); }, "view.zreset": () => { fs = 13; applyFs(); syncScroll(); },
     "go.line": () => { if (isApiTab() || !active) return; ask({ title: "Ke baris", text: "Nomor baris 1–" + ta.value.split("\n").length, input: true, ph: "12", ok: "Pergi" }, (v) => { const n = parseInt(v, 10); if (n) gotoLine(active, n); }); },
@@ -1447,7 +1425,6 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     "run.preview": () => { show("preview"); }, "run.repair": () => { const r = repair(); toast(r.changed ? r.changed + " berkas diperbaiki" : "Tidak ada yang perlu diperbaiki"); },
     "run.lint": () => { const p = lint(); showPanel("prob"); logEvt(p.length ? "WARN" : "OK", "workspace", "Pemeriksaan kode: " + p.length + " temuan"); },
     "run.api": () => { setView("api"); openTab("::api"); },
-    "term.new": () => { showPanel("term"); $("#termIn").focus(); }, "term.clear": () => { $("#termOut").innerHTML = ""; },
     "help.keys": () => ask({ title: "Pintasan keyboard", single: true, ok: "Tutup", text: "Ctrl+S  Simpan\nCtrl+F / Ctrl+H  Cari / Ganti\nCtrl+G  Ke baris\nCtrl+Shift+P atau F1  Command Palette\nCtrl+B  Sidebar\nCtrl+J  Panel\nCtrl+/  Komentar\nAlt+↑ / Alt+↓  Pindah baris\nShift+Alt+↓  Gandakan baris\nCtrl+= / Ctrl+-  Ukuran font\nTab  Indentasi 2 spasi" }, null),
     "help.about": () => modal("Workspace C.Ziperr", "Berkas dan perubahan disimpan di memori halaman ini dan hilang saat dimuat ulang. Ekspor ke ZIP dilakukan oleh Worker pada versi terhubung.")
   };
@@ -1504,7 +1481,7 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     $$(".sv").forEach((s) => s.classList.toggle("on", s.id === "v-" + v));
   }
   $$("#act [data-view]").forEach((b) => b.addEventListener("click", () => { const v = b.dataset.view; if (b.getAttribute("aria-pressed") === "true") { $("#vs").classList.toggle("noside"); return; } setView(v); if (v === "api") openTab("::api"); }));
-  function showPanel(p) { $("#panel").hidden = false; $$(".pt").forEach((b) => b.setAttribute("aria-selected", b.dataset.p === p ? "true" : "false")); $("#pTerm").classList.toggle("on", p === "term"); $("#pProb").classList.toggle("on", p === "prob"); $("#pOut").classList.toggle("on", p === "out"); }
+  function showPanel(p) { $("#panel").hidden = false; $$(".pt").forEach((b) => b.setAttribute("aria-selected", b.dataset.p === p ? "true" : "false")); $("#pProb").classList.toggle("on", p === "prob"); $("#pOut").classList.toggle("on", p === "out"); }
   $$(".pt").forEach((b) => b.addEventListener("click", () => showPanel(b.dataset.p)));
   $("#pClose").addEventListener("click", () => { $("#panel").hidden = true; });
   $("#stProb").addEventListener("click", () => showPanel("prob"));
@@ -1520,25 +1497,6 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
     box.innerHTML = (html || '<div style="color:var(--vs-dim);padding:4px 0">Tidak ada hasil.</div>') + (html ? '<div style="color:var(--vs-dim);padding:6px 0">' + n + " hasil</div>" : "");
     $$("#sres button").forEach((b) => b.addEventListener("click", () => gotoLine(b.dataset.p, +b.dataset.l)));
   });
-  /* Terminal */
-  function tout(t, cls) { const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = t; $("#termOut").appendChild(d); $("#pTerm").scrollTop = $("#pTerm").scrollHeight; }
-  tout("C.Ziperr terminal (proses lokal). Ketik help.", "dm");
-  $("#termForm").addEventListener("submit", (e) => {
-    e.preventDefault(); const line = $("#termIn").value.trim(); $("#termIn").value = ""; if (!line) return; tout("$ " + line, "dm");
-    const [c, ...a] = line.split(/\s+/), arg = a.join(" ");
-    if (c === "help") tout("help  ls [folder]  cat <berkas>  grep <teks>  open <berkas>  lint  repair  api  zip  clear");
-    else if (c === "ls") Object.keys(files).sort().filter((p) => !arg || p.indexOf(arg) === 0).forEach((p) => tout(p));
-    else if (c === "cat") { if (arg in files) tout(files[arg]); else tout("cat: " + arg + ": tidak ada", "er"); }
-    else if (c === "grep") { if (!arg) tout("grep: isi teks", "er"); else { let n = 0; Object.keys(files).forEach((p) => files[p].split("\n").forEach((l, i) => { if (l.toLowerCase().indexOf(arg.toLowerCase()) >= 0) { tout(p + ":" + (i + 1) + ": " + l.trim()); n++; } })); if (!n) tout("tidak ada hasil", "dm"); } }
-    else if (c === "open") { if (arg in files) openTab(arg); else tout("open: " + arg + ": tidak ada", "er"); }
-    else if (c === "lint") { const p = lint(); tout(p.length + " temuan", p.length ? "wr" : "okk"); p.forEach((x) => tout(x.p + ":" + x.line + " " + x.msg, x.sev === "error" ? "er" : "wr")); }
-    else if (c === "repair") { const r = repair(); tout(r.changed + " berkas diperbaiki", "okk"); }
-    else if (c === "api") { apis.forEach((x) => tout(x.m.padEnd(6) + x.p + "  [" + x.st + "]")); }
-    else if (c === "zip") { const kb = Object.keys(files).reduce((a, p) => a + files[p].length, 0) / 1024; tout(Object.keys(files).length + " berkas, " + kb.toFixed(1).replace(".", ",") + " KB di memori"); }
-    else if (c === "clear") $("#termOut").innerHTML = "";
-    else tout(c + ": perintah tidak dikenal. Ketik help.", "er");
-  });
-
   /* ===== Custom API ===== */
   const apis = [];
   let apiSel = 0, apiSeq = 1; const cfg = { mode: "direct", base: "", origin: "", timeout: 8000, rate: 60, idem: true, writeOk: false };
@@ -1648,22 +1606,6 @@ html[data-skin=hd]{--c1:#ff6a00;--c2:#ffd60a;--c3:#22d3ee;--c4:#34d399;--c5:#a78
   }
   $("#apiOpen").addEventListener("click", () => openTab("::api"));
   $("#apiDetect").addEventListener("click", detectApis);
-
-  /* ===== Asisten AI (analisis lokal) ===== */
-  function aiReply(q) {
-    const t = q.toLowerCase(); let m;
-    if (/endpoint|api/.test(t) && !/cari/.test(t)) return "Endpoint di Custom API:\n" + apis.map((a) => a.m + " " + a.p).join("\n");
-    if (/masalah|error|salah|lint/.test(t)) { const p = lint(); return p.length ? p.length + " temuan:\n" + p.slice(0, 8).map((x) => x.p + ":" + x.line + " " + x.msg).join("\n") : "Tidak ada masalah terdeteksi."; }
-    if ((m = t.match(/(?:cari|find|grep)\s+(.+)/))) { const q2 = m[1].trim(), out = []; Object.keys(files).forEach((p) => files[p].split("\n").forEach((l, i) => { if (l.toLowerCase().indexOf(q2) >= 0 && out.length < 8) out.push(p + ":" + (i + 1) + "  " + l.trim()); })); return out.length ? out.length + " hasil untuk \"" + q2 + "\":\n" + out.join("\n") : "Tidak ada hasil untuk \"" + q2 + "\"."; }
-    if (/repair|perbaiki/.test(t)) return "Jalankan menu Jalankan → Auto Repair (Deep). Perubahan langsung terlihat di editor.";
-    return "Saya bisa mencari teks, mendaftar endpoint, dan merangkum masalah kode. Panggilan ke API AI opsional; fitur lokal tetap aktif.";
-  }
-  $("#chatForm").addEventListener("submit", async (e) => {
-    e.preventDefault(); const t = $("#chatIn").value.trim(); if (!t) return; $("#chatIn").value = "";
-    const c = $("#chat"), u = document.createElement("div"); u.className = "msg u"; u.textContent = t; c.appendChild(u);
-    const a = document.createElement("div"); a.className = "msg a typing"; a.innerHTML = "<span></span><span></span><span></span>"; c.appendChild(a); c.scrollTop = c.scrollHeight;
-    await sleep(600); a.className = "msg a"; a.textContent = aiReply(t); c.scrollTop = c.scrollHeight; logEvt("INFO", "workspace", "Chat AI lokal: " + t.slice(0, 60));
-  });
 
   /* ===== Analisis ZIP nyata ===== */
   let loaded = false;

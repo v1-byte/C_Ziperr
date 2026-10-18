@@ -18,3 +18,11 @@ test("mock/replay metadata is opt-in only", () => {
   assert.match(worker, /const mockOffline = body\.mock_offline === true/);
   assert.match(collector, /const MOCK_OFFLINE = process\.env\.MOCK_OFFLINE === "1"/);
 });
+
+test("workspace does not expose simulated terminal, canned AI chat, or old reel demo UI", () => {
+  assert.doesNotMatch(html, /C\.Ziperr terminal \(proses lokal\)|id="termForm"|term\.new|term\.clear|data-p="term"|Asisten AI|function aiReply|id="v-ai"|\.stage \.reel/);
+  assert.match(html, /id="v-explorer"/);
+  assert.match(html, /data-p="prob"/);
+  assert.match(html, /data-p="out"/);
+  assert.match(html, /Custom API/);
+});
